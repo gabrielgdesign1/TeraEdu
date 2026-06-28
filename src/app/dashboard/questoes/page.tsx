@@ -778,6 +778,28 @@ function GerarComIA() {
   )
 }
 
+// ─── Banco em breve ──────────────────────────────────────────────────────────
+
+function BancoEmBreve({ vestibular, materia, conteudo, onVoltar }: {
+  vestibular: string; materia: string; conteudo: string; onVoltar: () => void
+}) {
+  return (
+    <div className="flex flex-col items-center justify-center py-20 text-center">
+      <div className="w-14 h-14 bg-brand-soft rounded-2xl flex items-center justify-center mb-5">
+        <BookOpen size={24} className="text-brand" />
+      </div>
+      <h2 className="text-text font-semibold text-lg mb-2">Banco de questões em breve</h2>
+      <p className="text-text-muted text-sm max-w-sm mb-1">
+        As questões reais de <span className="text-text font-medium">{vestibular} · {materia}</span> serão integradas em breve via API de provas.
+      </p>
+      <p className="text-text-faint text-xs mb-8">{conteudo}</p>
+      <button onClick={onVoltar} className="border border-border hover:border-brand text-text-muted hover:text-text px-5 py-2.5 rounded-xl text-sm font-medium transition-all">
+        ← Voltar
+      </button>
+    </div>
+  )
+}
+
 // ─── Sidebar link ─────────────────────────────────────────────────────────────
 
 function SidebarLink({ href, icon: Icon, label, active }: {
