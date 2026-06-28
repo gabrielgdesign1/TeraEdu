@@ -96,7 +96,7 @@ export default function Home() {
             {/* Lápis: -ml-[18%] faz ele invadir o texto criando overlap */}
             <div className="-ml-[18%] relative">
               <Image
-                src="/pencil png render.png"
+                src="/cap pngc render.png"
                 alt=""
                 width={760}
                 height={760}
@@ -225,7 +225,7 @@ export default function Home() {
               <div className="relative">
                 <div className="absolute inset-0 bg-brand/10 blur-[80px] rounded-full" />
                 <Image
-                  src="/cap pngc render.png"
+                  src="/pencil png render.png"
                   alt=""
                   width={320}
                   height={320}
