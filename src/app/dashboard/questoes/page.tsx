@@ -396,13 +396,10 @@ function BancoQuestoes() {
             <p className="text-text-muted text-xs mt-0.5">{conteudo} · {quantidade} questões</p>
           </div>
           <button
-            onClick={iniciarSessao}
-            disabled={loading}
-            className="flex items-center gap-2 bg-brand hover:bg-brand-hover disabled:opacity-60 text-white text-sm font-semibold px-6 py-2.5 rounded-xl transition-colors"
+            onClick={() => setIniciado(true)}
+            className="flex items-center gap-2 bg-brand hover:bg-brand-hover text-white text-sm font-semibold px-6 py-2.5 rounded-xl transition-colors"
           >
-            {loading ? (
-              <><div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Gerando...</>
-            ) : 'Começar'}
+            Começar
           </button>
         </div>
       )}
