@@ -224,7 +224,7 @@ export default function Resumos() {
                 <button
                   onClick={gerarResumo}
                   disabled={loading || !podeGerar}
-                  className="w-full bg-brand hover:bg-brand-hover disabled:opacity-40 disabled:cursor-not-allowed text-white font-medium py-3 rounded-xl transition-colors"
+                  className="w-full bg-brand hover:bg-brand-hover disabled:opacity-40 disabled:cursor-not-allowed text-white font-medium py-3 rounded-full transition-colors"
                 >
                   {loading ? 'Gerando resumo...' : 'Gerar resumo com IA'}
                 </button>

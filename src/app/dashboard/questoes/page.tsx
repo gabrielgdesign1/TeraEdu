@@ -300,7 +300,7 @@ function BancoQuestoes() {
               <button
                 key={v}
                 onClick={() => handleVestibular(v)}
-                className={`px-4 py-2 rounded-xl text-sm font-medium border transition-all ${
+                className={`px-4 py-2 rounded-full text-sm font-medium border transition-all ${
                   vestibular === v
                     ? 'bg-brand text-white border-brand'
                     : 'bg-bg-card border-border text-text-muted hover:text-text hover:border-brand'
@@ -323,7 +323,7 @@ function BancoQuestoes() {
                 <button
                   key={m}
                   onClick={() => handleMateria(m)}
-                  className={`px-4 py-2 rounded-xl text-sm font-medium border transition-all ${
+                  className={`px-4 py-2 rounded-full text-sm font-medium border transition-all ${
                     materia === m
                       ? 'bg-brand text-white border-brand'
                       : 'bg-bg-card border-border text-text-muted hover:text-text hover:border-brand'
@@ -347,7 +347,7 @@ function BancoQuestoes() {
                 <button
                   key={c}
                   onClick={() => setConteudo(c)}
-                  className={`px-4 py-2 rounded-xl text-sm font-medium border transition-all ${
+                  className={`px-4 py-2 rounded-full text-sm font-medium border transition-all ${
                     conteudo === c
                       ? 'bg-brand text-white border-brand'
                       : 'bg-bg-card border-border text-text-muted hover:text-text hover:border-brand'
@@ -371,7 +371,7 @@ function BancoQuestoes() {
                 <button
                   key={q}
                   onClick={() => setQuantidade(q)}
-                  className={`w-14 py-2 rounded-xl text-sm font-medium border transition-all ${
+                  className={`w-14 py-2 rounded-full text-sm font-medium border transition-all ${
                     quantidade === q
                       ? 'bg-brand text-white border-brand'
                       : 'bg-bg-card border-border text-text-muted hover:text-text hover:border-brand'
@@ -397,7 +397,7 @@ function BancoQuestoes() {
           </div>
           <button
             onClick={() => setIniciado(true)}
-            className="flex items-center gap-2 bg-brand hover:bg-brand-hover text-white text-sm font-semibold px-6 py-2.5 rounded-xl transition-colors"
+            className="flex items-center gap-2 bg-brand hover:bg-brand-hover text-white text-sm font-semibold px-6 py-2.5 rounded-full transition-colors"
           >
             Começar
           </button>
@@ -477,10 +477,10 @@ function SessaoQuestoes({
         </div>
 
         <div className="flex gap-3 justify-center">
-          <button onClick={reiniciar} className="flex items-center gap-2 border border-border text-text-muted hover:text-text px-5 py-2.5 rounded-xl text-sm transition-colors">
+          <button onClick={reiniciar} className="flex items-center gap-2 border border-border text-text-muted hover:text-text px-5 py-2.5 rounded-full text-sm transition-colors">
             <RotateCcw size={14} /> Refazer
           </button>
-          <button onClick={onVoltar} className="bg-brand hover:bg-brand-hover text-white px-5 py-2.5 rounded-xl text-sm font-medium transition-colors">
+          <button onClick={onVoltar} className="bg-brand hover:bg-brand-hover text-white px-5 py-2.5 rounded-full text-sm font-medium transition-colors">
             Nova sessão
           </button>
         </div>
@@ -558,14 +558,14 @@ function SessaoQuestoes({
           <button
             onClick={confirmar}
             disabled={!selecionada}
-            className="bg-brand hover:bg-brand-hover disabled:opacity-40 disabled:cursor-not-allowed text-white px-7 py-3 rounded-xl text-sm font-semibold transition-colors"
+            className="bg-brand hover:bg-brand-hover disabled:opacity-40 disabled:cursor-not-allowed text-white px-7 py-3 rounded-full text-sm font-semibold transition-colors"
           >
             Confirmar resposta
           </button>
         ) : (
           <button
             onClick={proxima}
-            className="bg-brand hover:bg-brand-hover text-white px-7 py-3 rounded-xl text-sm font-semibold transition-colors"
+            className="bg-brand hover:bg-brand-hover text-white px-7 py-3 rounded-full text-sm font-semibold transition-colors"
           >
             {atual + 1 >= quantidade ? 'Ver resultado' : 'Próxima questão →'}
           </button>
@@ -640,7 +640,7 @@ function GerarComIA() {
               <button
                 key={v}
                 onClick={() => handleVestibular(v)}
-                className={`px-4 py-2 rounded-xl text-sm font-medium border transition-all ${
+                className={`px-4 py-2 rounded-full text-sm font-medium border transition-all ${
                   vestibular === v
                     ? 'bg-brand text-white border-brand'
                     : 'bg-bg-card border-border text-text-muted hover:text-text hover:border-brand'
@@ -663,7 +663,7 @@ function GerarComIA() {
                 <button
                   key={m}
                   onClick={() => handleMateria(m)}
-                  className={`px-4 py-2 rounded-xl text-sm font-medium border transition-all ${
+                  className={`px-4 py-2 rounded-full text-sm font-medium border transition-all ${
                     materia === m
                       ? 'bg-brand text-white border-brand'
                       : 'bg-bg-card border-border text-text-muted hover:text-text hover:border-brand'
@@ -687,7 +687,7 @@ function GerarComIA() {
                 <button
                   key={c}
                   onClick={() => setConteudo(c)}
-                  className={`px-4 py-2 rounded-xl text-sm font-medium border transition-all ${
+                  className={`px-4 py-2 rounded-full text-sm font-medium border transition-all ${
                     conteudo === c
                       ? 'bg-brand text-white border-brand'
                       : 'bg-bg-card border-border text-text-muted hover:text-text hover:border-brand'
@@ -710,7 +710,7 @@ function GerarComIA() {
                   <button
                     key={d}
                     onClick={() => setDificuldade(d)}
-                    className={`flex-1 py-2 rounded-xl text-xs font-medium border transition-all capitalize ${
+                    className={`flex-1 py-2 rounded-full text-xs font-medium border transition-all capitalize ${
                       dificuldade === d
                         ? 'bg-brand text-white border-brand'
                         : 'bg-bg-card border-border text-text-muted hover:text-text hover:border-brand'
@@ -728,7 +728,7 @@ function GerarComIA() {
                   <button
                     key={q}
                     onClick={() => setQuantidade(q)}
-                    className={`flex-1 py-2 rounded-xl text-xs font-medium border transition-all ${
+                    className={`flex-1 py-2 rounded-full text-xs font-medium border transition-all ${
                       quantidade === q
                         ? 'bg-brand text-white border-brand'
                         : 'bg-bg-card border-border text-text-muted hover:text-text hover:border-brand'
@@ -747,7 +747,7 @@ function GerarComIA() {
           <button
             onClick={gerarQuestoes}
             disabled={loading}
-            className="flex items-center justify-center gap-2 bg-brand hover:bg-brand-hover disabled:opacity-60 text-white font-semibold py-3.5 rounded-2xl transition-colors text-sm"
+            className="flex items-center justify-center gap-2 bg-brand hover:bg-brand-hover disabled:opacity-60 text-white font-semibold py-3.5 rounded-full transition-colors text-sm"
           >
             {loading ? (
               <>
@@ -790,7 +790,7 @@ function BancoEmBreve({ vestibular, materia, conteudo, onVoltar }: {
         As questões reais de <span className="text-text font-medium">{vestibular} · {materia}</span> serão integradas em breve via API de provas.
       </p>
       <p className="text-text-faint text-xs mb-8">{conteudo}</p>
-      <button onClick={onVoltar} className="border border-border hover:border-brand text-text-muted hover:text-text px-5 py-2.5 rounded-xl text-sm font-medium transition-all">
+      <button onClick={onVoltar} className="border border-border hover:border-brand text-text-muted hover:text-text px-5 py-2.5 rounded-full text-sm font-medium transition-all">
         ← Voltar
       </button>
     </div>

@@ -115,7 +115,7 @@ export default function Login() {
             <button
               onClick={handleSubmit}
               disabled={loading}
-              className="w-full bg-brand hover:bg-brand-hover disabled:opacity-50 text-white font-medium py-3 rounded-xl transition-colors mt-1"
+              className="w-full bg-brand hover:bg-brand-hover disabled:opacity-50 text-white font-medium py-3 rounded-full transition-colors mt-1"
             >
               {loading ? 'Aguarde...' : isLogin ? 'Entrar' : 'Criar conta'}
             </button>

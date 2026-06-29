@@ -162,13 +162,13 @@ export default function Flashcards() {
                 <button
                   onClick={anterior}
                   disabled={indiceAtual === 0}
-                  className="flex items-center gap-2 flex-1 justify-center py-3 rounded-xl border border-border text-text-muted hover:text-text hover:border-brand/50 disabled:opacity-30 transition-all text-sm font-medium"
+                  className="flex items-center gap-2 flex-1 justify-center py-3 rounded-full border border-border text-text-muted hover:text-text hover:border-brand/50 disabled:opacity-30 transition-all text-sm font-medium"
                 >
                   <ChevronLeft size={15} /> Anterior
                 </button>
                 <button
                   onClick={proximo}
-                  className="flex items-center gap-2 flex-1 justify-center py-3 rounded-xl bg-brand hover:bg-brand-hover text-white transition-colors text-sm font-medium"
+                  className="flex items-center gap-2 flex-1 justify-center py-3 rounded-full bg-brand hover:bg-brand-hover text-white transition-colors text-sm font-medium"
                 >
                   {indiceAtual === flashcards.length - 1 ? 'Finalizar' : 'Próximo'}
                   {indiceAtual < flashcards.length - 1 && <ChevronRight size={15} />}
@@ -249,7 +249,7 @@ export default function Flashcards() {
                       <button
                         key={n}
                         onClick={() => setQuantidade(n)}
-                        className={`px-5 py-2.5 rounded-xl text-sm font-medium transition-colors ${
+                        className={`px-5 py-2.5 rounded-full text-sm font-medium transition-colors ${
                           quantidade === n ? 'bg-brand text-white' : 'bg-bg border border-border text-text-muted hover:text-text'
                         }`}
                       >
@@ -262,7 +262,7 @@ export default function Flashcards() {
                 <button
                   onClick={gerarFlashcards}
                   disabled={loading || !podeGerar}
-                  className="w-full bg-brand hover:bg-brand-hover disabled:opacity-40 disabled:cursor-not-allowed text-white font-medium py-3 rounded-xl transition-colors"
+                  className="w-full bg-brand hover:bg-brand-hover disabled:opacity-40 disabled:cursor-not-allowed text-white font-medium py-3 rounded-full transition-colors"
                 >
                   {loading ? 'Gerando flashcards...' : 'Gerar flashcards com IA'}
                 </button>
@@ -270,7 +270,7 @@ export default function Flashcards() {
                 {flashcards.length > 0 && (
                   <button
                     onClick={() => { setModoEstudo(true); setIndiceAtual(0); setVirado(false) }}
-                    className="w-full border border-border hover:border-brand text-text-muted hover:text-text py-3 rounded-xl text-sm font-medium transition-colors"
+                    className="w-full border border-border hover:border-brand text-text-muted hover:text-text py-3 rounded-full text-sm font-medium transition-colors"
                   >
                     Continuar estudando os {flashcards.length} flashcards
                   </button>

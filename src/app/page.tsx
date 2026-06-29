@@ -34,7 +34,7 @@ export default function Home() {
               {mounted && theme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}
             </button>
             <Link href="/login" className="text-text-muted hover:text-text text-sm transition-colors">Entrar</Link>
-            <Link href="/login" className="bg-brand hover:bg-brand-hover text-white text-sm font-medium px-5 py-2.5 rounded-xl transition-colors">
+            <Link href="/login" className="bg-brand hover:bg-brand-hover text-white text-sm font-medium px-5 py-2.5 rounded-full transition-colors">
               Começar grátis
             </Link>
           </div>
@@ -79,7 +79,7 @@ export default function Home() {
             </p>
 
             <div className="flex items-center gap-4 flex-wrap mb-6">
-              <Link href="/login" className="inline-flex items-center gap-2 bg-brand hover:bg-brand-hover text-white font-semibold px-7 py-3.5 rounded-2xl transition-all text-sm hover:gap-3">
+              <Link href="/login" className="inline-flex items-center gap-2 bg-brand hover:bg-brand-hover text-white font-semibold px-7 py-3.5 rounded-full transition-all text-sm hover:gap-3">
                 Criar conta grátis <ArrowRight size={14} />
               </Link>
               <a href="#como-funciona" className="text-text-muted hover:text-text text-sm flex items-center gap-1.5 transition-colors">
@@ -283,7 +283,7 @@ export default function Home() {
               <p className="text-text-muted text-lg max-w-lg mx-auto mb-12">
                 Junte-se a milhares de estudantes que já estão usando o TeraEdu para estudar com inteligência.
               </p>
-              <Link href="/login" className="inline-flex items-center gap-2 bg-brand hover:bg-brand-hover text-white font-semibold px-10 py-4 rounded-2xl transition-all text-base hover:gap-3">
+              <Link href="/login" className="inline-flex items-center gap-2 bg-brand hover:bg-brand-hover text-white font-semibold px-10 py-4 rounded-full transition-all text-base hover:gap-3">
                 Criar conta grátis agora <ArrowRight size={16} />
               </Link>
               <div className="flex items-center justify-center gap-6 mt-8 text-text-faint text-xs flex-wrap">
