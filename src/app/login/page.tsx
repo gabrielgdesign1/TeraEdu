@@ -53,7 +53,7 @@ export default function Login() {
 
       <div className="w-full max-w-md">
         <div className="flex items-center justify-center gap-2 mb-10">
-          <Image src="/TeraEdu-logo-blue.png" alt="TeraEdu" width={32} height={32} />
+          <Image src="/TeraEdu-logo-orange.png" alt="TeraEdu" width={32} height={32} />
           <span className="text-text font-semibold text-2xl">TeraEdu</span>
         </div>
 

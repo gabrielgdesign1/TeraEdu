@@ -18,7 +18,7 @@ export default function Home() {
       <nav className="fixed top-0 left-0 right-0 z-50 bg-bg/70 backdrop-blur-xl border-b border-border">
         <div className="max-w-7xl mx-auto px-6 lg:px-10 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <Image src="/TeraEdu-logo-blue.png" alt="TeraEdu" width={26} height={26} />
+            <Image src="/TeraEdu-logo-orange.png" alt="TeraEdu" width={26} height={26} />
             <span className="font-semibold tracking-tight">TeraEdu</span>
           </div>
           <div className="hidden md:flex items-center gap-10">
@@ -300,7 +300,7 @@ export default function Home() {
       <footer className="py-10 px-6 lg:px-10 border-t border-border">
         <div className="max-w-7xl mx-auto flex items-center justify-between flex-wrap gap-4">
           <div className="flex items-center gap-2.5">
-            <Image src="/TeraEdu-logo-blue.png" alt="TeraEdu" width={22} height={22} />
+            <Image src="/TeraEdu-logo-orange.png" alt="TeraEdu" width={22} height={22} />
             <span className="font-semibold tracking-tight">TeraEdu</span>
           </div>
           <p className="text-text-faint text-xs">© 2025 TeraEdu · Todos os direitos reservados</p>

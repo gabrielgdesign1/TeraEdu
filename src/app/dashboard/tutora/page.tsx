@@ -107,7 +107,7 @@ export default function IATutora() {
       {/* ── Sidebar ── */}
       <aside className="w-64 bg-bg border-r border-border/60 flex flex-col fixed h-full">
         <div className="flex items-center gap-2.5 px-6 py-6">
-          <Image src="/TeraEdu-logo-blue.png" alt="TeraEdu" width={26} height={26} />
+          <Image src="/TeraEdu-logo-orange.png" alt="TeraEdu" width={26} height={26} />
           <span className="text-text font-bold tracking-tight">TeraEdu</span>
         </div>
 

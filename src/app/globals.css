@@ -28,9 +28,9 @@
   --text: #0f1117;
   --text-muted: #6b7280;
   --text-faint: #9ca3af;
-  --brand: #2563eb;
-  --brand-hover: #1d4ed8;
-  --brand-soft: #eff6ff;
+  --brand: #f97316;
+  --brand-hover: #ea580c;
+  --brand-soft: #fff7ed;
 }
 
 /* Modo escuro */
@@ -43,9 +43,9 @@
   --text: #ffffff;
   --text-muted: #8b8fa8;
   --text-faint: #4a4d5e;
-  --brand: #2563eb;
-  --brand-hover: #1d4ed8;
-  --brand-soft: rgba(37, 99, 235, 0.1);
+  --brand: #f97316;
+  --brand-hover: #ea580c;
+  --brand-soft: rgba(249, 115, 22, 0.12);
 }
 
 html {

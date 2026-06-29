@@ -22,7 +22,7 @@ export default function Dashboard() {
       {/* ── Sidebar ── */}
       <aside className="w-64 bg-bg border-r border-border/60 flex flex-col fixed h-full">
         <div className="flex items-center gap-2.5 px-6 py-6">
-          <Image src="/TeraEdu-logo-blue.png" alt="TeraEdu" width={26} height={26} />
+          <Image src="/TeraEdu-logo-orange.png" alt="TeraEdu" width={26} height={26} />
           <span className="text-text font-bold tracking-tight">TeraEdu</span>
         </div>
 
@@ -124,7 +124,7 @@ export default function Dashboard() {
               </div>
               <div className="grid grid-cols-2 gap-2">
                 {[
-                  { nome: "Matemática", cor: "#2563eb", progresso: 68 },
+                  { nome: "Matemática", cor: "#f97316", progresso: 68 },
                   { nome: "Português",  cor: "#7c3aed", progresso: 45 },
                   { nome: "Física",     cor: "#0891b2", progresso: 32 },
                   { nome: "Química",    cor: "#059669", progresso: 55 },
