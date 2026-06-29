@@ -8,7 +8,7 @@ import {
   LayoutDashboard, FileQuestion, Layers, FileText, MessageCircle,
   BarChart3, Calendar, Sun, Moon, Settings, Sparkles, BookOpen,
   ChevronRight, ChevronDown, CheckCircle2, XCircle, RotateCcw,
-  Trophy, Target, GraduationCap
+  Trophy, Target, GraduationCap, Timer
 } from 'lucide-react'
 import { useNome } from '@/hooks/useNome'
 
@@ -429,10 +429,24 @@ function SessaoQuestoes({
   const [revelada,    setRevelada   ] = useState(false)
   const [respostas,   setRespostas  ] = useState<Record<number, string>>({})
   const [finalizado,  setFinalizado ] = useState(false)
+  const [tempoAtual,  setTempoAtual ] = useState(0)
+  const [tempos,      setTempos     ] = useState<number[]>([])
 
   const questao   = questoes[atual]
   const acertos   = Object.entries(respostas).filter(([i, r]) => r === questoes[Number(i)].resposta).length
   const progresso = (atual / quantidade) * 100
+
+  // Cronômetro: reinicia a cada questão, para quando revelada
+  useEffect(() => { setTempoAtual(0) }, [atual])
+  useEffect(() => {
+    if (revelada) return
+    const id = setInterval(() => setTempoAtual(t => t + 1), 1000)
+    return () => clearInterval(id)
+  }, [atual, revelada])
+
+  function fmt(s: number) {
+    return `${Math.floor(s / 60).toString().padStart(2, '0')}:${(s % 60).toString().padStart(2, '0')}`
+  }
 
   function responder(letra: string) {
     if (revelada) return
@@ -441,6 +455,7 @@ function SessaoQuestoes({
 
   function confirmar() {
     if (!selecionada) return
+    setTempos(prev => [...prev, tempoAtual])
     setRespostas(prev => ({ ...prev, [atual]: selecionada }))
     setRevelada(true)
   }
@@ -458,11 +473,14 @@ function SessaoQuestoes({
   function reiniciar() {
     setAtual(0); setSelecionada(null); setRevelada(false)
     setRespostas({}); setFinalizado(false)
+    setTempos([]); setTempoAtual(0)
   }
 
   // Tela de resultado final
   if (finalizado) {
     const pct = Math.round((acertos / quantidade) * 100)
+    const tempoTotal = tempos.reduce((a, b) => a + b, 0)
+    const tempoMedio = tempos.length ? Math.round(tempoTotal / tempos.length) : 0
     return (
       <div className="max-w-lg mx-auto text-center py-8">
         <div className="w-20 h-20 bg-brand-soft rounded-3xl flex items-center justify-center mx-auto mb-6">
@@ -471,9 +489,26 @@ function SessaoQuestoes({
         <h2 className="text-text text-2xl font-bold mb-2">Sessão concluída!</h2>
         <p className="text-text-muted text-sm mb-8">{vestibular} · {materia} · {conteudo}</p>
 
-        <div className="bg-bg-card border border-border rounded-2xl p-6 mb-6">
+        <div className="bg-bg-card border border-border rounded-2xl p-6 mb-4">
           <p className="text-[4rem] font-black text-brand leading-none">{pct}%</p>
           <p className="text-text-muted text-sm mt-2">{acertos} de {quantidade} questões certas</p>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3 mb-8">
+          <div className="bg-bg-card border border-border rounded-2xl p-4">
+            <div className="flex items-center justify-center gap-1.5 text-text-faint mb-1">
+              <Timer size={13} />
+              <span className="text-xs uppercase tracking-wider">Tempo total</span>
+            </div>
+            <p className="text-text text-2xl font-bold tabular-nums">{fmt(tempoTotal)}</p>
+          </div>
+          <div className="bg-bg-card border border-border rounded-2xl p-4">
+            <div className="flex items-center justify-center gap-1.5 text-text-faint mb-1">
+              <Timer size={13} />
+              <span className="text-xs uppercase tracking-wider">Média/questão</span>
+            </div>
+            <p className="text-text text-2xl font-bold tabular-nums">{fmt(tempoMedio)}</p>
+          </div>
         </div>
 
         <div className="flex gap-3 justify-center">
@@ -495,9 +530,22 @@ function SessaoQuestoes({
         <button onClick={onVoltar} className="text-text-muted hover:text-text text-sm flex items-center gap-1.5 transition-colors">
           ← Voltar
         </button>
-        <div className="text-right">
-          <p className="text-text text-sm font-medium">{vestibular} · {conteudo}</p>
-          <p className="text-text-faint text-xs mt-0.5">Questão {atual + 1} de {quantidade}</p>
+        <div className="flex items-center gap-3">
+          {/* Cronômetro */}
+          <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-sm tabular-nums font-medium transition-colors ${
+            revelada
+              ? 'border-border text-text-faint bg-bg-card'
+              : tempoAtual >= 60
+              ? 'border-brand/40 text-brand bg-brand-soft'
+              : 'border-border text-text-muted bg-bg-card'
+          }`}>
+            <Timer size={13} />
+            {fmt(tempoAtual)}
+          </div>
+          <div className="text-right">
+            <p className="text-text text-sm font-medium">{vestibular} · {conteudo}</p>
+            <p className="text-text-faint text-xs mt-0.5">Questão {atual + 1} de {quantidade}</p>
+          </div>
         </div>
       </div>
 
