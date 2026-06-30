@@ -8,7 +8,7 @@ import {
   LayoutDashboard, FileQuestion, Layers, FileText, MessageCircle,
   BarChart3, Calendar, Sun, Moon, Settings, Sparkles, BookOpen,
   ChevronRight, ChevronDown, CheckCircle2, XCircle, RotateCcw,
-  Trophy, Target, GraduationCap, Timer
+  Trophy, Target, GraduationCap, Timer, Pencil, AlertCircle
 } from 'lucide-react'
 import { useNome } from '@/hooks/useNome'
 
@@ -25,6 +25,27 @@ type Questao = {
 }
 
 type EstadoQuestao = 'pendente' | 'respondida' | 'revisada'
+
+type QuestaoDiscursiva = {
+  id: number
+  question_id: string
+  exam: string
+  year: number | null
+  subject: string | null
+  question: string
+  supporting_texts: string | null
+  image_descriptions: string[]
+  has_images: boolean
+  difficulty: number | null
+}
+
+type ResultadoCorrecao = {
+  nota: number
+  acertos: string[]
+  faltas: string[]
+  explicacao: string
+  resposta_oficial: string
+}
 
 // ─── Dados reais dos vestibulares ────────────────────────────────────────────
 
@@ -277,16 +298,27 @@ type ApiQuestao = {
 }
 
 const VESTIBULARES_BANCO = [
-  { id: 'ENEM',    disponivel: true  },
-  { id: 'FUVEST',  disponivel: true  },
-  { id: 'UNICAMP', disponivel: true  },
-  { id: 'UNESP',   disponivel: false },
-  { id: 'UERJ',    disponivel: false },
-  { id: 'UnB',     disponivel: false },
-  { id: 'UFG',     disponivel: false },
-  { id: 'UFPR',    disponivel: false },
-  { id: 'ITA',     disponivel: true  },
-  { id: 'IME',     disponivel: true  },
+  { id: 'ENEM',    disponivel: true,  tipo: 'objetiva'   },
+  { id: 'FUVEST',  disponivel: true,  tipo: 'objetiva'   },
+  { id: 'UNICAMP', disponivel: true,  tipo: 'objetiva'   },
+  { id: 'UNESP',   disponivel: true,  tipo: 'discursiva' },
+  { id: 'UERJ',    disponivel: false, tipo: 'objetiva'   },
+  { id: 'UnB',     disponivel: false, tipo: 'objetiva'   },
+  { id: 'UFG',     disponivel: false, tipo: 'objetiva'   },
+  { id: 'UFPR',    disponivel: false, tipo: 'objetiva'   },
+  { id: 'ITA',     disponivel: true,  tipo: 'objetiva'   },
+  { id: 'IME',     disponivel: true,  tipo: 'objetiva'   },
+]
+
+// Matérias da UNESP discursiva (importadas do EduBench)
+const MATERIAS_UNESP = [
+  'Ciências Humanas',
+  'Biologia',
+  'Química',
+  'Física',
+  'Ciências Exatas',
+  'Língua Portuguesa e Literatura',
+  'Língua Inglesa',
 ]
 
 // Matérias reais encontradas no dataset por vestibular
@@ -314,17 +346,24 @@ type DbQuestao = {
 }
 
 function BancoQuestoes() {
-  const [vestibular, setVestibular] = useState('')
-  const [materia,    setMateria   ] = useState('')   // ENEM: valor da DISCIPLINAS_ENEM; outros: 'Matemática' etc.
-  const [quantidade, setQuantidade] = useState(10)
-  const [loading,    setLoading   ] = useState(false)
-  const [erro,       setErro      ] = useState('')
-  const [aviso,      setAviso     ] = useState('')
-  const [questoes,   setQuestoes  ] = useState<Questao[]>([])
-  const [iniciado,   setIniciado  ] = useState(false)
+  const [vestibular,    setVestibular   ] = useState('')
+  const [materia,       setMateria      ] = useState('')
+  const [quantidade,    setQuantidade   ] = useState(10)
+  const [loading,       setLoading      ] = useState(false)
+  const [erro,          setErro         ] = useState('')
+  const [aviso,         setAviso        ] = useState('')
+  // objetivas
+  const [questoes,      setQuestoes     ] = useState<Questao[]>([])
+  const [iniciado,      setIniciado     ] = useState(false)
+  // discursivas (UNESP)
+  const [questoesDisc,  setQuestoesDisc ] = useState<QuestaoDiscursiva[]>([])
+  const [iniciadoDisc,  setIniciadoDisc ] = useState(false)
+
+  const tipoVestibular = VESTIBULARES_BANCO.find(v => v.id === vestibular)?.tipo ?? 'objetiva'
 
   function escolherVestibular(v: string) {
     setVestibular(v); setMateria(''); setErro(''); setAviso('')
+    setIniciado(false); setIniciadoDisc(false)
   }
 
   // ── ENEM: busca pela api.enem.dev ──────────────────────────────────────────
@@ -399,13 +438,46 @@ function BancoQuestoes() {
     setLoading(false)
   }
 
+  // ── UNESP discursiva: busca no banco interno ──────────────────────────────
+  async function buscarDiscursiva() {
+    setLoading(true); setErro(''); setAviso('')
+    try {
+      const params = new URLSearchParams({ exam: 'UNESP', subject: materia, quantidade: String(quantidade) })
+      const res  = await fetch(`/api/questoes/discursiva?${params}`)
+      const data = await res.json()
+      if (!res.ok || !data.questoes?.length) {
+        setErro('Não foi possível carregar as questões. Tente outra matéria.')
+        setLoading(false); return
+      }
+      if (data.total < quantidade) {
+        setAviso(`Encontradas ${data.total} questões disponíveis para essa matéria.`)
+      }
+      setQuestoesDisc(data.questoes as QuestaoDiscursiva[])
+      setIniciadoDisc(true)
+    } catch { setErro('Erro de conexão. Verifique sua internet e tente novamente.') }
+    setLoading(false)
+  }
+
   function buscar() {
     if (!materia || loading) return
     if (vestibular === 'ENEM') buscarEnem()
+    else if (tipoVestibular === 'discursiva') buscarDiscursiva()
     else buscarVestibular()
   }
 
-  // ── Sessão ativa ──────────────────────────────────────────────────────────
+  // ── Sessão discursiva ativa (UNESP) ───────────────────────────────────────
+  if (iniciadoDisc && questoesDisc.length > 0) {
+    return (
+      <SessaoDiscursiva
+        vestibular={vestibular}
+        materia={materia}
+        questoes={questoesDisc}
+        onVoltar={() => { setIniciadoDisc(false); setQuestoesDisc([]) }}
+      />
+    )
+  }
+
+  // ── Sessão objetiva ativa ─────────────────────────────────────────────────
   if (iniciado && questoes.length > 0) {
     const materiaLabel = vestibular === 'ENEM'
       ? (DISCIPLINAS_ENEM.find(d => d.value === materia)?.label ?? materia)
@@ -422,8 +494,12 @@ function BancoQuestoes() {
   }
 
   // ── Seletores ──────────────────────────────────────────────────────────────
-  const materiasDisponiveis = vestibular === 'ENEM' ? null : (MATERIAS_VESTIBULAR[vestibular] ?? [])
-  const prontoParaBuscar   = !!materia
+  const materiasDisponiveis = vestibular === 'ENEM'
+    ? null
+    : tipoVestibular === 'discursiva'
+    ? MATERIAS_UNESP
+    : (MATERIAS_VESTIBULAR[vestibular] ?? [])
+  const prontoParaBuscar = !!materia
 
   return (
     <div className="max-w-lg">
@@ -438,7 +514,7 @@ function BancoQuestoes() {
             <button
               key={v.id}
               onClick={() => v.disponivel && escolherVestibular(v.id)}
-              className={`px-4 py-2 rounded-full text-sm font-medium border transition-all ${
+              className={`px-4 py-2 rounded-full text-sm font-medium border transition-all flex items-center gap-1.5 ${
                 vestibular === v.id
                   ? 'bg-brand text-white border-brand'
                   : v.disponivel
@@ -447,7 +523,14 @@ function BancoQuestoes() {
               }`}
             >
               {v.id}
-              {!v.disponivel && <span className="ml-1.5 text-[10px] opacity-70">em breve</span>}
+              {!v.disponivel && <span className="text-[10px] opacity-70">em breve</span>}
+              {v.disponivel && v.tipo === 'discursiva' && (
+                <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
+                  vestibular === v.id ? 'bg-white/20 text-white' : 'bg-brand-soft text-brand'
+                }`}>
+                  discursiva
+                </span>
+              )}
             </button>
           ))}
         </div>
@@ -948,6 +1031,270 @@ function GerarComIA() {
           </div>
         )}
       </div>
+    </div>
+  )
+}
+
+// ─── Sessão discursiva (UNESP) ────────────────────────────────────────────────
+
+function SessaoDiscursiva({
+  vestibular, materia, questoes, onVoltar
+}: {
+  vestibular: string; materia: string; questoes: QuestaoDiscursiva[]; onVoltar: () => void
+}) {
+  const total = questoes.length
+
+  const [atual,      setAtual     ] = useState(0)
+  const [resposta,   setResposta  ] = useState('')
+  const [corrigindo, setCorrigindo] = useState(false)
+  const [resultado,  setResultado ] = useState<ResultadoCorrecao | null>(null)
+  const [notas,      setNotas     ] = useState<number[]>([])
+  const [finalizado, setFinalizado] = useState(false)
+  const [tempoAtual, setTempoAtual] = useState(0)
+  const [tempos,     setTempos    ] = useState<number[]>([])
+
+  useEffect(() => { setTempoAtual(0) }, [atual])
+  useEffect(() => {
+    if (resultado || finalizado) return
+    const id = setInterval(() => setTempoAtual(t => t + 1), 1000)
+    return () => clearInterval(id)
+  }, [atual, resultado, finalizado])
+
+  function fmt(s: number) {
+    return `${Math.floor(s / 60).toString().padStart(2, '0')}:${(s % 60).toString().padStart(2, '0')}`
+  }
+
+  const questao = questoes[atual]
+
+  async function confirmar() {
+    setCorrigindo(true)
+    setTempos(prev => [...prev, tempoAtual])
+    try {
+      const res = await fetch('/api/questoes/corrigir', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question_id: questao.question_id, resposta_usuario: resposta }),
+      })
+      const data = await res.json()
+      setResultado(data)
+      setNotas(prev => [...prev, data.nota ?? 0])
+    } catch {
+      setResultado({ nota: 0, acertos: [], faltas: ['Erro ao conectar com a correção.'], explicacao: '', resposta_oficial: '' })
+    }
+    setCorrigindo(false)
+  }
+
+  function proxima() {
+    if (atual + 1 >= total) { setFinalizado(true); return }
+    setAtual(atual + 1)
+    setResposta('')
+    setResultado(null)
+  }
+
+  function reiniciar() {
+    setAtual(0); setResposta(''); setResultado(null)
+    setNotas([]); setTempos([]); setFinalizado(false)
+  }
+
+  // ── Tela final ──────────────────────────────────────────────────────────────
+  if (finalizado) {
+    const mediaNotas  = notas.length ? Math.round(notas.reduce((a, b) => a + b, 0) / notas.length) : 0
+    const tempoTotal  = tempos.reduce((a, b) => a + b, 0)
+    const notaColor   = mediaNotas >= 70 ? 'text-green-500' : mediaNotas >= 40 ? 'text-amber-500' : 'text-red-500'
+    return (
+      <div className="max-w-2xl">
+        <div className="text-center py-8 mb-8">
+          <div className={`text-6xl font-bold tabular-nums mb-1 ${notaColor}`}>{mediaNotas}%</div>
+          <p className="text-text-muted text-sm">Nota média na sessão</p>
+        </div>
+        <div className="grid grid-cols-2 gap-3 mb-8">
+          <div className="bg-bg-card border border-border rounded-2xl p-4 text-center">
+            <p className="text-text-faint text-xs uppercase tracking-wider mb-1">Questões</p>
+            <p className="text-text font-bold text-2xl">{total}</p>
+          </div>
+          <div className="bg-bg-card border border-border rounded-2xl p-4 text-center">
+            <p className="text-text-faint text-xs uppercase tracking-wider mb-1">Tempo total</p>
+            <p className="text-text font-bold text-2xl tabular-nums">{fmt(tempoTotal)}</p>
+          </div>
+        </div>
+        <div className="bg-bg-card border border-border rounded-2xl p-4 mb-8 flex flex-col gap-2">
+          {notas.map((n, i) => (
+            <div key={i} className="flex items-center gap-3">
+              <span className="text-text-faint text-xs w-16">Questão {i + 1}</span>
+              <div className="flex-1 h-2 bg-bg rounded-full overflow-hidden">
+                <div
+                  className={`h-full rounded-full transition-all ${n >= 70 ? 'bg-green-500' : n >= 40 ? 'bg-amber-500' : 'bg-red-500'}`}
+                  style={{ width: `${n}%` }}
+                />
+              </div>
+              <span className={`text-xs font-semibold tabular-nums w-10 text-right ${n >= 70 ? 'text-green-500' : n >= 40 ? 'text-amber-500' : 'text-red-500'}`}>
+                {n}%
+              </span>
+            </div>
+          ))}
+        </div>
+        <div className="flex gap-3">
+          <button onClick={onVoltar} className="flex-1 border border-border hover:border-brand text-text-muted hover:text-text py-3 rounded-full text-sm font-medium transition-all">
+            ← Voltar
+          </button>
+          <button onClick={reiniciar} className="flex-1 bg-brand hover:bg-brand-hover text-white py-3 rounded-full text-sm font-semibold transition-colors flex items-center justify-center gap-2">
+            <RotateCcw size={14} /> Praticar novamente
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  // ── Questão ativa ────────────────────────────────────────────────────────────
+  const notaColor = resultado
+    ? resultado.nota >= 70 ? 'text-green-500' : resultado.nota >= 40 ? 'text-amber-500' : 'text-red-500'
+    : ''
+
+  return (
+    <div className="max-w-2xl">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
+        <button onClick={onVoltar} className="flex items-center gap-1.5 text-text-muted hover:text-text text-sm transition-colors">
+          <ChevronRight size={14} className="rotate-180" /> Voltar
+        </button>
+        <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-sm tabular-nums font-medium transition-colors ${
+          resultado ? 'border-border text-text-faint bg-bg-card' : 'border-brand/40 text-brand bg-brand-soft'
+        }`}>
+          <Timer size={13} />
+          {fmt(tempoAtual)}
+        </div>
+        <div className="text-right">
+          <p className="text-text text-sm font-semibold">{vestibular} · {materia}</p>
+          <p className="text-text-muted text-xs">Questão {atual + 1} de {total}</p>
+        </div>
+      </div>
+
+      {/* Barra de progresso */}
+      <div className="h-1 bg-bg-card rounded-full overflow-hidden mb-6">
+        <div className="h-full bg-brand rounded-full transition-all" style={{ width: `${((atual) / total) * 100}%` }} />
+      </div>
+
+      {/* Enunciado */}
+      <div className="bg-bg-card border border-border rounded-2xl p-6 mb-4">
+        {questao.year && (
+          <span className="text-brand text-xs font-semibold uppercase tracking-wider mb-3 block">
+            UNESP {questao.year}
+          </span>
+        )}
+        <p className="text-text text-sm leading-relaxed whitespace-pre-wrap">{questao.question}</p>
+
+        {(() => {
+          const txt = questao.supporting_texts?.replace(/<image[^>]*>/gi, '').trim()
+          return txt ? (
+            <div className="mt-4 pt-4 border-t border-border">
+              <p className="text-text-faint text-xs uppercase tracking-wider mb-2">Texto de apoio</p>
+              <p className="text-text-muted text-sm leading-relaxed whitespace-pre-wrap">{txt}</p>
+            </div>
+          ) : null
+        })()}
+
+        {questao.image_descriptions?.length > 0 && (
+          <div className="mt-4 pt-4 border-t border-border">
+            <p className="text-text-faint text-xs uppercase tracking-wider mb-2 flex items-center gap-1">
+              <AlertCircle size={11} /> Descrição de imagem
+            </p>
+            {questao.image_descriptions.map((desc, i) => (
+              <p key={i} className="text-text-muted text-sm italic leading-relaxed mb-1">[{desc}]</p>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Campo de resposta (oculto após correção) */}
+      {!resultado && (
+        <div className="mb-4">
+          <label className="text-text-muted text-xs font-medium uppercase tracking-wider mb-2 block flex items-center gap-1.5">
+            <Pencil size={11} /> Sua resposta
+          </label>
+          <textarea
+            value={resposta}
+            onChange={e => setResposta(e.target.value)}
+            rows={6}
+            placeholder="Escreva sua resposta aqui..."
+            className="w-full bg-bg border border-border rounded-2xl px-4 py-3 text-text text-sm placeholder:text-text-faint focus:outline-none focus:border-brand transition-colors resize-none"
+          />
+        </div>
+      )}
+
+      {/* Botão confirmar */}
+      {!resultado && (
+        <button
+          onClick={confirmar}
+          disabled={corrigindo}
+          className="w-full flex items-center justify-center gap-2 bg-brand hover:bg-brand-hover disabled:opacity-60 text-white font-semibold py-3.5 rounded-full transition-colors text-sm mb-6"
+        >
+          {corrigindo
+            ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Corrigindo com IA...</>
+            : 'Confirmar resposta'
+          }
+        </button>
+      )}
+
+      {/* Resultado da correção */}
+      {resultado && (
+        <div className="flex flex-col gap-4 mb-6">
+
+          {/* Nota */}
+          <div className="bg-bg-card border border-border rounded-2xl p-5 flex items-center gap-5">
+            <div className={`text-4xl font-bold tabular-nums ${notaColor}`}>{resultado.nota}%</div>
+            <div className="flex-1">
+              <p className="text-text text-sm font-medium">
+                {resultado.nota >= 70 ? 'Boa resposta!' : resultado.nota >= 40 ? 'Resposta parcial' : 'Resposta incompleta'}
+              </p>
+              {resultado.explicacao && (
+                <p className="text-text-muted text-xs mt-0.5 leading-relaxed">{resultado.explicacao}</p>
+              )}
+            </div>
+          </div>
+
+          {/* Acertos */}
+          {resultado.acertos.length > 0 && (
+            <div className="bg-green-500/8 border border-green-500/20 rounded-2xl p-4">
+              <p className="text-green-600 dark:text-green-400 text-xs font-semibold uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                <CheckCircle2 size={12} /> O que você acertou
+              </p>
+              <ul className="flex flex-col gap-1">
+                {resultado.acertos.map((a, i) => (
+                  <li key={i} className="text-text text-sm flex gap-2"><span className="text-green-500 mt-0.5">✓</span>{a}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Faltas */}
+          {resultado.faltas.length > 0 && (
+            <div className="bg-amber-500/8 border border-amber-500/20 rounded-2xl p-4">
+              <p className="text-amber-600 dark:text-amber-400 text-xs font-semibold uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                <XCircle size={12} /> O que faltou
+              </p>
+              <ul className="flex flex-col gap-1">
+                {resultado.faltas.map((f, i) => (
+                  <li key={i} className="text-text text-sm flex gap-2"><span className="text-amber-500 mt-0.5">·</span>{f}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Resposta oficial */}
+          <div className="bg-bg-card border border-border rounded-2xl p-5">
+            <p className="text-text-faint text-xs font-semibold uppercase tracking-wider mb-2">Resposta oficial da banca</p>
+            <p className="text-text text-sm leading-relaxed whitespace-pre-wrap">{resultado.resposta_oficial}</p>
+          </div>
+
+          {/* Botão próxima */}
+          <button
+            onClick={proxima}
+            className="w-full flex items-center justify-center gap-2 bg-brand hover:bg-brand-hover text-white font-semibold py-3.5 rounded-full transition-colors text-sm"
+          >
+            {atual + 1 >= total ? <><Trophy size={15} /> Ver resultado final</> : <>Próxima questão <ChevronRight size={15} /></>}
+          </button>
+        </div>
+      )}
     </div>
   )
 }
