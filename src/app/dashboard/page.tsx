@@ -11,6 +11,7 @@ import {
 import { useProfile } from "@/hooks/useProfile"
 import { useStats, useActivities } from "@/hooks/useStats"
 import { Onboarding } from "@/components/Onboarding"
+import { createClient } from "@/lib/supabase"
 
 const MATERIAS_CORES: Record<string, string> = {
   'Matemática':  '#f97316',
@@ -44,6 +45,76 @@ const TIPO_ICON: Record<string, React.ElementType> = {
   tutora:    MessageCircle,
   simulado:  BarChart3,
 }
+
+// ─── Card do plano no dashboard ───────────────────────────────────────────────
+
+function PlanoCardDashboard() {
+  const [plano, setPlano] = useState<{
+    vestibular: string
+    data_prova: string
+    cronograma: { semanas: { numero: number; fase: string; dias: { data: string; materia: string; topico: string; horas: number; questoes: number; concluido: boolean }[] }[] }
+  } | null | undefined>(undefined) // undefined = ainda carregando
+
+  useEffect(() => {
+    const supabase = createClient()
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
+      if (!user) { setPlano(null); return }
+      const { data } = await supabase
+        .from('planos_estudo')
+        .select('vestibular, data_prova, cronograma')
+        .eq('user_id', user.id)
+        .single()
+      setPlano(data ?? null)
+    })
+  }, [])
+
+  if (plano === undefined) return null
+
+  if (!plano) {
+    return (
+      <div className="bg-bg-card rounded-2xl p-5 border border-dashed border-border flex items-center justify-between">
+        <div>
+          <p className="text-text font-semibold text-sm mb-1">📅 Plano de estudos personalizado</p>
+          <p className="text-text-muted text-xs">Não sabe por onde começar? A IA organiza tudo para você.</p>
+        </div>
+        <Link href="/dashboard/plano"
+          className="flex-shrink-0 ml-4 bg-brand hover:bg-brand-hover text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors whitespace-nowrap">
+          Criar meu plano →
+        </Link>
+      </div>
+    )
+  }
+
+  const hj = new Date().toISOString().slice(0, 10)
+  const tarefaHoje = plano.cronograma.semanas.flatMap(s => s.dias).find(d => d.data === hj)
+  const diasParaProva = Math.round((new Date(plano.data_prova + 'T12:00:00').getTime() - Date.now()) / 86400000)
+
+  return (
+    <div className="bg-brand-soft border border-brand/20 rounded-2xl p-5 flex items-center justify-between">
+      <div className="flex items-start gap-3">
+        <div className="w-9 h-9 bg-brand/15 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5">
+          <Calendar size={16} className="text-brand" />
+        </div>
+        <div>
+          <p className="text-text font-semibold text-sm mb-0.5">
+            {tarefaHoje
+              ? `📅 Hoje: ${tarefaHoje.materia} — ${tarefaHoje.topico}`
+              : `📅 Plano ${plano.vestibular} — ${diasParaProva > 0 ? `${diasParaProva} dias para a prova` : 'Prova chegou!'}`}
+          </p>
+          {tarefaHoje && (
+            <p className="text-text-muted text-xs">{tarefaHoje.horas}h · {tarefaHoje.questoes} questões</p>
+          )}
+        </div>
+      </div>
+      <Link href="/dashboard/plano"
+        className="flex-shrink-0 ml-4 border border-brand/30 text-brand hover:bg-brand hover:text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors whitespace-nowrap">
+        Ver plano →
+      </Link>
+    </div>
+  )
+}
+
+// ─── Dashboard ────────────────────────────────────────────────────────────────
 
 export default function Dashboard() {
   const { theme, setTheme } = useTheme()
@@ -187,6 +258,11 @@ export default function Dashboard() {
         </div>
 
         <div className="px-10 py-8">
+
+          {/* Card do plano */}
+          <div className="mb-7">
+            <PlanoCardDashboard />
+          </div>
 
           {/* Stats */}
           <div className="grid grid-cols-4 gap-4 mb-8">
