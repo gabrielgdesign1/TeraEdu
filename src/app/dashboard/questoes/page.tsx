@@ -278,36 +278,58 @@ type ApiQuestao = {
 
 const VESTIBULARES_BANCO = [
   { id: 'ENEM',    disponivel: true  },
-  { id: 'FUVEST',  disponivel: false },
-  { id: 'UNICAMP', disponivel: false },
+  { id: 'FUVEST',  disponivel: true  },
+  { id: 'UNICAMP', disponivel: true  },
   { id: 'UNESP',   disponivel: false },
   { id: 'UERJ',    disponivel: false },
   { id: 'UnB',     disponivel: false },
   { id: 'UFG',     disponivel: false },
   { id: 'UFPR',    disponivel: false },
-  { id: 'ITA',     disponivel: false },
-  { id: 'IME',     disponivel: false },
+  { id: 'ITA',     disponivel: true  },
+  { id: 'IME',     disponivel: true  },
 ]
+
+// Matérias reais encontradas no dataset por vestibular
+const MATERIAS_VESTIBULAR: Record<string, string[]> = {
+  FUVEST:  ['Biologia','Filosofia','Física','Geografia','História','Matemática','Português','Química','Sociologia'],
+  UNICAMP: ['Biologia','Filosofia','Física','Geografia','História','Matemática','Português','Química','Sociologia'],
+  ITA:     ['Física','Matemática','Português','Química'],
+  IME:     ['Física','Matemática','Química'],
+}
+
+type DbQuestao = {
+  id: number
+  question_id: string
+  exam_type: string
+  exam_name: string
+  exam_year: number | null
+  subject: string | null
+  question_statement: string
+  correct_answer: string
+  alternative_a: string | null
+  alternative_b: string | null
+  alternative_c: string | null
+  alternative_d: string | null
+  alternative_e: string | null
+}
 
 function BancoQuestoes() {
   const [vestibular, setVestibular] = useState('')
-  const [disciplina, setDisciplina] = useState('')
+  const [materia,    setMateria   ] = useState('')   // ENEM: valor da DISCIPLINAS_ENEM; outros: 'Matemática' etc.
   const [quantidade, setQuantidade] = useState(10)
   const [loading,    setLoading   ] = useState(false)
   const [erro,       setErro      ] = useState('')
+  const [aviso,      setAviso     ] = useState('')
   const [questoes,   setQuestoes  ] = useState<Questao[]>([])
   const [iniciado,   setIniciado  ] = useState(false)
 
   function escolherVestibular(v: string) {
-    setVestibular(v)
-    setDisciplina('')
-    setErro('')
+    setVestibular(v); setMateria(''); setErro(''); setAviso('')
   }
 
-  async function buscar() {
-    if (!disciplina || loading) return
-    setLoading(true)
-    setErro('')
+  // ── ENEM: busca pela api.enem.dev ──────────────────────────────────────────
+  async function buscarEnem() {
+    setLoading(true); setErro(''); setAviso('')
     try {
       const numAnos = quantidade <= 10 ? 1 : quantidade <= 25 ? 2 : 3
       const anosEmbaralhados = [...ANOS_ENEM].sort(() => Math.random() - 0.5).slice(0, numAnos)
@@ -316,25 +338,15 @@ function BancoQuestoes() {
       const resultados = await Promise.all(
         anosEmbaralhados.map(async (ano) => {
           const offset = Math.floor(Math.random() * 30)
-          const res = await fetch(
-            `/api/questoes/banco?year=${ano}&discipline=${disciplina}&limit=${porAno}&offset=${offset}`
-          )
+          const res = await fetch(`/api/questoes/banco?year=${ano}&discipline=${materia}&limit=${porAno}&offset=${offset}`)
           if (!res.ok) return [] as ApiQuestao[]
           const data = await res.json()
           return (data.questions ?? []) as ApiQuestao[]
         })
       )
 
-      const todas = resultados
-        .flat()
-        .sort(() => Math.random() - 0.5)
-        .slice(0, quantidade)
-
-      if (!todas.length) {
-        setErro('Não foi possível carregar as questões. Tente novamente.')
-        setLoading(false)
-        return
-      }
+      const todas = resultados.flat().sort(() => Math.random() - 0.5).slice(0, quantidade)
+      if (!todas.length) { setErro('Não foi possível carregar as questões. Tente novamente.'); setLoading(false); return }
 
       const mapped: Questao[] = todas.map((q, i) => ({
         id: i + 1,
@@ -343,27 +355,75 @@ function BancoQuestoes() {
         resposta: q.correctAlternative,
         explicacao: '',
       }))
-
-      setQuestoes(mapped)
-      setIniciado(true)
-    } catch {
-      setErro('Erro de conexão. Verifique sua internet e tente novamente.')
-    }
+      setQuestoes(mapped); setIniciado(true)
+    } catch { setErro('Erro de conexão. Verifique sua internet e tente novamente.') }
     setLoading(false)
   }
 
+  // ── Outros vestibulares: busca no banco interno ────────────────────────────
+  async function buscarVestibular() {
+    setLoading(true); setErro(''); setAviso('')
+    try {
+      const params = new URLSearchParams({
+        vestibular: vestibular.toLowerCase(),
+        subject: materia,
+        quantidade: String(quantidade),
+      })
+      const res = await fetch(`/api/questoes/vestibular?${params}`)
+      const data = await res.json()
+
+      if (!res.ok || !data.questoes?.length) {
+        setErro('Não foi possível carregar as questões. Tente outra matéria.')
+        setLoading(false); return
+      }
+
+      if (data.total < quantidade) {
+        setAviso(`Encontradas ${data.total} questões disponíveis para esse filtro.`)
+      }
+
+      const mapped: Questao[] = (data.questoes as DbQuestao[]).map((q, i) => ({
+        id: i + 1,
+        enunciado: q.question_statement,
+        alternativas: [
+          { letra: 'A', texto: q.alternative_a ?? '' },
+          { letra: 'B', texto: q.alternative_b ?? '' },
+          { letra: 'C', texto: q.alternative_c ?? '' },
+          { letra: 'D', texto: q.alternative_d ?? '' },
+          { letra: 'E', texto: q.alternative_e ?? '' },
+        ].filter(a => a.texto),
+        resposta: q.correct_answer.toUpperCase(),
+        explicacao: '',
+      }))
+      setQuestoes(mapped); setIniciado(true)
+    } catch { setErro('Erro de conexão. Verifique sua internet e tente novamente.') }
+    setLoading(false)
+  }
+
+  function buscar() {
+    if (!materia || loading) return
+    if (vestibular === 'ENEM') buscarEnem()
+    else buscarVestibular()
+  }
+
+  // ── Sessão ativa ──────────────────────────────────────────────────────────
   if (iniciado && questoes.length > 0) {
-    const disciplinaLabel = DISCIPLINAS_ENEM.find(d => d.value === disciplina)?.label ?? disciplina
+    const materiaLabel = vestibular === 'ENEM'
+      ? (DISCIPLINAS_ENEM.find(d => d.value === materia)?.label ?? materia)
+      : materia
     return (
       <SessaoQuestoes
-        vestibular="ENEM"
-        materia={disciplinaLabel}
-        conteudo="Questões de múltiplos anos"
+        vestibular={vestibular}
+        materia={materiaLabel}
+        conteudo={vestibular === 'ENEM' ? 'Questões de múltiplos anos' : `${vestibular} — múltiplos anos`}
         questoes={questoes}
         onVoltar={() => { setIniciado(false); setQuestoes([]) }}
       />
     )
   }
+
+  // ── Seletores ──────────────────────────────────────────────────────────────
+  const materiasDisponiveis = vestibular === 'ENEM' ? null : (MATERIAS_VESTIBULAR[vestibular] ?? [])
+  const prontoParaBuscar   = !!materia
 
   return (
     <div className="max-w-lg">
@@ -378,90 +438,100 @@ function BancoQuestoes() {
             <button
               key={v.id}
               onClick={() => v.disponivel && escolherVestibular(v.id)}
-              className={`px-4 py-2 rounded-full text-sm font-medium border transition-all relative ${
+              className={`px-4 py-2 rounded-full text-sm font-medium border transition-all ${
                 vestibular === v.id
                   ? 'bg-brand text-white border-brand'
                   : v.disponivel
                   ? 'bg-bg-card border-border text-text-muted hover:text-text hover:border-brand'
-                  : 'bg-bg-card border-border text-text-faint cursor-not-allowed opacity-50'
+                  : 'bg-bg-card border-border text-text-faint cursor-not-allowed opacity-40'
               }`}
             >
               {v.id}
-              {!v.disponivel && (
-                <span className="ml-1.5 text-[10px] opacity-70">em breve</span>
-              )}
+              {!v.disponivel && <span className="ml-1.5 text-[10px] opacity-70">em breve</span>}
             </button>
           ))}
         </div>
       </div>
 
-      {/* Passo 2 — Configuração ENEM */}
+      {/* Passo 2 — Área / Matéria */}
       {vestibular === 'ENEM' && (
-        <div className="flex flex-col gap-7 mb-8">
-          <div>
-            <label className="text-text-muted text-xs font-medium uppercase tracking-wider mb-3 block">
-              Área de Conhecimento
-            </label>
-            <div className="grid grid-cols-2 gap-2">
-              {DISCIPLINAS_ENEM.map(d => (
-                <button
-                  key={d.value}
-                  onClick={() => setDisciplina(d.value)}
-                  className={`py-3 px-4 rounded-full text-sm font-medium border transition-all ${
-                    disciplina === d.value
-                      ? 'bg-brand text-white border-brand'
-                      : 'bg-bg-card border-border text-text-muted hover:text-text hover:border-brand'
-                  }`}
-                >
-                  {d.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <div className="flex items-center justify-between mb-3">
-              <label className="text-text-muted text-xs font-medium uppercase tracking-wider">
-                Quantidade de questões
-              </label>
-              <span className="text-brand font-bold text-xl tabular-nums">{quantidade}</span>
-            </div>
-            <input
-              type="range"
-              min={5}
-              max={50}
-              step={5}
-              value={quantidade}
-              onChange={e => setQuantidade(Number(e.target.value))}
-              style={{ accentColor: 'var(--brand)' }}
-              className="w-full h-1.5 cursor-pointer"
-            />
-            <div className="flex justify-between mt-1.5">
-              <span className="text-text-faint text-xs">5</span>
-              <span className="text-text-faint text-xs">50</span>
-            </div>
+        <div className="mb-6">
+          <label className="text-text-muted text-xs font-medium uppercase tracking-wider mb-3 block">Área de Conhecimento</label>
+          <div className="grid grid-cols-2 gap-2">
+            {DISCIPLINAS_ENEM.map(d => (
+              <button
+                key={d.value}
+                onClick={() => setMateria(d.value)}
+                className={`py-3 px-4 rounded-full text-sm font-medium border transition-all ${
+                  materia === d.value ? 'bg-brand text-white border-brand' : 'bg-bg-card border-border text-text-muted hover:text-text hover:border-brand'
+                }`}
+              >
+                {d.label}
+              </button>
+            ))}
           </div>
         </div>
       )}
 
-      {erro && <p className="text-red-500 text-sm mb-4">{erro}</p>}
+      {materiasDisponiveis && materiasDisponiveis.length > 0 && (
+        <div className="mb-6">
+          <label className="text-text-muted text-xs font-medium uppercase tracking-wider mb-3 block">Matéria</label>
+          <div className="flex flex-wrap gap-2">
+            {materiasDisponiveis.map(m => (
+              <button
+                key={m}
+                onClick={() => setMateria(m)}
+                className={`px-4 py-2 rounded-full text-sm font-medium border transition-all ${
+                  materia === m ? 'bg-brand text-white border-brand' : 'bg-bg-card border-border text-text-muted hover:text-text hover:border-brand'
+                }`}
+              >
+                {m}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
-      {vestibular === 'ENEM' && (
+      {/* Passo 3 — Quantidade */}
+      {vestibular && (
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-3">
+            <label className="text-text-muted text-xs font-medium uppercase tracking-wider">Quantidade de questões</label>
+            <span className="text-brand font-bold text-xl tabular-nums">{quantidade}</span>
+          </div>
+          <input
+            type="range" min={5} max={50} step={5} value={quantidade}
+            onChange={e => setQuantidade(Number(e.target.value))}
+            style={{ accentColor: 'var(--brand)' }}
+            className="w-full h-1.5 cursor-pointer"
+          />
+          <div className="flex justify-between mt-1.5">
+            <span className="text-text-faint text-xs">5</span>
+            <span className="text-text-faint text-xs">50</span>
+          </div>
+        </div>
+      )}
+
+      {aviso && <p className="text-amber-500 text-sm mb-3">{aviso}</p>}
+      {erro   && <p className="text-red-500  text-sm mb-4">{erro}</p>}
+
+      {vestibular && (
         <button
           onClick={buscar}
-          disabled={!disciplina || loading}
+          disabled={!prontoParaBuscar || loading}
           className="flex items-center justify-center gap-2 w-full bg-brand hover:bg-brand-hover disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3.5 rounded-full transition-colors text-sm"
         >
-          {loading ? (
-            <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Buscando questões...</>
-          ) : (
-            <><BookOpen size={15} /> Começar com {quantidade} questões</>
-          )}
+          {loading
+            ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Buscando questões...</>
+            : <><BookOpen size={15} /> Começar com {quantidade} questões</>
+          }
         </button>
       )}
 
-      {vestibular === 'ENEM' && !disciplina && (
-        <p className="text-text-faint text-xs text-center mt-4">Selecione uma área de conhecimento para continuar</p>
+      {vestibular && !materia && (
+        <p className="text-text-faint text-xs text-center mt-4">
+          {vestibular === 'ENEM' ? 'Selecione uma área de conhecimento' : 'Selecione uma matéria'} para continuar
+        </p>
       )}
 
       {!vestibular && (
