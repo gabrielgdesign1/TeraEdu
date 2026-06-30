@@ -1035,6 +1035,138 @@ function GerarComIA() {
   )
 }
 
+// ─── Rich content renderer (questões discursivas) ─────────────────────────────
+
+// Converts simple \begin{array} LaTeX tables to HTML
+function latexArrayToHtml(latex: string): string {
+  const inner = latex
+    .replace(/^\$+\s*/, '').replace(/\s*\$+$/, '')
+    .replace(/\\begin\{array\}\{[^}]*\}/, '')
+    .replace(/\\end\{array\}/, '')
+    .trim()
+
+  const rows = inner.split(/\\\\/)
+    .map(r => r.replace(/^[\s\\]*hline\s*/g, '').replace(/\s*\\hline\s*$/g, '').trim())
+    .filter(r => r.trim() && r.trim() !== '\\hline')
+
+  const htmlRows = rows.map((row, i) => {
+    const cells = row.split('&').map(c =>
+      c.trim()
+        .replace(/\\text\{([^}]*)\}/g, '$1')
+        .replace(/\\textbf\{([^}]*)\}/g, '<strong>$1</strong>')
+        .replace(/\\textit\{([^}]*)\}/g, '<em>$1</em>')
+        .trim()
+    )
+    const tag = i === 0 ? 'th' : 'td'
+    return `<tr>${cells.map(c => `<${tag}>${c}</${tag}>`).join('')}</tr>`
+  })
+
+  return `<table>${htmlRows.join('')}</table>`
+}
+
+function renderQuestaoContent(text: string, imageDescriptions: string[]) {
+  if (!text?.trim()) return null
+
+  // Split into segments: plain text | <image id="N"> | <table>…</table> | $$latex$$
+  const segments = text.split(/(<image[^>]*>|<table[\s\S]*?<\/table>|\$\$[\s\S]*?\$\$)/gi)
+
+  return segments.map((seg, i) => {
+    // ── image placeholder ──────────────────────────────────────────────────────
+    const imgMatch = seg.match(/^<image\s+id="?(\d+)"?>/i)
+    if (imgMatch) {
+      const idx   = parseInt(imgMatch[1])
+      const desc  = imageDescriptions?.[idx]
+      return (
+        <div key={i} className="my-3 border border-dashed border-border rounded-xl overflow-hidden bg-bg">
+          <div className="flex items-center gap-2 px-3 py-2 border-b border-border/60">
+            <span className="text-text-faint text-sm">🖼</span>
+            <span className="text-text-faint text-[10px] font-semibold uppercase tracking-wider">Imagem {idx + 1}</span>
+          </div>
+          {desc && (
+            <p className="px-3 py-2.5 text-text-faint text-[11px] italic leading-relaxed">{desc}</p>
+          )}
+        </div>
+      )
+    }
+
+    // ── LaTeX $$ block ─────────────────────────────────────────────────────────
+    if (/^\$\$/.test(seg.trim())) {
+      const hasArray = /\\begin\{array\}/.test(seg)
+      if (hasArray) {
+        return (
+          <div
+            key={i}
+            className="my-3 overflow-x-auto rounded-xl border border-border text-xs
+              [&_table]:w-full [&_table]:border-collapse
+              [&_th]:bg-bg-card [&_th]:px-3 [&_th]:py-2 [&_th]:text-left [&_th]:font-semibold [&_th]:text-text [&_th]:border [&_th]:border-border
+              [&_td]:px-3 [&_td]:py-1.5 [&_td]:border [&_td]:border-border [&_td]:text-text-muted"
+            dangerouslySetInnerHTML={{ __html: latexArrayToHtml(seg) }}
+          />
+        )
+      }
+      // Fórmula genérica
+      return (
+        <div key={i} className="my-3 bg-bg border border-border rounded-xl px-3 py-2.5 overflow-x-auto">
+          <pre className="text-text-muted text-[11px] font-mono leading-relaxed whitespace-pre-wrap">
+            {seg.replace(/^\$+|\$+$/g, '').trim()}
+          </pre>
+        </div>
+      )
+    }
+
+    // ── HTML table ─────────────────────────────────────────────────────────────
+    if (/<table/i.test(seg)) {
+      const cleaned = seg.replace(/^\s*\|[^<]*/, '') // strip "| xxx" markdown artifact
+      return (
+        <div
+          key={i}
+          className="my-3 overflow-x-auto rounded-xl border border-border text-xs
+            [&_table]:w-full [&_table]:border-collapse
+            [&_th]:bg-bg-card [&_th]:px-3 [&_th]:py-2 [&_th]:text-left [&_th]:font-semibold [&_th]:text-text [&_th]:border [&_th]:border-border
+            [&_td]:px-3 [&_td]:py-1.5 [&_td]:border [&_td]:border-border [&_td]:text-text-muted"
+          dangerouslySetInnerHTML={{ __html: cleaned }}
+        />
+      )
+    }
+
+    // ── plain text: detect Texto N headers and citations ───────────────────────
+    if (!seg.trim()) return null
+
+    const paras = seg.split(/\n\n+/).filter(p => p.trim())
+    return (
+      <div key={i} className="flex flex-col gap-2">
+        {paras.map((para, j) =>
+          para.split('\n').filter(l => l.trim()).map((line, k) => {
+            const t = line.trim()
+
+            // "Texto 1" / "Texto 2" section labels
+            if (/^Texto \d+$/i.test(t)) {
+              return (
+                <p key={`${j}-${k}`} className="text-brand text-[10px] font-bold uppercase tracking-widest mt-3 first:mt-0">
+                  {t}
+                </p>
+              )
+            }
+            // Source citations: starts with ( ends with ) or ).
+            if (/^\(/.test(t) && /\)\.?$/.test(t)) {
+              return (
+                <p key={`${j}-${k}`} className="text-text-faint text-[11px] italic leading-relaxed">
+                  {t}
+                </p>
+              )
+            }
+            return (
+              <p key={`${j}-${k}`} className="text-text-muted text-sm leading-relaxed">
+                {line}
+              </p>
+            )
+          })
+        )}
+      </div>
+    )
+  })
+}
+
 // ─── Sessão discursiva (UNESP) ────────────────────────────────────────────────
 
 function SessaoDiscursiva({
@@ -1177,30 +1309,25 @@ function SessaoDiscursiva({
       {/* Enunciado */}
       <div className="bg-bg-card border border-border rounded-2xl p-6 mb-4">
         {questao.year && (
-          <span className="text-brand text-xs font-semibold uppercase tracking-wider mb-3 block">
+          <span className="text-brand text-[10px] font-bold uppercase tracking-widest mb-3 block">
             UNESP {questao.year}
           </span>
         )}
-        <p className="text-text text-sm leading-relaxed whitespace-pre-wrap">{questao.question}</p>
 
-        {(() => {
-          const txt = questao.supporting_texts?.replace(/<image[^>]*>/gi, '').trim()
-          return txt ? (
-            <div className="mt-4 pt-4 border-t border-border">
-              <p className="text-text-faint text-xs uppercase tracking-wider mb-2">Texto de apoio</p>
-              <p className="text-text-muted text-sm leading-relaxed whitespace-pre-wrap">{txt}</p>
-            </div>
-          ) : null
-        })()}
+        {/* Comando da questão */}
+        <div className="text-text text-sm leading-relaxed">
+          {renderQuestaoContent(questao.question, questao.image_descriptions ?? [])}
+        </div>
 
-        {questao.image_descriptions?.length > 0 && (
+        {/* Textos de apoio (com imagens e citações inline) */}
+        {questao.supporting_texts?.trim() && (
           <div className="mt-4 pt-4 border-t border-border">
-            <p className="text-text-faint text-xs uppercase tracking-wider mb-2 flex items-center gap-1">
-              <AlertCircle size={11} /> Descrição de imagem
+            <p className="text-text-faint text-[10px] font-semibold uppercase tracking-wider mb-3">
+              Texto de apoio
             </p>
-            {questao.image_descriptions.map((desc, i) => (
-              <p key={i} className="text-text-muted text-sm italic leading-relaxed mb-1">[{desc}]</p>
-            ))}
+            <div className="flex flex-col gap-1">
+              {renderQuestaoContent(questao.supporting_texts, questao.image_descriptions ?? [])}
+            </div>
           </div>
         )}
       </div>
