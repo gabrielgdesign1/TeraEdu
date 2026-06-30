@@ -276,7 +276,21 @@ type ApiQuestao = {
   correctAlternative: string
 }
 
+const VESTIBULARES_BANCO = [
+  { id: 'ENEM',    disponivel: true  },
+  { id: 'FUVEST',  disponivel: false },
+  { id: 'UNICAMP', disponivel: false },
+  { id: 'UNESP',   disponivel: false },
+  { id: 'UERJ',    disponivel: false },
+  { id: 'UnB',     disponivel: false },
+  { id: 'UFG',     disponivel: false },
+  { id: 'UFPR',    disponivel: false },
+  { id: 'ITA',     disponivel: false },
+  { id: 'IME',     disponivel: false },
+]
+
 function BancoQuestoes() {
+  const [vestibular, setVestibular] = useState('')
   const [disciplina, setDisciplina] = useState('')
   const [quantidade, setQuantidade] = useState(10)
   const [loading,    setLoading   ] = useState(false)
@@ -284,12 +298,17 @@ function BancoQuestoes() {
   const [questoes,   setQuestoes  ] = useState<Questao[]>([])
   const [iniciado,   setIniciado  ] = useState(false)
 
+  function escolherVestibular(v: string) {
+    setVestibular(v)
+    setDisciplina('')
+    setErro('')
+  }
+
   async function buscar() {
     if (!disciplina || loading) return
     setLoading(true)
     setErro('')
     try {
-      // Distribui entre 1-3 anos aleatórios para máxima variedade
       const numAnos = quantidade <= 10 ? 1 : quantidade <= 25 ? 2 : 3
       const anosEmbaralhados = [...ANOS_ENEM].sort(() => Math.random() - 0.5).slice(0, numAnos)
       const porAno = Math.ceil(quantidade / numAnos)
@@ -348,75 +367,108 @@ function BancoQuestoes() {
 
   return (
     <div className="max-w-lg">
-      <h2 className="text-text font-semibold text-lg mb-1">Banco de Questões ENEM</h2>
-      <p className="text-text-muted text-sm mb-8">
-        Questões reais misturadas de vários anos — diferentes a cada sessão.
-      </p>
+      <h2 className="text-text font-semibold text-lg mb-1">Banco de Questões</h2>
+      <p className="text-text-muted text-sm mb-8">Escolha o vestibular e pratique com questões reais.</p>
 
-      <div className="flex flex-col gap-7 mb-8">
-
-        {/* Área de conhecimento */}
-        <div>
-          <label className="text-text-muted text-xs font-medium uppercase tracking-wider mb-3 block">Área de Conhecimento</label>
-          <div className="grid grid-cols-2 gap-2">
-            {DISCIPLINAS_ENEM.map(d => (
-              <button
-                key={d.value}
-                onClick={() => setDisciplina(d.value)}
-                className={`py-3 px-4 rounded-full text-sm font-medium border transition-all ${
-                  disciplina === d.value
-                    ? 'bg-brand text-white border-brand'
-                    : 'bg-bg-card border-border text-text-muted hover:text-text hover:border-brand'
-                }`}
-              >
-                {d.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Quantidade — slider */}
-        <div>
-          <div className="flex items-center justify-between mb-3">
-            <label className="text-text-muted text-xs font-medium uppercase tracking-wider">
-              Quantidade de questões
-            </label>
-            <span className="text-brand font-bold text-xl tabular-nums">{quantidade}</span>
-          </div>
-          <input
-            type="range"
-            min={5}
-            max={50}
-            step={5}
-            value={quantidade}
-            onChange={e => setQuantidade(Number(e.target.value))}
-            style={{ accentColor: 'var(--brand)' }}
-            className="w-full h-1.5 cursor-pointer"
-          />
-          <div className="flex justify-between mt-1.5">
-            <span className="text-text-faint text-xs">5</span>
-            <span className="text-text-faint text-xs">50</span>
-          </div>
+      {/* Passo 1 — Vestibular */}
+      <div className="mb-7">
+        <label className="text-text-muted text-xs font-medium uppercase tracking-wider mb-3 block">Vestibular</label>
+        <div className="flex flex-wrap gap-2">
+          {VESTIBULARES_BANCO.map(v => (
+            <button
+              key={v.id}
+              onClick={() => v.disponivel && escolherVestibular(v.id)}
+              className={`px-4 py-2 rounded-full text-sm font-medium border transition-all relative ${
+                vestibular === v.id
+                  ? 'bg-brand text-white border-brand'
+                  : v.disponivel
+                  ? 'bg-bg-card border-border text-text-muted hover:text-text hover:border-brand'
+                  : 'bg-bg-card border-border text-text-faint cursor-not-allowed opacity-50'
+              }`}
+            >
+              {v.id}
+              {!v.disponivel && (
+                <span className="ml-1.5 text-[10px] opacity-70">em breve</span>
+              )}
+            </button>
+          ))}
         </div>
       </div>
 
+      {/* Passo 2 — Configuração ENEM */}
+      {vestibular === 'ENEM' && (
+        <div className="flex flex-col gap-7 mb-8">
+          <div>
+            <label className="text-text-muted text-xs font-medium uppercase tracking-wider mb-3 block">
+              Área de Conhecimento
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              {DISCIPLINAS_ENEM.map(d => (
+                <button
+                  key={d.value}
+                  onClick={() => setDisciplina(d.value)}
+                  className={`py-3 px-4 rounded-full text-sm font-medium border transition-all ${
+                    disciplina === d.value
+                      ? 'bg-brand text-white border-brand'
+                      : 'bg-bg-card border-border text-text-muted hover:text-text hover:border-brand'
+                  }`}
+                >
+                  {d.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <label className="text-text-muted text-xs font-medium uppercase tracking-wider">
+                Quantidade de questões
+              </label>
+              <span className="text-brand font-bold text-xl tabular-nums">{quantidade}</span>
+            </div>
+            <input
+              type="range"
+              min={5}
+              max={50}
+              step={5}
+              value={quantidade}
+              onChange={e => setQuantidade(Number(e.target.value))}
+              style={{ accentColor: 'var(--brand)' }}
+              className="w-full h-1.5 cursor-pointer"
+            />
+            <div className="flex justify-between mt-1.5">
+              <span className="text-text-faint text-xs">5</span>
+              <span className="text-text-faint text-xs">50</span>
+            </div>
+          </div>
+        </div>
+      )}
+
       {erro && <p className="text-red-500 text-sm mb-4">{erro}</p>}
 
-      <button
-        onClick={buscar}
-        disabled={!disciplina || loading}
-        className="flex items-center justify-center gap-2 w-full bg-brand hover:bg-brand-hover disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3.5 rounded-full transition-colors text-sm"
-      >
-        {loading ? (
-          <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Buscando questões...</>
-        ) : (
-          <><BookOpen size={15} /> Começar com {quantidade} questões</>
+      {vestibular === 'ENEM' && (
+        <button
+          onClick={buscar}
+          disabled={!disciplina || loading}
+          className="flex items-center justify-center gap-2 w-full bg-brand hover:bg-brand-hover disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3.5 rounded-full transition-colors text-sm"
+        >
+          {loading ? (
+            <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Buscando questões...</>
+          ) : (
+            <><BookOpen size={15} /> Começar com {quantidade} questões</>
+          )}
+        </button>
+      )}
 
-        )}
-      </button>
-
-      {!disciplina && (
+      {vestibular === 'ENEM' && !disciplina && (
         <p className="text-text-faint text-xs text-center mt-4">Selecione uma área de conhecimento para continuar</p>
+      )}
+
+      {!vestibular && (
+        <div className="border border-dashed border-border rounded-2xl p-10 text-center">
+          <GraduationCap size={28} className="text-text-faint mx-auto mb-3" />
+          <p className="text-text-muted text-sm">Selecione um vestibular acima para começar</p>
+        </div>
       )}
     </div>
   )
