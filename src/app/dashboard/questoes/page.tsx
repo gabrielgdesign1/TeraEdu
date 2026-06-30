@@ -694,6 +694,20 @@ function SessaoQuestoes({
     setRevelada(true)
   }
 
+  async function salvarDesempenho(acertosFinais: number) {
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+    await supabase.from('desempenho_questoes').insert({
+      user_id: user.id,
+      data: new Date().toISOString().slice(0, 10),
+      materia,
+      vestibular,
+      acertos: acertosFinais,
+      total: quantidade,
+    })
+  }
+
   function proxima() {
     if (atual + 1 >= quantidade) {
       setFinalizado(true)
@@ -705,6 +719,10 @@ function SessaoQuestoes({
         quantidade,
         minutos,
       })
+      const respostasFinal = { ...respostas, [atual]: selecionada ?? '' }
+      const acertosFinais = Object.entries(respostasFinal)
+        .filter(([i, r]) => r === questoes[Number(i)].resposta).length
+      salvarDesempenho(acertosFinais)
     } else {
       setAtual(atual + 1)
       setSelecionada(null)

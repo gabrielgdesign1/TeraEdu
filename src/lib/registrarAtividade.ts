@@ -58,6 +58,7 @@ export async function registrarAtividade(params: {
     minutos_semana: (mesmaSemanana ? (stats?.minutos_semana ?? 0) : 0) + (params.minutos ?? 0),
     // Sequência
     sequencia_dias:    sequencia,
+    sequencia_maxima:  Math.max(stats?.sequencia_maxima ?? 0, sequencia),
     ultima_atividade:  hoje,
     semana_referencia: segunda,
     atualizado_em:     new Date().toISOString(),
