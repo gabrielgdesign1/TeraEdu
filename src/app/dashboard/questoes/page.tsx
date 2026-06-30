@@ -267,48 +267,58 @@ const DISCIPLINAS_ENEM = [
   { value: 'matematica',        label: 'Matemática'            },
 ]
 
+type ApiQuestao = {
+  index: number
+  year: number
+  context?: string
+  alternativesIntroduction?: string
+  alternatives: { letter: string; text: string }[]
+  correctAlternative: string
+}
+
 function BancoQuestoes() {
-  const [ano,        setAno       ] = useState('2023')
   const [disciplina, setDisciplina] = useState('')
-  const [quantidade, setQuantidade] = useState(5)
+  const [quantidade, setQuantidade] = useState(10)
   const [loading,    setLoading   ] = useState(false)
   const [erro,       setErro      ] = useState('')
   const [questoes,   setQuestoes  ] = useState<Questao[]>([])
   const [iniciado,   setIniciado  ] = useState(false)
 
-  const pronto = ano && disciplina
-
   async function buscar() {
-    if (!pronto || loading) return
+    if (!disciplina || loading) return
     setLoading(true)
     setErro('')
     try {
-      // Busca total disponível para calcular offset aleatório
-      const meta = await fetch(`/api/questoes/banco?year=${ano}&discipline=${disciplina}&limit=1&offset=0`)
-      const metaJson = await meta.json()
-      const total: number = metaJson.metadata?.total ?? 45
-      const maxOffset = Math.max(0, total - quantidade)
-      const offset = Math.floor(Math.random() * (maxOffset + 1))
+      // Distribui entre 1-3 anos aleatórios para máxima variedade
+      const numAnos = quantidade <= 10 ? 1 : quantidade <= 25 ? 2 : 3
+      const anosEmbaralhados = [...ANOS_ENEM].sort(() => Math.random() - 0.5).slice(0, numAnos)
+      const porAno = Math.ceil(quantidade / numAnos)
 
-      const res = await fetch(
-        `/api/questoes/banco?year=${ano}&discipline=${disciplina}&limit=${quantidade}&offset=${offset}`
+      const resultados = await Promise.all(
+        anosEmbaralhados.map(async (ano) => {
+          const offset = Math.floor(Math.random() * 30)
+          const res = await fetch(
+            `/api/questoes/banco?year=${ano}&discipline=${disciplina}&limit=${porAno}&offset=${offset}`
+          )
+          if (!res.ok) return [] as ApiQuestao[]
+          const data = await res.json()
+          return (data.questions ?? []) as ApiQuestao[]
+        })
       )
-      const data = await res.json()
 
-      if (!res.ok || !data.questions?.length) {
-        setErro('Não foi possível carregar as questões. Tente outro ano ou disciplina.')
+      const todas = resultados
+        .flat()
+        .sort(() => Math.random() - 0.5)
+        .slice(0, quantidade)
+
+      if (!todas.length) {
+        setErro('Não foi possível carregar as questões. Tente novamente.')
         setLoading(false)
         return
       }
 
-      const mapped: Questao[] = data.questions.map((q: {
-        index: number
-        context?: string
-        alternativesIntroduction?: string
-        alternatives: { letter: string; text: string }[]
-        correctAlternative: string
-      }) => ({
-        id: q.index,
+      const mapped: Questao[] = todas.map((q, i) => ({
+        id: i + 1,
         enunciado: [q.context, q.alternativesIntroduction].filter(Boolean).join('\n\n'),
         alternativas: q.alternatives.map(a => ({ letra: a.letter, texto: a.text })),
         resposta: q.correctAlternative,
@@ -329,7 +339,7 @@ function BancoQuestoes() {
       <SessaoQuestoes
         vestibular="ENEM"
         materia={disciplinaLabel}
-        conteudo={`ENEM ${ano}`}
+        conteudo="Questões de múltiplos anos"
         questoes={questoes}
         onVoltar={() => { setIniciado(false); setQuestoes([]) }}
       />
@@ -337,33 +347,15 @@ function BancoQuestoes() {
   }
 
   return (
-    <div className="max-w-2xl">
+    <div className="max-w-lg">
       <h2 className="text-text font-semibold text-lg mb-1">Banco de Questões ENEM</h2>
-      <p className="text-text-muted text-sm mb-8">Questões reais do ENEM por ano e área de conhecimento.</p>
+      <p className="text-text-muted text-sm mb-8">
+        Questões reais misturadas de vários anos — diferentes a cada sessão.
+      </p>
 
-      <div className="flex flex-col gap-6 mb-8">
+      <div className="flex flex-col gap-7 mb-8">
 
-        {/* Ano */}
-        <div>
-          <label className="text-text-muted text-xs font-medium uppercase tracking-wider mb-3 block">Ano</label>
-          <div className="flex flex-wrap gap-2">
-            {ANOS_ENEM.map(a => (
-              <button
-                key={a}
-                onClick={() => setAno(a)}
-                className={`px-4 py-2 rounded-full text-sm font-medium border transition-all ${
-                  ano === a
-                    ? 'bg-brand text-white border-brand'
-                    : 'bg-bg-card border-border text-text-muted hover:text-text hover:border-brand'
-                }`}
-              >
-                {a}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Disciplina */}
+        {/* Área de conhecimento */}
         <div>
           <label className="text-text-muted text-xs font-medium uppercase tracking-wider mb-3 block">Área de Conhecimento</label>
           <div className="grid grid-cols-2 gap-2">
@@ -383,40 +375,43 @@ function BancoQuestoes() {
           </div>
         </div>
 
-        {/* Quantidade */}
+        {/* Quantidade — slider */}
         <div>
-          <label className="text-text-muted text-xs font-medium uppercase tracking-wider mb-3 block">Quantidade de questões</label>
-          <div className="flex gap-2">
-            {[5, 10, 15, 20].map(q => (
-              <button
-                key={q}
-                onClick={() => setQuantidade(q)}
-                className={`w-14 py-2 rounded-full text-sm font-medium border transition-all ${
-                  quantidade === q
-                    ? 'bg-brand text-white border-brand'
-                    : 'bg-bg-card border-border text-text-muted hover:text-text hover:border-brand'
-                }`}
-              >
-                {q}
-              </button>
-            ))}
+          <div className="flex items-center justify-between mb-3">
+            <label className="text-text-muted text-xs font-medium uppercase tracking-wider">
+              Quantidade de questões
+            </label>
+            <span className="text-brand font-bold text-xl tabular-nums">{quantidade}</span>
+          </div>
+          <input
+            type="range"
+            min={5}
+            max={50}
+            step={5}
+            value={quantidade}
+            onChange={e => setQuantidade(Number(e.target.value))}
+            style={{ accentColor: 'var(--brand)' }}
+            className="w-full h-1.5 cursor-pointer"
+          />
+          <div className="flex justify-between mt-1.5">
+            <span className="text-text-faint text-xs">5</span>
+            <span className="text-text-faint text-xs">50</span>
           </div>
         </div>
       </div>
 
-      {erro && (
-        <p className="text-red-500 text-sm mb-4">{erro}</p>
-      )}
+      {erro && <p className="text-red-500 text-sm mb-4">{erro}</p>}
 
       <button
         onClick={buscar}
-        disabled={!pronto || loading}
+        disabled={!disciplina || loading}
         className="flex items-center justify-center gap-2 w-full bg-brand hover:bg-brand-hover disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3.5 rounded-full transition-colors text-sm"
       >
         {loading ? (
           <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Buscando questões...</>
         ) : (
-          <><BookOpen size={15} /> Buscar {quantidade} questões · ENEM {ano}</>
+          <><BookOpen size={15} /> Começar com {quantidade} questões</>
+
         )}
       </button>
 
