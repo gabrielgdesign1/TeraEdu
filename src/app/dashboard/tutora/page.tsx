@@ -11,7 +11,7 @@ import 'katex/dist/katex.min.css'
 import { useTheme } from 'next-themes'
 import {
   LayoutDashboard, FileQuestion, Layers, FileText, MessageCircle,
-  BarChart3, Calendar, Sun, Moon, Settings, Send, Plus, Pencil
+  BarChart3, Calendar, Sun, Moon, Settings, Send, Plus, Pencil, GraduationCap
 } from 'lucide-react'
 import { useProfile } from '@/hooks/useProfile'
 import { createClient } from '@/lib/supabase'
@@ -217,7 +217,8 @@ export default function IATutora() {
           <SidebarLink href="/dashboard/questoes"   icon={FileQuestion}    label="Questões" />
           <SidebarLink href="/dashboard/flashcards" icon={Layers}          label="Flashcards" />
           <SidebarLink href="/dashboard/resumos"    icon={FileText}        label="Resumos" />
-          <SidebarLink href="/dashboard/tutora"     icon={MessageCircle}   label="IA Tutora" active />
+          <SidebarLink href="/dashboard/tutora"          icon={MessageCircle}   label="IA Tutora" active />
+          <SidebarLink href="/dashboard/vestibulares"    icon={GraduationCap}   label="Vestibulares" />
         </nav>
 
         {/* Histórico de conversas */}

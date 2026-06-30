@@ -89,6 +89,7 @@ export default function Configuracoes() {
           <SidebarLink href="/dashboard/flashcards"       icon={Layers}          label="Flashcards" />
           <SidebarLink href="/dashboard/resumos"          icon={FileText}        label="Resumos" />
           <SidebarLink href="/dashboard/tutora"           icon={MessageCircle}   label="IA Tutora" />
+          <SidebarLink href="/dashboard/vestibulares"    icon={GraduationCap}   label="Vestibulares" />
           <div className="px-3 mt-8 mb-2">
             <p className="text-text-faint text-[10px] uppercase tracking-widest font-semibold">Progresso</p>
           </div>

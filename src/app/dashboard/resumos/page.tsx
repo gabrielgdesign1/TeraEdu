@@ -12,7 +12,7 @@ import { useTheme } from 'next-themes'
 import {
   LayoutDashboard, FileQuestion, Layers, FileText, MessageCircle,
   BarChart3, Calendar, Sun, Moon, Settings, Pencil, ClipboardList,
-  FileUp, Send, Plus
+  FileUp, Send, Plus, GraduationCap
 } from 'lucide-react'
 import { useProfile } from '@/hooks/useProfile'
 import { createClient } from '@/lib/supabase'
@@ -188,7 +188,8 @@ export default function Resumos() {
           <SidebarLink href="/dashboard/questoes"   icon={FileQuestion}    label="Questões" />
           <SidebarLink href="/dashboard/flashcards" icon={Layers}          label="Flashcards" />
           <SidebarLink href="/dashboard/resumos"    icon={FileText}        label="Resumos" active />
-          <SidebarLink href="/dashboard/tutora"     icon={MessageCircle}   label="IA Tutora" />
+          <SidebarLink href="/dashboard/tutora"          icon={MessageCircle}   label="IA Tutora" />
+          <SidebarLink href="/dashboard/vestibulares"    icon={GraduationCap}   label="Vestibulares" />
         </nav>
 
         {/* Histórico */}
