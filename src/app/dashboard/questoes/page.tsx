@@ -258,158 +258,170 @@ export default function Questoes() {
 
 // ─── Aba: Banco de Questões ───────────────────────────────────────────────────
 
+const ANOS_ENEM = ['2023','2022','2021','2020','2019','2018','2017','2016','2015','2014','2013','2012','2011','2010','2009']
+
+const DISCIPLINAS_ENEM = [
+  { value: 'ciencias-humanas',  label: 'Ciências Humanas'     },
+  { value: 'ciencias-natureza', label: 'Ciências da Natureza'  },
+  { value: 'linguagens',        label: 'Linguagens e Códigos'  },
+  { value: 'matematica',        label: 'Matemática'            },
+]
+
 function BancoQuestoes() {
-  const [vestibular, setVestibular] = useState('')
-  const [materia,    setMateria   ] = useState('')
-  const [conteudo,   setConteudo  ] = useState('')
+  const [ano,        setAno       ] = useState('2023')
+  const [disciplina, setDisciplina] = useState('')
   const [quantidade, setQuantidade] = useState(5)
-  const [iniciado, setIniciado] = useState(false)
+  const [loading,    setLoading   ] = useState(false)
+  const [erro,       setErro      ] = useState('')
+  const [questoes,   setQuestoes  ] = useState<Questao[]>([])
+  const [iniciado,   setIniciado  ] = useState(false)
 
-  const materias  = vestibular ? MATERIAS[vestibular]            ?? [] : []
-  const conteudos = materia    ? CONTEUDOS[vestibular]?.[materia] ?? [] : []
+  const pronto = ano && disciplina
 
-  function handleVestibular(v: string) { setVestibular(v); setMateria(''); setConteudo(''); setIniciado(false) }
-  function handleMateria   (m: string) { setMateria(m);    setConteudo(''); setIniciado(false) }
+  async function buscar() {
+    if (!pronto || loading) return
+    setLoading(true)
+    setErro('')
+    try {
+      // Busca total disponível para calcular offset aleatório
+      const meta = await fetch(`/api/questoes/banco?year=${ano}&discipline=${disciplina}&limit=1&offset=0`)
+      const metaJson = await meta.json()
+      const total: number = metaJson.metadata?.total ?? 45
+      const maxOffset = Math.max(0, total - quantidade)
+      const offset = Math.floor(Math.random() * (maxOffset + 1))
 
-  const pronto = vestibular && materia && conteudo
+      const res = await fetch(
+        `/api/questoes/banco?year=${ano}&discipline=${disciplina}&limit=${quantidade}&offset=${offset}`
+      )
+      const data = await res.json()
 
-  if (iniciado && pronto) {
+      if (!res.ok || !data.questions?.length) {
+        setErro('Não foi possível carregar as questões. Tente outro ano ou disciplina.')
+        setLoading(false)
+        return
+      }
+
+      const mapped: Questao[] = data.questions.map((q: {
+        index: number
+        context?: string
+        alternativesIntroduction?: string
+        alternatives: { letter: string; text: string }[]
+        correctAlternative: string
+      }) => ({
+        id: q.index,
+        enunciado: [q.context, q.alternativesIntroduction].filter(Boolean).join('\n\n'),
+        alternativas: q.alternatives.map(a => ({ letra: a.letter, texto: a.text })),
+        resposta: q.correctAlternative,
+        explicacao: '',
+      }))
+
+      setQuestoes(mapped)
+      setIniciado(true)
+    } catch {
+      setErro('Erro de conexão. Verifique sua internet e tente novamente.')
+    }
+    setLoading(false)
+  }
+
+  if (iniciado && questoes.length > 0) {
+    const disciplinaLabel = DISCIPLINAS_ENEM.find(d => d.value === disciplina)?.label ?? disciplina
     return (
-      <BancoEmBreve
-        vestibular={vestibular}
-        materia={materia}
-        conteudo={conteudo}
-        onVoltar={() => setIniciado(false)}
+      <SessaoQuestoes
+        vestibular="ENEM"
+        materia={disciplinaLabel}
+        conteudo={`ENEM ${ano}`}
+        questoes={questoes}
+        onVoltar={() => { setIniciado(false); setQuestoes([]) }}
       />
     )
   }
 
   return (
     <div className="max-w-2xl">
-      <h2 className="text-text font-semibold text-lg mb-1">Escolha o conteúdo</h2>
-      <p className="text-text-muted text-sm mb-8">Selecione o vestibular, matéria e conteúdo para começar a praticar.</p>
+      <h2 className="text-text font-semibold text-lg mb-1">Banco de Questões ENEM</h2>
+      <p className="text-text-muted text-sm mb-8">Questões reais do ENEM por ano e área de conhecimento.</p>
 
-      {/* Seletor em cascata */}
-      <div className="flex flex-col gap-4 mb-8">
+      <div className="flex flex-col gap-6 mb-8">
 
-        {/* Vestibular */}
+        {/* Ano */}
         <div>
-          <label className="text-text-muted text-xs font-medium uppercase tracking-wider mb-2 block">Vestibular</label>
+          <label className="text-text-muted text-xs font-medium uppercase tracking-wider mb-3 block">Ano</label>
           <div className="flex flex-wrap gap-2">
-            {VESTIBULARES.map(v => (
+            {ANOS_ENEM.map(a => (
               <button
-                key={v}
-                onClick={() => handleVestibular(v)}
+                key={a}
+                onClick={() => setAno(a)}
                 className={`px-4 py-2 rounded-full text-sm font-medium border transition-all ${
-                  vestibular === v
+                  ano === a
                     ? 'bg-brand text-white border-brand'
                     : 'bg-bg-card border-border text-text-muted hover:text-text hover:border-brand'
                 }`}
               >
-                {v}
+                {a}
               </button>
             ))}
           </div>
         </div>
 
-        {/* Matéria */}
-        {vestibular && (
-          <div>
-            <label className="text-text-muted text-xs font-medium uppercase tracking-wider mb-2 block">
-              Matéria <ChevronRight size={12} className="inline" />
-            </label>
-            <div className="flex flex-wrap gap-2">
-              {materias.map(m => (
-                <button
-                  key={m}
-                  onClick={() => handleMateria(m)}
-                  className={`px-4 py-2 rounded-full text-sm font-medium border transition-all ${
-                    materia === m
-                      ? 'bg-brand text-white border-brand'
-                      : 'bg-bg-card border-border text-text-muted hover:text-text hover:border-brand'
-                  }`}
-                >
-                  {m}
-                </button>
-              ))}
-            </div>
+        {/* Disciplina */}
+        <div>
+          <label className="text-text-muted text-xs font-medium uppercase tracking-wider mb-3 block">Área de Conhecimento</label>
+          <div className="grid grid-cols-2 gap-2">
+            {DISCIPLINAS_ENEM.map(d => (
+              <button
+                key={d.value}
+                onClick={() => setDisciplina(d.value)}
+                className={`py-3 px-4 rounded-full text-sm font-medium border transition-all ${
+                  disciplina === d.value
+                    ? 'bg-brand text-white border-brand'
+                    : 'bg-bg-card border-border text-text-muted hover:text-text hover:border-brand'
+                }`}
+              >
+                {d.label}
+              </button>
+            ))}
           </div>
-        )}
-
-        {/* Conteúdo */}
-        {materia && (
-          <div>
-            <label className="text-text-muted text-xs font-medium uppercase tracking-wider mb-2 block">
-              Conteúdo <ChevronRight size={12} className="inline" />
-            </label>
-            <div className="flex flex-wrap gap-2">
-              {conteudos.map(c => (
-                <button
-                  key={c}
-                  onClick={() => setConteudo(c)}
-                  className={`px-4 py-2 rounded-full text-sm font-medium border transition-all ${
-                    conteudo === c
-                      ? 'bg-brand text-white border-brand'
-                      : 'bg-bg-card border-border text-text-muted hover:text-text hover:border-brand'
-                  }`}
-                >
-                  {c}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
+        </div>
 
         {/* Quantidade */}
-        {pronto && (
-          <div>
-            <label className="text-text-muted text-xs font-medium uppercase tracking-wider mb-2 block">
-              Quantidade de questões
-            </label>
-            <div className="flex gap-2">
-              {[5, 10, 15, 20].map(q => (
-                <button
-                  key={q}
-                  onClick={() => setQuantidade(q)}
-                  className={`w-14 py-2 rounded-full text-sm font-medium border transition-all ${
-                    quantidade === q
-                      ? 'bg-brand text-white border-brand'
-                      : 'bg-bg-card border-border text-text-muted hover:text-text hover:border-brand'
-                  }`}
-                >
-                  {q}
-                </button>
-              ))}
-            </div>
+        <div>
+          <label className="text-text-muted text-xs font-medium uppercase tracking-wider mb-3 block">Quantidade de questões</label>
+          <div className="flex gap-2">
+            {[5, 10, 15, 20].map(q => (
+              <button
+                key={q}
+                onClick={() => setQuantidade(q)}
+                className={`w-14 py-2 rounded-full text-sm font-medium border transition-all ${
+                  quantidade === q
+                    ? 'bg-brand text-white border-brand'
+                    : 'bg-bg-card border-border text-text-muted hover:text-text hover:border-brand'
+                }`}
+              >
+                {q}
+              </button>
+            ))}
           </div>
-        )}
+        </div>
       </div>
 
-      {/* Resumo da seleção */}
-      {pronto && (
-        <div className="bg-bg-card border border-border rounded-2xl p-5 mb-6 flex items-center gap-4">
-          <div className="w-10 h-10 bg-brand-soft rounded-xl flex items-center justify-center flex-shrink-0">
-            <Target size={18} className="text-brand" />
-          </div>
-          <div className="flex-1">
-            <p className="text-text text-sm font-medium">{vestibular} · {materia}</p>
-            <p className="text-text-muted text-xs mt-0.5">{conteudo} · {quantidade} questões</p>
-          </div>
-          <button
-            onClick={() => setIniciado(true)}
-            className="flex items-center gap-2 bg-brand hover:bg-brand-hover text-white text-sm font-semibold px-6 py-2.5 rounded-full transition-colors"
-          >
-            Começar
-          </button>
-        </div>
+      {erro && (
+        <p className="text-red-500 text-sm mb-4">{erro}</p>
       )}
 
-      {/* Empty state */}
-      {!vestibular && (
-        <div className="border border-dashed border-border rounded-2xl p-10 text-center">
-          <GraduationCap size={32} className="text-text-faint mx-auto mb-3" />
-          <p className="text-text-muted text-sm">Selecione um vestibular acima para começar</p>
-        </div>
+      <button
+        onClick={buscar}
+        disabled={!pronto || loading}
+        className="flex items-center justify-center gap-2 w-full bg-brand hover:bg-brand-hover disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3.5 rounded-full transition-colors text-sm"
+      >
+        {loading ? (
+          <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Buscando questões...</>
+        ) : (
+          <><BookOpen size={15} /> Buscar {quantidade} questões · ENEM {ano}</>
+        )}
+      </button>
+
+      {!disciplina && (
+        <p className="text-text-faint text-xs text-center mt-4">Selecione uma área de conhecimento para continuar</p>
       )}
     </div>
   )
@@ -593,7 +605,7 @@ function SessaoQuestoes({
       </div>
 
       {/* Explicação */}
-      {revelada && (
+      {revelada && questao.explicacao && (
         <div className="bg-brand-soft border border-brand/20 rounded-2xl p-5 mb-6">
           <p className="text-brand text-xs font-semibold uppercase tracking-wider mb-2">Explicação</p>
           <p className="text-text text-sm leading-relaxed">{questao.explicacao}</p>
@@ -819,28 +831,6 @@ function GerarComIA() {
           </div>
         )}
       </div>
-    </div>
-  )
-}
-
-// ─── Banco em breve ──────────────────────────────────────────────────────────
-
-function BancoEmBreve({ vestibular, materia, conteudo, onVoltar }: {
-  vestibular: string; materia: string; conteudo: string; onVoltar: () => void
-}) {
-  return (
-    <div className="flex flex-col items-center justify-center py-20 text-center">
-      <div className="w-14 h-14 bg-brand-soft rounded-2xl flex items-center justify-center mb-5">
-        <BookOpen size={24} className="text-brand" />
-      </div>
-      <h2 className="text-text font-semibold text-lg mb-2">Banco de questões em breve</h2>
-      <p className="text-text-muted text-sm max-w-sm mb-1">
-        As questões reais de <span className="text-text font-medium">{vestibular} · {materia}</span> serão integradas em breve via API de provas.
-      </p>
-      <p className="text-text-faint text-xs mb-8">{conteudo}</p>
-      <button onClick={onVoltar} className="border border-border hover:border-brand text-text-muted hover:text-text px-5 py-2.5 rounded-full text-sm font-medium transition-all">
-        ← Voltar
-      </button>
     </div>
   )
 }
