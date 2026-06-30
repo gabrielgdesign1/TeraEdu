@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
+import { registrarAtividade } from '@/lib/registrarAtividade'
 import { useTheme } from 'next-themes'
 import {
   LayoutDashboard, FileQuestion, Layers, FileText, MessageCircle,
@@ -675,6 +676,14 @@ function SessaoQuestoes({
   function proxima() {
     if (atual + 1 >= quantidade) {
       setFinalizado(true)
+      const minutos = Math.max(1, Math.round([...tempos, tempoAtual].reduce((a, b) => a + b, 0) / 60))
+      registrarAtividade({
+        tipo: 'questao',
+        descricao: `${quantidade} questão${quantidade !== 1 ? 'ões' : ''} — ${vestibular}`,
+        materia,
+        quantidade,
+        minutos,
+      })
     } else {
       setAtual(atual + 1)
       setSelecionada(null)
@@ -1217,7 +1226,18 @@ function SessaoDiscursiva({
   }
 
   function proxima() {
-    if (atual + 1 >= total) { setFinalizado(true); return }
+    if (atual + 1 >= total) {
+      setFinalizado(true)
+      const minutos = Math.max(1, Math.round(tempos.reduce((a, b) => a + b, 0) / 60))
+      registrarAtividade({
+        tipo: 'questao',
+        descricao: `${total} questão${total !== 1 ? 'ões' : ''} discursiva${total !== 1 ? 's' : ''} — UNESP`,
+        materia,
+        quantidade: total,
+        minutos,
+      })
+      return
+    }
     setAtual(atual + 1)
     setResposta('')
     setResultado(null)
