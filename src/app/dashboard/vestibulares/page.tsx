@@ -1,10 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useTheme } from 'next-themes'
-import { useEffect } from 'react'
 import {
   LayoutDashboard, FileQuestion, Layers, FileText, MessageCircle,
   BarChart3, Calendar, Sun, Moon, Settings, GraduationCap,
@@ -12,14 +11,15 @@ import {
 } from 'lucide-react'
 import { useProfile } from '@/hooks/useProfile'
 
-// ─── Dados ────────────────────────────────────────────────────────────────────
+// ─── Tipos ────────────────────────────────────────────────────────────────────
 
 type Status =
   | 'inscricoes-abertas'
-  | 'inscricoes-futuras'
-  | 'inscricoes-encerradas'
+  | 'em-breve'
+  | 'abrindo-em-breve'
+  | 'provas-em-breve'
+  | 'encerrado'
   | 'aguardando-edital'
-  | 'prova-proxima'
 
 type Link_ = { label: string; url: string }
 
@@ -28,7 +28,12 @@ type Vestibular = {
   nome: string
   edicao: string
   instituicao: string
-  status: Status
+  /** Fallback quando não há datas suficientes para calcular dinamicamente */
+  statusFallback: Status
+  /** Datas no formato YYYY-MM-DD para cálculo dinâmico */
+  inscricaoInicioDate: string | null
+  inscricaoFimDate: string | null
+  primeiraProvaDate: string | null
   taxa: string | null
   inscricoes: { periodo: string } | null
   provas: string[]
@@ -38,13 +43,18 @@ type Vestibular = {
   obs?: string
 }
 
+// ─── Dados dos vestibulares ───────────────────────────────────────────────────
+
 const VESTIBULARES: Vestibular[] = [
   {
     id: 'enem',
     nome: 'ENEM',
     edicao: '2026',
     instituicao: 'Inep / Ministério da Educação',
-    status: 'inscricoes-encerradas',
+    statusFallback: 'provas-em-breve',
+    inscricaoInicioDate: '2026-05-25',
+    inscricaoFimDate:    '2026-06-12',
+    primeiraProvaDate:   '2026-11-08',
     taxa: 'R$ 85,00',
     inscricoes: { periodo: '25/05/2026 – 12/06/2026' },
     provas: ['08/11/2026 (1º dia)', '15/11/2026 (2º dia)'],
@@ -66,11 +76,14 @@ const VESTIBULARES: Vestibular[] = [
     nome: 'FUVEST / USP',
     edicao: '2027',
     instituicao: 'Fundação Universitária para o Vestibular',
-    status: 'inscricoes-futuras',
+    statusFallback: 'em-breve',
+    inscricaoInicioDate: '2026-08-17',
+    inscricaoFimDate:    '2026-10-09',
+    primeiraProvaDate:   '2026-11-01',
     taxa: 'R$ 228,00',
     inscricoes: { periodo: '17/08/2026 – 09/10/2026' },
     provas: ['01/11/2026 (1ª fase)', '06–07/12/2026 (2ª fase)'],
-    fases: ['1ª fase — 80 questões objetivas', '2ª fase — discursiva', 'Provas de habilidades específicas (Música, Artes, Teatro)'],
+    fases: ['1ª fase — 80 questões objetivas', '2ª fase — discursiva', 'Habilidades específicas (Música, Artes, Teatro)'],
     destaques: [
       '1ª fase: 01/11/2026',
       'Divulgação convocados 2ª fase: 23/11/2026',
@@ -91,7 +104,10 @@ const VESTIBULARES: Vestibular[] = [
     nome: 'UNICAMP',
     edicao: '2027',
     instituicao: 'Comvest / Unicamp',
-    status: 'inscricoes-futuras',
+    statusFallback: 'em-breve',
+    inscricaoInicioDate: '2026-08-03',
+    inscricaoFimDate:    '2026-08-31',
+    primeiraProvaDate:   '2026-10-18',
     taxa: 'A confirmar no edital',
     inscricoes: { periodo: '03/08/2026 – 31/08/2026' },
     provas: ['18/10/2026 (1ª fase)', '29–30/11/2026 (2ª fase)'],
@@ -113,7 +129,10 @@ const VESTIBULARES: Vestibular[] = [
     nome: 'UNESP',
     edicao: '2027',
     instituicao: 'Fundação Vunesp / Unesp',
-    status: 'inscricoes-futuras',
+    statusFallback: 'em-breve',
+    inscricaoInicioDate: '2026-09-04',
+    inscricaoFimDate:    '2026-10-20',
+    primeiraProvaDate:   '2026-11-22',
     taxa: 'A confirmar no manual',
     inscricoes: { periodo: '04/09/2026 – 20/10/2026' },
     provas: ['22/11/2026 (1ª fase)', '13–14/12/2026 (2ª fase)'],
@@ -136,13 +155,17 @@ const VESTIBULARES: Vestibular[] = [
     nome: 'UERJ',
     edicao: '2027',
     instituicao: 'Departamento de Seleção Acadêmica da UERJ',
-    status: 'prova-proxima',
+    statusFallback: 'provas-em-breve',
+    // 1º EQ já ocorreu; 2º EQ previsto para 2º sem 2026 — sem data exata publicada
+    inscricaoInicioDate: null,
+    inscricaoFimDate:    '2026-05-07',
+    primeiraProvaDate:   '2026-06-07',
     taxa: 'R$ 100,00 (1º EQ)',
     inscricoes: { periodo: 'Até 07/05/2026 (1º EQ — encerrado)' },
-    provas: ['07/06/2026 (1º Exame de Qualificação)', '2º EQ — 2º sem. 2026', 'Exame Discursivo — a confirmar'],
+    provas: ['07/06/2026 (1º EQ — realizado)', '2º EQ — 2º sem. 2026', 'Exame Discursivo — a confirmar'],
     fases: ['1º Exame de Qualificação', '2º Exame de Qualificação', 'Exame Discursivo (80 pts)'],
     destaques: [
-      '1º EQ: 07/06/2026 — Livro: "Ainda estou aqui"',
+      '1º EQ realizado em 07/06/2026 — Livro: "Ainda estou aqui"',
       '2º EQ: 2º semestre de 2026 — Livro: "O Cortiço"',
       'Exame Discursivo: obra "O bem-amado"',
       'Redação usa "Luanda, Lisboa, Paraíso"',
@@ -152,14 +175,17 @@ const VESTIBULARES: Vestibular[] = [
       { label: 'Sistemas candidato', url: 'https://sistemas.vestibular.uerj.br/' },
       { label: 'Questões comentadas', url: 'https://www.revista.vestibular.uerj.br/questao/' },
     ],
-    obs: 'Acompanhar 2º EQ e Exame Discursivo no site oficial.',
+    obs: '2º EQ e Exame Discursivo com datas a confirmar no site oficial.',
   },
   {
     id: 'unb',
     nome: 'UnB',
     edicao: '2026',
     instituicao: 'Cebraspe / Universidade de Brasília',
-    status: 'aguardando-edital',
+    statusFallback: 'aguardando-edital',
+    inscricaoInicioDate: '2025-08-15',
+    inscricaoFimDate:    '2025-09-05',
+    primeiraProvaDate:   '2025-11-22',
     taxa: 'R$ 173,00 (edição 2026)',
     inscricoes: { periodo: '15/08/2025 – 05/09/2025 (edição 2026)' },
     provas: ['22–23/11/2025 (edição 2026)'],
@@ -167,25 +193,28 @@ const VESTIBULARES: Vestibular[] = [
     destaques: [
       'Edição 2027 ainda sem edital publicado',
       '2.102 vagas na edição 2026',
-      'Aplicação no DF e cidades satélites',
       'Modelo Cebraspe — não é A/B/C/D/E tradicional',
+      'Aplicação no DF e cidades próximas',
     ],
     links: [
       { label: 'Cebraspe — Vestibular UnB 2026', url: 'https://www.cebraspe.org.br/vestibulares/VESTUNB_26' },
       { label: 'Vestibulares Cebraspe', url: 'https://www.cebraspe.org.br/vestibulares/' },
     ],
-    obs: 'Informações da edição 2026 como referência. Edital 2027 ainda não publicado.',
+    obs: 'Dados da edição 2026 como referência. Edital 2027 ainda não publicado.',
   },
   {
     id: 'ufg',
     nome: 'UFG',
     edicao: '2027',
     instituicao: 'Instituto Verbena / UFG',
-    status: 'inscricoes-abertas',
+    statusFallback: 'inscricoes-abertas',
+    inscricaoInicioDate: '2026-06-26',
+    inscricaoFimDate:    '2026-08-07',
+    primeiraProvaDate:   '2026-09-27',
     taxa: 'R$ 130,00',
     inscricoes: { periodo: '26/06/2026 – 07/08/2026' },
-    provas: ['27/09/2026 (prova objetiva e redação)'],
-    fases: ['Fase única — objetiva + redação', '96 questões objetivas'],
+    provas: ['27/09/2026 (objetiva + redação)'],
+    fases: ['Fase única — 96 questões objetivas + redação'],
     destaques: [
       'Gabarito preliminar: 28/09/2026',
       'Resultado final: 11/12/2026',
@@ -197,20 +226,22 @@ const VESTIBULARES: Vestibular[] = [
       { label: 'Portal do Candidato', url: 'https://sistemas.institutoverbena.ufg.br/portal/login' },
       { label: 'Edital de abertura', url: 'https://sistemas.institutoverbena.ufg.br/2026/vestibular-ufg/sistema/arquivos/editais/VESTIBULAR_UFG_2027_EDITAL_.pdf' },
     ],
-    obs: 'Inscrições abertas até 07/08/2026.',
   },
   {
     id: 'ufpr',
     nome: 'UFPR',
     edicao: '2027',
     instituicao: 'Núcleo de Concursos da UFPR',
-    status: 'inscricoes-abertas',
+    statusFallback: 'inscricoes-abertas',
+    inscricaoInicioDate: '2026-05-18',
+    inscricaoFimDate:    '2026-07-20',
+    primeiraProvaDate:   '2026-11-01',
     taxa: 'R$ 180,00',
     inscricoes: { periodo: '18/05/2026 – 20/07/2026' },
-    provas: ['01/11/2026 (objetiva + discursiva)', '02/11/2026 (Música — habilidade específica)'],
+    provas: ['01/11/2026 (objetiva + discursiva)', '02/11/2026 (Música)'],
     fases: ['Fase única — 80 questões objetivas + 2 discursivas'],
     destaques: [
-      'Aplicação em 12 cidades: Curitiba, Londrina, Maringá, Joinville/SC...',
+      'Aplicação em 12 cidades: Curitiba, Londrina, Maringá, Joinville/SC…',
       'Resultado preliminar das inscrições: 14/08/2026',
       'Isenção: até 15/06/2026',
       'Atendimento especializado: até 21/07/2026',
@@ -220,18 +251,20 @@ const VESTIBULARES: Vestibular[] = [
       { label: 'Portal do Candidato', url: 'https://servicos.nc.ufpr.br/PortalNC/Login' },
       { label: 'Núcleo de Concursos', url: 'https://www.nc.ufpr.br/' },
     ],
-    obs: 'Inscrições abertas até 20/07/2026.',
   },
   {
     id: 'ita',
     nome: 'ITA',
     edicao: '2027',
     instituicao: 'Instituto Tecnológico de Aeronáutica',
-    status: 'inscricoes-encerradas',
+    statusFallback: 'inscricoes-abertas',
+    inscricaoInicioDate: '2026-06-02',
+    inscricaoFimDate:    '2026-07-12',
+    primeiraProvaDate:   '2026-09-27',
     taxa: 'R$ 195,00',
     inscricoes: { periodo: '02/06/2026 – 12/07/2026' },
     provas: ['27/09/2026 (1ª fase)', '20–23/10/2026 (2ª fase)'],
-    fases: ['1ª fase — exame objetivo (13h–18h)', '2ª fase — provas dissertativas/objetivas por disciplina', '3ª fase — inspeção de saúde'],
+    fases: ['1ª fase — exame objetivo (13h–18h)', '2ª fase — provas dissertativas por disciplina', '3ª fase — inspeção de saúde'],
     destaques: [
       '2ª fase: 20/10 Matemática, 21/10 Química, 22/10 Física, 23/10 Português',
       'Cartão/local divulgado: 21/09/2026',
@@ -242,14 +275,16 @@ const VESTIBULARES: Vestibular[] = [
       { label: 'Edital ITA 2027', url: 'https://vestibular.ita.br/instrucoes/edital_2027.pdf' },
       { label: 'Provas anteriores', url: 'https://vestibular.ita.br/provas.htm' },
     ],
-    obs: 'Inscrições encerradas em 12/07/2026.',
   },
   {
     id: 'ime',
     nome: 'IME',
     edicao: '2026/2027',
     instituicao: 'Instituto Militar de Engenharia / Exército Brasileiro',
-    status: 'inscricoes-encerradas',
+    statusFallback: 'inscricoes-abertas',
+    inscricaoInicioDate: '2026-05-27',
+    inscricaoFimDate:    '2026-07-08',
+    primeiraProvaDate:   '2026-09-20',
     taxa: 'R$ 140,00',
     inscricoes: { periodo: '27/05/2026 – 08/07/2026' },
     provas: ['20/09/2026 (1ª fase)', '26–29/10/2026 (2ª fase discursiva)'],
@@ -263,27 +298,83 @@ const VESTIBULARES: Vestibular[] = [
       { label: 'Portal de inscrição IME', url: 'https://inscricoes.ime.eb.br/cfg/' },
       { label: 'Portal concursos IME', url: 'https://www.ime.eb.mil.br/component/banners/click/6' },
     ],
-    obs: 'Inscrições encerradas em 08/07/2026.',
   },
 ]
 
-// ─── Status config ─────────────────────────────────────────────────────────────
+// ─── Status dinâmico ──────────────────────────────────────────────────────────
 
-const STATUS_CONFIG: Record<Status, { label: string; color: string; dot: string }> = {
-  'inscricoes-abertas':    { label: 'Inscrições abertas',    color: 'bg-green-500/10 text-green-600 border-green-500/30',  dot: 'bg-green-500'  },
-  'inscricoes-futuras':    { label: 'Inscrições em breve',   color: 'bg-blue-500/10 text-blue-600 border-blue-500/30',    dot: 'bg-blue-500'   },
-  'inscricoes-encerradas': { label: 'Inscrições encerradas', color: 'bg-zinc-500/10 text-text-muted border-zinc-500/20',  dot: 'bg-zinc-400'   },
-  'aguardando-edital':     { label: 'Aguardando edital',     color: 'bg-amber-500/10 text-amber-600 border-amber-500/30', dot: 'bg-amber-500'  },
-  'prova-proxima':         { label: 'Prova próxima',         color: 'bg-brand/10 text-brand border-brand/30',             dot: 'bg-brand'      },
+type StatusInfo = {
+  status: Status
+  label: string
+  diasLabel: string | null
+  color: string
+  dot: string
 }
 
+function calcularStatus(v: Vestibular, hoje: Date): StatusInfo {
+  const cfg: Record<Status, { label: string; color: string; dot: string }> = {
+    'inscricoes-abertas': { label: 'Inscrições abertas',  color: 'bg-green-500/10 text-green-600 border-green-500/30',     dot: 'bg-green-500'   },
+    'em-breve':           { label: 'Em breve',             color: 'bg-blue-500/10 text-blue-600 border-blue-500/30',       dot: 'bg-blue-500'    },
+    'abrindo-em-breve':   { label: 'Abrindo em breve',    color: 'bg-amber-500/10 text-amber-600 border-amber-500/30',     dot: 'bg-amber-500'   },
+    'provas-em-breve':    { label: 'Provas em breve',      color: 'bg-brand/10 text-brand border-brand/30',                dot: 'bg-brand'       },
+    'encerrado':          { label: 'Encerrado',            color: 'bg-zinc-500/10 text-text-muted border-zinc-500/20',     dot: 'bg-zinc-400'    },
+    'aguardando-edital':  { label: 'Aguardando edital',   color: 'bg-purple-500/10 text-purple-600 border-purple-500/30', dot: 'bg-purple-500'  },
+  }
+
+  function make(s: Status, diasLabel: string | null = null): StatusInfo {
+    return { status: s, diasLabel, ...cfg[s] }
+  }
+
+  function diffDias(a: Date, b: Date) {
+    return Math.ceil((b.getTime() - a.getTime()) / 86400000)
+  }
+
+  const { inscricaoInicioDate, inscricaoFimDate, primeiraProvaDate } = v
+
+  // Sem datas suficientes: usa fallback
+  if (!inscricaoFimDate) return make(v.statusFallback)
+
+  const fim   = new Date(inscricaoFimDate + 'T23:59:59')
+  const prova = primeiraProvaDate ? new Date(primeiraProvaDate + 'T08:00:00') : null
+
+  // Inscrições já fecharam
+  if (hoje > fim) {
+    // Se tem prova futura: "provas em breve"
+    if (prova && hoje < prova) {
+      const d = diffDias(hoje, prova)
+      return make('provas-em-breve', `Prova em ${d} dia${d !== 1 ? 's' : ''}`)
+    }
+    // UERJ/UnB com fallback especial
+    if (v.statusFallback === 'aguardando-edital') return make('aguardando-edital')
+    if (v.statusFallback === 'provas-em-breve')   return make('provas-em-breve', '2º EQ a confirmar')
+    return make('encerrado')
+  }
+
+  const inicio = inscricaoInicioDate ? new Date(inscricaoInicioDate + 'T00:00:00') : null
+
+  // Inscrições ainda não abriram
+  if (inicio && hoje < inicio) {
+    const d = diffDias(hoje, inicio)
+    if (d <= 7) return make('abrindo-em-breve', `Abre em ${d} dia${d !== 1 ? 's' : ''}`)
+    return make('em-breve', `Abre em ${d} dias`)
+  }
+
+  // Estamos dentro do período de inscrição
+  const d = diffDias(hoje, fim)
+  if (d === 0) return make('inscricoes-abertas', 'Fecha hoje!')
+  return make('inscricoes-abertas', `Fecha em ${d} dia${d !== 1 ? 's' : ''}`)
+}
+
+// ─── Filtros ──────────────────────────────────────────────────────────────────
+
 const FILTROS: { id: Status | 'todos'; label: string }[] = [
-  { id: 'todos',                label: 'Todos'               },
-  { id: 'inscricoes-abertas',   label: 'Inscrições abertas'  },
-  { id: 'inscricoes-futuras',   label: 'Em breve'            },
-  { id: 'prova-proxima',        label: 'Prova próxima'       },
-  { id: 'inscricoes-encerradas',label: 'Encerradas'          },
-  { id: 'aguardando-edital',    label: 'Aguardando edital'   },
+  { id: 'todos',              label: 'Todos'               },
+  { id: 'inscricoes-abertas', label: 'Inscrições abertas'  },
+  { id: 'abrindo-em-breve',  label: 'Abrindo em breve'    },
+  { id: 'em-breve',          label: 'Em breve'             },
+  { id: 'provas-em-breve',   label: 'Provas em breve'      },
+  { id: 'encerrado',         label: 'Encerradas'           },
+  { id: 'aguardando-edital', label: 'Aguardando edital'    },
 ]
 
 // ─── Página ────────────────────────────────────────────────────────────────────
@@ -291,15 +382,34 @@ const FILTROS: { id: Status | 'todos'; label: string }[] = [
 export default function Vestibulares() {
   const { theme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
-  useEffect(() => setMounted(true), [])
+
+  // hoje é null no server/hydration, setado no cliente para evitar mismatch
+  const [hoje, setHoje] = useState<Date | null>(null)
+
+  useEffect(() => {
+    setMounted(true)
+    setHoje(new Date())
+  }, [])
 
   const { profile } = useProfile()
   const primeiroNome = profile?.nome?.split(' ')[0] ?? null
 
-  const [filtro, setFiltro]       = useState<Status | 'todos'>('todos')
+  const [filtro,    setFiltro   ] = useState<Status | 'todos'>('todos')
   const [expandido, setExpandido] = useState<string | null>(null)
 
-  const lista = filtro === 'todos' ? VESTIBULARES : VESTIBULARES.filter(v => v.status === filtro)
+  // Calcula status de cada vestibular (só no cliente)
+  const statusMap: Record<string, StatusInfo> = {}
+  if (hoje) {
+    for (const v of VESTIBULARES) {
+      statusMap[v.id] = calcularStatus(v, hoje)
+    }
+  }
+
+  const lista = VESTIBULARES.filter(v => {
+    if (filtro === 'todos') return true
+    if (!hoje) return true  // durante hydration mostra tudo
+    return statusMap[v.id]?.status === filtro
+  })
 
   return (
     <div className="min-h-screen bg-bg flex">
@@ -311,17 +421,17 @@ export default function Vestibulares() {
           <span className="text-text font-bold tracking-tight">TeraEdu</span>
         </div>
         <nav className="flex flex-col gap-0.5 px-3 flex-1 pt-1">
-          <SidebarLink href="/dashboard"                 icon={LayoutDashboard} label="Início" />
-          <SidebarLink href="/dashboard/questoes"        icon={FileQuestion}    label="Questões" />
-          <SidebarLink href="/dashboard/flashcards"      icon={Layers}          label="Flashcards" />
-          <SidebarLink href="/dashboard/resumos"         icon={FileText}        label="Resumos" />
-          <SidebarLink href="/dashboard/tutora"          icon={MessageCircle}   label="IA Tutora" />
-          <SidebarLink href="/dashboard/vestibulares"    icon={GraduationCap}   label="Vestibulares" active />
+          <SidebarLink href="/dashboard"              icon={LayoutDashboard} label="Início" />
+          <SidebarLink href="/dashboard/questoes"     icon={FileQuestion}    label="Questões" />
+          <SidebarLink href="/dashboard/flashcards"   icon={Layers}          label="Flashcards" />
+          <SidebarLink href="/dashboard/resumos"      icon={FileText}        label="Resumos" />
+          <SidebarLink href="/dashboard/tutora"       icon={MessageCircle}   label="IA Tutora" />
+          <SidebarLink href="/dashboard/vestibulares" icon={GraduationCap}   label="Vestibulares" active />
           <div className="px-3 mt-8 mb-2">
             <p className="text-text-faint text-[10px] uppercase tracking-widest font-semibold">Progresso</p>
           </div>
-          <SidebarLink href="/dashboard/desempenho" icon={BarChart3}  label="Desempenho" />
-          <SidebarLink href="/dashboard/plano"      icon={Calendar}   label="Plano de Estudos" />
+          <SidebarLink href="/dashboard/desempenho" icon={BarChart3} label="Desempenho" />
+          <SidebarLink href="/dashboard/plano"      icon={Calendar}  label="Plano de Estudos" />
         </nav>
         <div className="px-3 py-4 border-t border-border/60">
           <button
@@ -378,14 +488,13 @@ export default function Vestibulares() {
         {/* Cards */}
         <div className="grid grid-cols-2 gap-4 max-w-5xl">
           {lista.map(v => {
-            const st = STATUS_CONFIG[v.status]
+            const st = hoje ? statusMap[v.id] : null
             const aberto = expandido === v.id
+
             return (
-              <div
-                key={v.id}
-                className="bg-bg-card border border-border rounded-2xl overflow-hidden transition-all"
-              >
-                {/* Card header */}
+              <div key={v.id} className="bg-bg-card border border-border rounded-2xl overflow-hidden">
+
+                {/* Header do card */}
                 <div className="p-6">
                   <div className="flex items-start justify-between gap-3 mb-4">
                     <div>
@@ -395,10 +504,23 @@ export default function Vestibulares() {
                       </div>
                       <p className="text-text-faint text-xs">{v.instituicao}</p>
                     </div>
-                    <span className={`flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border flex-shrink-0 ${st.color}`}>
-                      <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${st.dot}`} />
-                      {st.label}
-                    </span>
+
+                    {/* Badge dinâmico */}
+                    <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                      {st ? (
+                        <>
+                          <span className={`flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border ${st.color}`}>
+                            <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${st.dot}`} />
+                            {st.label}
+                          </span>
+                          {st.diasLabel && (
+                            <span className="text-[10px] text-text-faint font-medium">{st.diasLabel}</span>
+                          )}
+                        </>
+                      ) : (
+                        <span className="w-28 h-6 bg-bg-hover rounded-full animate-pulse" />
+                      )}
+                    </div>
                   </div>
 
                   {/* Info rápida */}
@@ -439,7 +561,6 @@ export default function Vestibulares() {
                 {aberto && (
                   <div className="border-t border-border px-6 pb-6 pt-5 flex flex-col gap-5">
 
-                    {/* Destaques */}
                     <div>
                       <p className="text-text-faint text-[10px] uppercase tracking-widest font-semibold mb-2">Datas chave</p>
                       <ul className="flex flex-col gap-1">
@@ -452,7 +573,6 @@ export default function Vestibulares() {
                       </ul>
                     </div>
 
-                    {/* Fases */}
                     <div>
                       <p className="text-text-faint text-[10px] uppercase tracking-widest font-semibold mb-2">Fases</p>
                       <ul className="flex flex-col gap-1">
@@ -465,14 +585,12 @@ export default function Vestibulares() {
                       </ul>
                     </div>
 
-                    {/* Obs */}
                     {v.obs && (
                       <div className="bg-bg border border-border rounded-xl px-4 py-3">
                         <p className="text-text-muted text-xs leading-relaxed">{v.obs}</p>
                       </div>
                     )}
 
-                    {/* Links */}
                     <div>
                       <p className="text-text-faint text-[10px] uppercase tracking-widest font-semibold mb-2">Links oficiais</p>
                       <div className="flex flex-col gap-1.5">
