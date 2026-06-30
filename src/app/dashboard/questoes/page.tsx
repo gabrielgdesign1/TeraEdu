@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { registrarAtividade } from '@/lib/registrarAtividade'
@@ -9,13 +9,15 @@ import {
   LayoutDashboard, FileQuestion, Layers, FileText, MessageCircle,
   BarChart3, Calendar, Sun, Moon, Settings, Sparkles, BookOpen,
   ChevronRight, ChevronDown, CheckCircle2, XCircle, RotateCcw,
-  Trophy, Target, GraduationCap, Timer, Pencil, AlertCircle
+  Trophy, Target, GraduationCap, Timer, Pencil, AlertCircle,
+  Bookmark, BookmarkCheck, Trash2
 } from 'lucide-react'
-import { useNome } from '@/hooks/useNome'
+import { useProfile } from '@/hooks/useProfile'
+import { createClient } from '@/lib/supabase'
 
 // ─── Tipos ───────────────────────────────────────────────────────────────────
 
-type Aba = 'ia' | 'banco'
+type Aba = 'ia' | 'banco' | 'salvas'
 
 type Questao = {
   id: number
@@ -190,7 +192,9 @@ export default function Questoes() {
   const { theme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
   useEffect(() => setMounted(true), [])
-  const { primeiroNome, nome } = useNome()
+  const { profile } = useProfile()
+  const primeiroNome = profile?.nome?.split(' ')[0] ?? null
+  const nome = profile?.nome ?? null
 
   const [aba, setAba] = useState<Aba>('banco')
 
@@ -266,12 +270,25 @@ export default function Questoes() {
               <Sparkles size={15} />
               Gerar com IA
             </button>
+            <button
+              onClick={() => setAba('salvas')}
+              className={`flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-medium transition-all ${
+                aba === 'salvas'
+                  ? 'bg-bg shadow-sm text-text border border-border'
+                  : 'text-text-muted hover:text-text'
+              }`}
+            >
+              <Bookmark size={15} />
+              Salvas
+            </button>
           </div>
         </div>
 
         {/* Conteúdo da aba */}
         <div className="flex-1 px-10 py-8">
-          {aba === 'banco' ? <BancoQuestoes /> : <GerarComIA />}
+          {aba === 'banco' && <BancoQuestoes />}
+          {aba === 'ia'    && <GerarComIA />}
+          {aba === 'salvas' && <QuestoesSalvas />}
         </div>
       </main>
     </div>
@@ -631,9 +648,10 @@ function BancoQuestoes() {
 // ─── Sessão de questões ───────────────────────────────────────────────────────
 
 function SessaoQuestoes({
-  vestibular, materia, conteudo, questoes, onVoltar
+  vestibular, materia, conteudo, questoes, onVoltar, onSalvar
 }: {
-  vestibular: string; materia: string; conteudo: string; questoes: Questao[]; onVoltar: () => void
+  vestibular: string; materia: string; conteudo: string; questoes: Questao[]
+  onVoltar: () => void; onSalvar?: (q: Questao) => Promise<void>
 }) {
   const quantidade = questoes.length
 
@@ -644,6 +662,8 @@ function SessaoQuestoes({
   const [finalizado,  setFinalizado ] = useState(false)
   const [tempoAtual,  setTempoAtual ] = useState(0)
   const [tempos,      setTempos     ] = useState<number[]>([])
+  const [salvas,      setSalvas     ] = useState<Set<number>>(new Set())
+  const [salvando,    setSalvando   ] = useState<number | null>(null)
 
   const questao   = questoes[atual]
   const acertos   = Object.entries(respostas).filter(([i, r]) => r === questoes[Number(i)].resposta).length
@@ -695,6 +715,15 @@ function SessaoQuestoes({
     setAtual(0); setSelecionada(null); setRevelada(false)
     setRespostas({}); setFinalizado(false)
     setTempos([]); setTempoAtual(0)
+  }
+
+  async function salvarQuestao() {
+    if (!onSalvar || salvando !== null) return
+    const q = questoes[atual]
+    setSalvando(q.id)
+    await onSalvar(q)
+    setSalvas(prev => new Set(prev).add(q.id))
+    setSalvando(null)
   }
 
   // Tela de resultado final
@@ -752,6 +781,21 @@ function SessaoQuestoes({
           ← Voltar
         </button>
         <div className="flex items-center gap-3">
+          {/* Salvar questão */}
+          {onSalvar && (
+            <button
+              onClick={salvarQuestao}
+              disabled={salvando === questao.id}
+              title={salvas.has(questao.id) ? 'Questão salva' : 'Salvar questão'}
+              className={`w-8 h-8 rounded-full border flex items-center justify-center transition-colors ${
+                salvas.has(questao.id)
+                  ? 'bg-brand border-brand text-white'
+                  : 'border-border text-text-muted hover:border-brand hover:text-brand'
+              }`}
+            >
+              {salvas.has(questao.id) ? <BookmarkCheck size={14} /> : <Bookmark size={14} />}
+            </button>
+          )}
           {/* Cronômetro */}
           <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-sm tabular-nums font-medium transition-colors ${
             revelada
@@ -882,6 +926,21 @@ function GerarComIA() {
     }
   }
 
+  async function salvarQuestao(q: Questao) {
+    const sb = createClient()
+    const { data: { user } } = await sb.auth.getUser()
+    if (!user) return
+    await sb.from('questoes_salvas').insert({
+      user_id:      user.id,
+      materia,
+      dificuldade,
+      enunciado:    q.enunciado,
+      alternativas: q.alternativas,
+      gabarito:     q.resposta,
+      explicacao:   q.explicacao || null,
+    })
+  }
+
   if (questoes.length > 0) {
     return (
       <SessaoQuestoes
@@ -890,6 +949,7 @@ function GerarComIA() {
         conteudo={conteudo}
         questoes={questoes}
         onVoltar={() => setQuestoes([])}
+        onSalvar={salvarQuestao}
       />
     )
   }
@@ -1442,6 +1502,134 @@ function SessaoDiscursiva({
           </button>
         </div>
       )}
+    </div>
+  )
+}
+
+// ─── Questões Salvas ──────────────────────────────────────────────────────────
+
+type QuestaoSalva = {
+  id: number
+  materia: string | null
+  dificuldade: string | null
+  enunciado: string
+  alternativas: { letra: string; texto: string }[] | null
+  gabarito: string | null
+  explicacao: string | null
+  criado_em: string
+}
+
+function QuestoesSalvas() {
+  const [questoes,  setQuestoes  ] = useState<QuestaoSalva[]>([])
+  const [loading,   setLoading   ] = useState(true)
+  const [expandida, setExpandida ] = useState<number | null>(null)
+
+  const carregar = useCallback(async () => {
+    setLoading(true)
+    const sb = createClient()
+    const { data: { user } } = await sb.auth.getUser()
+    if (!user) { setLoading(false); return }
+    const { data } = await sb
+      .from('questoes_salvas')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('criado_em', { ascending: false })
+    if (data) setQuestoes(data as QuestaoSalva[])
+    setLoading(false)
+  }, [])
+
+  useEffect(() => { carregar() }, [carregar])
+
+  async function remover(id: number) {
+    const sb = createClient()
+    await sb.from('questoes_salvas').delete().eq('id', id)
+    setQuestoes(prev => prev.filter(q => q.id !== id))
+  }
+
+  if (loading) return (
+    <div className="flex items-center gap-2 text-text-muted text-sm py-6">
+      <div className="w-4 h-4 border-2 border-border border-t-brand rounded-full animate-spin" /> Carregando...
+    </div>
+  )
+
+  if (questoes.length === 0) return (
+    <div className="border border-dashed border-border rounded-2xl p-12 text-center max-w-lg">
+      <Bookmark size={32} className="text-text-faint mx-auto mb-3" />
+      <p className="text-text font-semibold mb-1">Nenhuma questão salva</p>
+      <p className="text-text-muted text-sm">Ao resolver questões geradas com IA, clique no ícone de marcador para salvá-las aqui.</p>
+    </div>
+  )
+
+  return (
+    <div className="max-w-2xl">
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-text font-semibold">{questoes.length} questão{questoes.length !== 1 ? 'ões' : ''} salva{questoes.length !== 1 ? 's' : ''}</h2>
+      </div>
+      <div className="flex flex-col gap-3">
+        {questoes.map(q => (
+          <div key={q.id} className="bg-bg-card border border-border rounded-2xl overflow-hidden">
+            <div className="p-5">
+              <div className="flex items-start justify-between gap-3 mb-3">
+                <div className="flex gap-2 flex-wrap">
+                  {q.materia && (
+                    <span className="text-xs bg-brand-soft text-brand px-2.5 py-1 rounded-full font-medium">{q.materia}</span>
+                  )}
+                  {q.dificuldade && (
+                    <span className="text-xs bg-bg border border-border text-text-muted px-2.5 py-1 rounded-full capitalize">{q.dificuldade}</span>
+                  )}
+                </div>
+                <button
+                  onClick={() => remover(q.id)}
+                  className="text-text-faint hover:text-red-500 transition-colors flex-shrink-0"
+                  title="Remover"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
+              <p className="text-text text-sm leading-relaxed line-clamp-3">{q.enunciado}</p>
+              <button
+                onClick={() => setExpandida(expandida === q.id ? null : q.id)}
+                className="text-brand text-xs mt-3 flex items-center gap-1 hover:opacity-75 transition-opacity"
+              >
+                {expandida === q.id ? 'Recolher' : 'Ver questão completa'}
+                <ChevronDown size={12} className={`transition-transform ${expandida === q.id ? 'rotate-180' : ''}`} />
+              </button>
+            </div>
+
+            {expandida === q.id && (
+              <div className="border-t border-border px-5 pb-5 pt-4">
+                <p className="text-text text-sm leading-relaxed mb-4">{q.enunciado}</p>
+                {q.alternativas && q.alternativas.length > 0 && (
+                  <div className="flex flex-col gap-2 mb-4">
+                    {q.alternativas.map(alt => (
+                      <div
+                        key={alt.letra}
+                        className={`flex items-start gap-3 p-3 rounded-xl border text-sm ${
+                          alt.letra === q.gabarito
+                            ? 'bg-green-500/10 border-green-500 text-text'
+                            : 'bg-bg border-border text-text-muted'
+                        }`}
+                      >
+                        <span className="w-6 h-6 rounded-lg bg-bg border border-border flex items-center justify-center text-xs font-bold flex-shrink-0">
+                          {alt.letra}
+                        </span>
+                        <span className="leading-relaxed pt-0.5">{alt.texto}</span>
+                        {alt.letra === q.gabarito && <CheckCircle2 size={14} className="text-green-500 flex-shrink-0 mt-1 ml-auto" />}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {q.explicacao && (
+                  <div className="bg-brand-soft border border-brand/20 rounded-xl p-4">
+                    <p className="text-brand text-xs font-semibold uppercase tracking-wider mb-1.5">Explicação</p>
+                    <p className="text-text text-sm leading-relaxed">{q.explicacao}</p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
     </div>
   )
 }

@@ -1,35 +1,83 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useTheme } from 'next-themes'
 import {
   LayoutDashboard, FileQuestion, Layers, FileText, MessageCircle,
-  BarChart3, Calendar, Sun, Moon, Settings, Pencil, ClipboardList,
-  FileUp, RotateCcw, ChevronLeft, ChevronRight
+  BarChart3, Sun, Moon, Settings, Pencil, ClipboardList,
+  FileUp, RotateCcw, ChevronLeft, ChevronRight, Plus
 } from 'lucide-react'
-import { useNome } from '@/hooks/useNome'
+import { useProfile } from '@/hooks/useProfile'
+import { createClient } from '@/lib/supabase'
+import { registrarAtividade } from '@/lib/registrarAtividade'
 
-type Flashcard = { pergunta: string; resposta: string }
-type ModoEntrada = 'tema' | 'texto' | 'pdf'
+type Flashcard     = { pergunta: string; resposta: string }
+type ModoEntrada   = 'tema' | 'texto' | 'pdf'
+type HistoricoItem = { id: number; titulo: string; criado_em: string }
+
+function dataRelativa(iso: string) {
+  const diff = Date.now() - new Date(iso).getTime()
+  const dias  = Math.floor(diff / 86400000)
+  if (dias === 0)  return 'hoje'
+  if (dias === 1)  return 'ontem'
+  if (dias < 7)   return `${dias} dias atrás`
+  if (dias < 30)  return `${Math.floor(dias / 7)} sem. atrás`
+  return `${Math.floor(dias / 30)} mes. atrás`
+}
 
 export default function Flashcards() {
   const { theme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
   useEffect(() => setMounted(true), [])
-  const { primeiroNome, nome } = useNome()
+
+  const { profile } = useProfile()
+  const primeiroNome = profile?.nome?.split(' ')[0] ?? null
 
   const [modoEntrada, setModoEntrada] = useState<ModoEntrada>('tema')
-  const [tema, setTema] = useState('')
-  const [texto, setTexto] = useState('')
-  const [arquivo, setArquivo] = useState<File | null>(null)
-  const [quantidade, setQuantidade] = useState(5)
-  const [flashcards, setFlashcards] = useState<Flashcard[]>([])
-  const [loading, setLoading] = useState(false)
-  const [indiceAtual, setIndiceAtual] = useState(0)
-  const [virado, setVirado] = useState(false)
-  const [modoEstudo, setModoEstudo] = useState(false)
+  const [tema,        setTema        ] = useState('')
+  const [texto,       setTexto       ] = useState('')
+  const [arquivo,     setArquivo     ] = useState<File | null>(null)
+  const [quantidade,  setQuantidade  ] = useState(5)
+  const [flashcards,  setFlashcards  ] = useState<Flashcard[]>([])
+  const [loading,     setLoading     ] = useState(false)
+  const [indiceAtual, setIndiceAtual ] = useState(0)
+  const [virado,      setVirado      ] = useState(false)
+  const [modoEstudo,  setModoEstudo  ] = useState(false)
+  const [historico,   setHistorico   ] = useState<HistoricoItem[]>([])
+  const [sessaoId,    setSessaoId    ] = useState<number | null>(null)
+
+  const carregarHistorico = useCallback(async () => {
+    const sb = createClient()
+    const { data: { user } } = await sb.auth.getUser()
+    if (!user) return
+    const { data } = await sb
+      .from('sessoes_flashcards')
+      .select('id, titulo, criado_em')
+      .eq('user_id', user.id)
+      .order('criado_em', { ascending: false })
+      .limit(30)
+    if (data) setHistorico(data as HistoricoItem[])
+  }, [])
+
+  useEffect(() => { carregarHistorico() }, [carregarHistorico])
+
+  async function abrirSessao(id: number) {
+    const sb = createClient()
+    const { data } = await sb
+      .from('sessoes_flashcards')
+      .select('flashcards')
+      .eq('id', id)
+      .single()
+    if (data) {
+      setFlashcards(data.flashcards as Flashcard[])
+      setIndiceAtual(0)
+      setVirado(false)
+      setModoEstudo(true)
+      setSessaoId(id)
+    }
+  }
 
   async function gerarFlashcards() {
     if (loading) return
@@ -46,10 +94,29 @@ export default function Flashcards() {
       if (modoEntrada === 'pdf' && arquivo) formData.append('arquivo', arquivo)
       const res = await fetch('/api/flashcards', { method: 'POST', body: formData })
       const dados = await res.json()
-      setFlashcards(dados.flashcards)
+      const novosCards = dados.flashcards as Flashcard[]
+      setFlashcards(novosCards)
       setIndiceAtual(0)
       setVirado(false)
       setModoEstudo(true)
+      setSessaoId(null)
+
+      // Salva no Supabase
+      const sb = createClient()
+      const { data: { user } } = await sb.auth.getUser()
+      if (user) {
+        const base = tema.trim() || texto.trim().slice(0, 60) || arquivo?.name || 'Flashcards'
+        const titulo = base + (base.length >= 60 ? '…' : '')
+        const { data } = await sb
+          .from('sessoes_flashcards')
+          .insert({ user_id: user.id, titulo, flashcards: novosCards })
+          .select('id')
+          .single()
+        if (data) {
+          setSessaoId(data.id)
+          setHistorico(prev => [{ id: data.id, titulo, criado_em: new Date().toISOString() }, ...prev])
+        }
+      }
     } catch {
       alert('Erro ao gerar flashcards.')
     }
@@ -59,17 +126,27 @@ export default function Flashcards() {
   function proximo() {
     setVirado(false)
     setTimeout(() => {
-      if (indiceAtual < flashcards.length - 1) setIndiceAtual(indiceAtual + 1)
-      else setModoEstudo(false)
+      if (indiceAtual < flashcards.length - 1) {
+        setIndiceAtual(indiceAtual + 1)
+      } else {
+        setModoEstudo(false)
+        registrarAtividade({
+          tipo: 'flashcard',
+          descricao: `Revisou ${flashcards.length} flashcards${tema ? ` — ${tema}` : ''}`,
+          quantidade: flashcards.length,
+        })
+      }
     }, 120)
   }
+
   function anterior() {
     setVirado(false)
     setTimeout(() => { if (indiceAtual > 0) setIndiceAtual(indiceAtual - 1) }, 120)
   }
+
   function reiniciar() {
     setFlashcards([]); setTema(''); setTexto(''); setArquivo(null)
-    setModoEstudo(false); setIndiceAtual(0); setVirado(false)
+    setModoEstudo(false); setIndiceAtual(0); setVirado(false); setSessaoId(null)
   }
 
   const podeGerar =
@@ -84,53 +161,80 @@ export default function Flashcards() {
 
       {/* ── Sidebar ── */}
       <aside className="w-64 bg-bg border-r border-border/60 flex flex-col fixed h-full">
-        <div className="flex items-center gap-2.5 px-6 py-6">
+        <div className="flex items-center gap-2.5 px-6 py-5">
           <Image src="/TeraEdu-logo-orange.png" alt="TeraEdu" width={26} height={26} />
           <span className="text-text font-bold tracking-tight">TeraEdu</span>
         </div>
 
-        <nav className="flex flex-col gap-0.5 px-3 flex-1 pt-1">
+        {/* Nav */}
+        <nav className="flex flex-col gap-0.5 px-3 pb-2">
           <SidebarLink href="/dashboard"            icon={LayoutDashboard} label="Início" />
           <SidebarLink href="/dashboard/questoes"   icon={FileQuestion}    label="Questões" />
           <SidebarLink href="/dashboard/flashcards" icon={Layers}          label="Flashcards" active />
           <SidebarLink href="/dashboard/resumos"    icon={FileText}        label="Resumos" />
           <SidebarLink href="/dashboard/tutora"     icon={MessageCircle}   label="IA Tutora" />
-          <div className="px-3 mt-8 mb-2">
-            <p className="text-text-faint text-[10px] uppercase tracking-widest font-semibold">Progresso</p>
-          </div>
-          <SidebarLink href="/dashboard/desempenho" icon={BarChart3}  label="Desempenho" />
-          <SidebarLink href="/dashboard/plano"      icon={Calendar}   label="Plano de Estudos" />
         </nav>
 
-        <div className="px-3 py-4 border-t border-border/60">
+        {/* Histórico */}
+        <div className="flex-1 flex flex-col min-h-0 border-t border-border/60 pt-3">
+          <div className="flex items-center justify-between px-5 mb-2">
+            <p className="text-text-faint text-[10px] uppercase tracking-widest font-semibold">Decks salvos</p>
+            <button
+              onClick={reiniciar}
+              className="text-text-faint hover:text-brand transition-colors"
+              title="Novo deck"
+            >
+              <Plus size={14} />
+            </button>
+          </div>
+          <div className="flex-1 overflow-y-auto px-3 flex flex-col gap-0.5 pb-2">
+            {historico.length === 0 && (
+              <p className="text-text-faint text-xs px-3 py-2">Nenhum deck ainda</p>
+            )}
+            {historico.map(h => (
+              <button
+                key={h.id}
+                onClick={() => abrirSessao(h.id)}
+                className={`w-full text-left px-3 py-2 rounded-xl transition-colors ${
+                  sessaoId === h.id
+                    ? 'bg-bg-hover text-text'
+                    : 'text-text-muted hover:text-text hover:bg-bg-hover'
+                }`}
+              >
+                <p className="text-xs truncate">{h.titulo}</p>
+                <p className="text-[10px] text-text-faint mt-0.5">{dataRelativa(h.criado_em)}</p>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Desempenho + User */}
+        <div className="px-3 pb-1 pt-2 border-t border-border/60">
+          <SidebarLink href="/dashboard/desempenho" icon={BarChart3} label="Desempenho" />
+        </div>
+        <div className="px-3 py-3 border-t border-border/60">
           <button
             onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-            className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl hover:bg-bg-hover text-text-muted hover:text-text text-sm transition-colors mb-1"
+            className="flex items-center gap-3 w-full px-3 py-2 rounded-xl hover:bg-bg-hover text-text-muted hover:text-text text-sm transition-colors mb-1"
           >
             {mounted && theme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}
             <span>{mounted && theme === 'dark' ? 'Modo claro' : 'Modo escuro'}</span>
           </button>
-          <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-bg-hover cursor-pointer transition-colors">
-            <div className="w-8 h-8 bg-brand rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-              {primeiroNome ? primeiroNome[0].toUpperCase() : 'G'}
+          <Link href="/dashboard/configuracoes" className="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-bg-hover cursor-pointer transition-colors">
+            <div className="w-7 h-7 bg-brand rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+              {primeiroNome ? primeiroNome[0].toUpperCase() : '?'}
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-text text-sm font-semibold truncate">{nome ?? 'Gabriel'}</p>
-            </div>
-            <Settings size={13} className="text-text-faint" />
-          </div>
+            <p className="text-text text-sm font-semibold truncate flex-1">{profile?.nome ?? '...'}</p>
+            <Settings size={12} className="text-text-faint" />
+          </Link>
         </div>
       </aside>
 
       {/* ── Main ── */}
       <main className="flex-1 ml-64 flex flex-col min-h-screen">
-
         {modoEstudo ? (
-          /* ── Modo estudo ── */
           <div className="flex-1 flex flex-col items-center justify-center px-6 py-10">
             <div className="w-full max-w-xl">
-
-              {/* Progresso */}
               <div className="flex items-center justify-between mb-3">
                 <span className="text-text-muted text-sm">{indiceAtual + 1} / {flashcards.length}</span>
                 <button onClick={reiniciar} className="flex items-center gap-1.5 text-text-muted hover:text-text text-sm transition-colors">
@@ -141,7 +245,6 @@ export default function Flashcards() {
                 <div className="h-full bg-brand rounded-full transition-all duration-300" style={{ width: `${progresso}%` }} />
               </div>
 
-              {/* Card */}
               <div
                 onClick={() => setVirado(!virado)}
                 className="bg-bg-card rounded-2xl p-12 min-h-72 flex flex-col items-center justify-center cursor-pointer hover:ring-1 hover:ring-brand/40 transition-all select-none"
@@ -157,7 +260,6 @@ export default function Flashcards() {
                 </p>
               </div>
 
-              {/* Navegação */}
               <div className="flex gap-3 mt-5">
                 <button
                   onClick={anterior}
@@ -177,18 +279,16 @@ export default function Flashcards() {
             </div>
           </div>
         ) : (
-          /* ── Tela de criação ── */
           <div className="flex-1 flex flex-col items-center justify-center px-6 py-10">
             <div className="w-full max-w-xl">
               <h1 className="text-text text-3xl font-bold tracking-tight mb-1.5 text-center">Flashcards</h1>
               <p className="text-text-muted text-center mb-10">A IA cria flashcards a partir de qualquer conteúdo</p>
 
-              {/* Tabs */}
               <div className="flex gap-1 mb-6 bg-bg-card rounded-xl p-1">
                 {([
-                  { id: 'tema' as ModoEntrada,  label: 'Tema',       icon: Pencil       },
-                  { id: 'texto' as ModoEntrada, label: 'Colar texto', icon: ClipboardList },
-                  { id: 'pdf' as ModoEntrada,   label: 'PDF',         icon: FileUp       },
+                  { id: 'tema' as ModoEntrada,  label: 'Tema',        icon: Pencil        },
+                  { id: 'texto' as ModoEntrada, label: 'Colar texto',  icon: ClipboardList },
+                  { id: 'pdf' as ModoEntrada,   label: 'PDF',          icon: FileUp        },
                 ]).map((m) => (
                   <button
                     key={m.id}
@@ -202,7 +302,6 @@ export default function Flashcards() {
                 ))}
               </div>
 
-              {/* Entrada */}
               <div className="flex flex-col gap-5">
                 {modoEntrada === 'tema' && (
                   <div>
@@ -241,7 +340,6 @@ export default function Flashcards() {
                   </label>
                 )}
 
-                {/* Quantidade */}
                 <div>
                   <label className="text-text-muted text-sm mb-2 block">Quantos flashcards?</label>
                   <div className="flex gap-2">
@@ -291,9 +389,7 @@ function SidebarLink({ href, icon: Icon, label, active }: {
     <Link
       href={href}
       className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all ${
-        active
-          ? 'bg-bg-hover text-text font-semibold'
-          : 'text-text-muted hover:text-text hover:bg-bg-hover'
+        active ? 'bg-bg-hover text-text font-semibold' : 'text-text-muted hover:text-text hover:bg-bg-hover'
       }`}
     >
       <Icon size={16} />

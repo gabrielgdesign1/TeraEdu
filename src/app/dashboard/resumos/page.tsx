@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import ReactMarkdown from 'react-markdown'
@@ -12,29 +12,82 @@ import { useTheme } from 'next-themes'
 import {
   LayoutDashboard, FileQuestion, Layers, FileText, MessageCircle,
   BarChart3, Calendar, Sun, Moon, Settings, Pencil, ClipboardList,
-  FileUp, Send, RotateCcw
+  FileUp, Send, Plus
 } from 'lucide-react'
-import { useNome } from '@/hooks/useNome'
+import { useProfile } from '@/hooks/useProfile'
+import { createClient } from '@/lib/supabase'
 
 type ModoEntrada = 'tema' | 'texto' | 'pdf'
-type Tamanho = 'curto' | 'medio' | 'completo'
+type Tamanho     = 'curto' | 'medio' | 'completo'
+type QA          = { pergunta: string; resposta: string }
+type HistoricoItem = { id: number; titulo: string; criado_em: string }
+
+function dataRelativa(iso: string) {
+  const diff = Date.now() - new Date(iso).getTime()
+  const dias  = Math.floor(diff / 86400000)
+  if (dias === 0)  return 'hoje'
+  if (dias === 1)  return 'ontem'
+  if (dias < 7)   return `${dias} dias atrás`
+  if (dias < 30)  return `${Math.floor(dias / 7)} sem. atrás`
+  return `${Math.floor(dias / 30)} mes. atrás`
+}
 
 export default function Resumos() {
   const { theme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
   useEffect(() => setMounted(true), [])
-  const { primeiroNome, nome } = useNome()
+
+  const { profile } = useProfile()
+  const primeiroNome = profile?.nome?.split(' ')[0] ?? null
 
   const [modoEntrada, setModoEntrada] = useState<ModoEntrada>('tema')
-  const [tema, setTema] = useState('')
-  const [texto, setTexto] = useState('')
-  const [arquivo, setArquivo] = useState<File | null>(null)
-  const [tamanho, setTamanho] = useState<Tamanho>('medio')
-  const [resumo, setResumo] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [perguntas, setPerguntas] = useState<{ pergunta: string; resposta: string }[]>([])
-  const [pergunta, setPergunta] = useState('')
-  const [loadingPergunta, setLoadingPergunta] = useState(false)
+  const [tema,        setTema        ] = useState('')
+  const [texto,       setTexto       ] = useState('')
+  const [arquivo,     setArquivo     ] = useState<File | null>(null)
+  const [tamanho,     setTamanho     ] = useState<Tamanho>('medio')
+  const [resumo,      setResumo      ] = useState('')
+  const [loading,     setLoading     ] = useState(false)
+  const [perguntas,   setPerguntas   ] = useState<QA[]>([])
+  const [pergunta,    setPergunta    ] = useState('')
+  const [loadingQ,    setLoadingQ    ] = useState(false)
+  const [sessaoId,    setSessaoId    ] = useState<number | null>(null)
+  const [historico,   setHistorico   ] = useState<HistoricoItem[]>([])
+
+  const carregarHistorico = useCallback(async () => {
+    const sb = createClient()
+    const { data: { user } } = await sb.auth.getUser()
+    if (!user) return
+    const { data } = await sb
+      .from('sessoes_resumos')
+      .select('id, titulo, criado_em')
+      .eq('user_id', user.id)
+      .order('criado_em', { ascending: false })
+      .limit(30)
+    if (data) setHistorico(data as HistoricoItem[])
+  }, [])
+
+  useEffect(() => { carregarHistorico() }, [carregarHistorico])
+
+  function novoResumo() {
+    setResumo(''); setTema(''); setTexto(''); setArquivo(null)
+    setPerguntas([]); setPergunta(''); setSessaoId(null)
+  }
+
+  async function abrirSessao(id: number) {
+    const sb = createClient()
+    const { data } = await sb
+      .from('sessoes_resumos')
+      .select('resumo, tema, perguntas, modo_entrada')
+      .eq('id', id)
+      .single()
+    if (data) {
+      setResumo(data.resumo)
+      setTema(data.tema ?? '')
+      setPerguntas(data.perguntas as QA[])
+      setModoEntrada(data.modo_entrada as ModoEntrada)
+      setSessaoId(id)
+    }
+  }
 
   async function gerarResumo() {
     if (loading) return
@@ -52,7 +105,37 @@ export default function Resumos() {
       if (modoEntrada === 'pdf' && arquivo) formData.append('arquivo', arquivo)
       const res = await fetch('/api/resumos', { method: 'POST', body: formData })
       const dados = await res.json()
-      setResumo(dados.resumo)
+      const novoResumoTexto = dados.resumo as string
+      setResumo(novoResumoTexto)
+      setPerguntas([])
+      setSessaoId(null)
+
+      // Salva no Supabase
+      const sb = createClient()
+      const { data: { user } } = await sb.auth.getUser()
+      if (user) {
+        const titulo = tema.trim() || texto.trim().slice(0, 60) || arquivo?.name || 'Resumo'
+        const { data } = await sb
+          .from('sessoes_resumos')
+          .insert({
+            user_id:     user.id,
+            titulo:      titulo + (titulo.length >= 60 ? '…' : ''),
+            modo_entrada: modoEntrada,
+            resumo:      novoResumoTexto,
+            tema:        tema || null,
+            perguntas:   [],
+          })
+          .select('id')
+          .single()
+        if (data) {
+          setSessaoId(data.id)
+          setHistorico(prev => [{
+            id:        data.id,
+            titulo:    titulo + (titulo.length >= 60 ? '…' : ''),
+            criado_em: new Date().toISOString(),
+          }, ...prev])
+        }
+      }
     } catch {
       alert('Erro ao gerar resumo.')
     }
@@ -60,10 +143,10 @@ export default function Resumos() {
   }
 
   async function enviarPergunta() {
-    if (!pergunta.trim() || loadingPergunta) return
+    if (!pergunta.trim() || loadingQ) return
     const q = pergunta
     setPergunta('')
-    setLoadingPergunta(true)
+    setLoadingQ(true)
     try {
       const res = await fetch('/api/resumos/pergunta', {
         method: 'POST',
@@ -71,15 +154,17 @@ export default function Resumos() {
         body: JSON.stringify({ resumo, pergunta: q, historico: perguntas }),
       })
       const dados = await res.json()
-      setPerguntas([...perguntas, { pergunta: q, resposta: dados.resposta }])
+      const novasPerguntas = [...perguntas, { pergunta: q, resposta: dados.resposta }]
+      setPerguntas(novasPerguntas)
+
+      if (sessaoId) {
+        const sb = createClient()
+        await sb.from('sessoes_resumos').update({ perguntas: novasPerguntas }).eq('id', sessaoId)
+      }
     } catch {
       alert('Erro ao enviar pergunta.')
     }
-    setLoadingPergunta(false)
-  }
-
-  function novoResumo() {
-    setResumo(''); setTema(''); setTexto(''); setArquivo(null); setPerguntas([]); setPergunta('')
+    setLoadingQ(false)
   }
 
   const podeGerar =
@@ -92,60 +177,88 @@ export default function Resumos() {
 
       {/* ── Sidebar ── */}
       <aside className="w-64 bg-bg border-r border-border/60 flex flex-col fixed h-full">
-        <div className="flex items-center gap-2.5 px-6 py-6">
+        <div className="flex items-center gap-2.5 px-6 py-5">
           <Image src="/TeraEdu-logo-orange.png" alt="TeraEdu" width={26} height={26} />
           <span className="text-text font-bold tracking-tight">TeraEdu</span>
         </div>
 
-        <nav className="flex flex-col gap-0.5 px-3 flex-1 pt-1">
+        {/* Nav */}
+        <nav className="flex flex-col gap-0.5 px-3 pb-2">
           <SidebarLink href="/dashboard"            icon={LayoutDashboard} label="Início" />
           <SidebarLink href="/dashboard/questoes"   icon={FileQuestion}    label="Questões" />
           <SidebarLink href="/dashboard/flashcards" icon={Layers}          label="Flashcards" />
           <SidebarLink href="/dashboard/resumos"    icon={FileText}        label="Resumos" active />
           <SidebarLink href="/dashboard/tutora"     icon={MessageCircle}   label="IA Tutora" />
-          <div className="px-3 mt-8 mb-2">
-            <p className="text-text-faint text-[10px] uppercase tracking-widest font-semibold">Progresso</p>
-          </div>
-          <SidebarLink href="/dashboard/desempenho" icon={BarChart3}  label="Desempenho" />
-          <SidebarLink href="/dashboard/plano"      icon={Calendar}   label="Plano de Estudos" />
         </nav>
 
-        <div className="px-3 py-4 border-t border-border/60">
+        {/* Histórico */}
+        <div className="flex-1 flex flex-col min-h-0 border-t border-border/60 pt-3">
+          <div className="flex items-center justify-between px-5 mb-2">
+            <p className="text-text-faint text-[10px] uppercase tracking-widest font-semibold">Histórico</p>
+            <button
+              onClick={novoResumo}
+              className="text-text-faint hover:text-brand transition-colors"
+              title="Novo resumo"
+            >
+              <Plus size={14} />
+            </button>
+          </div>
+          <div className="flex-1 overflow-y-auto px-3 flex flex-col gap-0.5 pb-2">
+            {historico.length === 0 && (
+              <p className="text-text-faint text-xs px-3 py-2">Nenhum resumo ainda</p>
+            )}
+            {historico.map(h => (
+              <button
+                key={h.id}
+                onClick={() => abrirSessao(h.id)}
+                className={`w-full text-left px-3 py-2 rounded-xl transition-colors ${
+                  sessaoId === h.id
+                    ? 'bg-bg-hover text-text'
+                    : 'text-text-muted hover:text-text hover:bg-bg-hover'
+                }`}
+              >
+                <p className="text-xs truncate">{h.titulo}</p>
+                <p className="text-[10px] text-text-faint mt-0.5">{dataRelativa(h.criado_em)}</p>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Desempenho + User */}
+        <div className="px-3 pb-1 pt-2 border-t border-border/60">
+          <SidebarLink href="/dashboard/desempenho" icon={BarChart3} label="Desempenho" />
+        </div>
+        <div className="px-3 py-3 border-t border-border/60">
           <button
             onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-            className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl hover:bg-bg-hover text-text-muted hover:text-text text-sm transition-colors mb-1"
+            className="flex items-center gap-3 w-full px-3 py-2 rounded-xl hover:bg-bg-hover text-text-muted hover:text-text text-sm transition-colors mb-1"
           >
             {mounted && theme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}
             <span>{mounted && theme === 'dark' ? 'Modo claro' : 'Modo escuro'}</span>
           </button>
-          <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-bg-hover cursor-pointer transition-colors">
-            <div className="w-8 h-8 bg-brand rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-              {primeiroNome ? primeiroNome[0].toUpperCase() : 'G'}
+          <Link href="/dashboard/configuracoes" className="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-bg-hover cursor-pointer transition-colors">
+            <div className="w-7 h-7 bg-brand rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+              {primeiroNome ? primeiroNome[0].toUpperCase() : '?'}
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-text text-sm font-semibold truncate">{nome ?? 'Gabriel'}</p>
-            </div>
-            <Settings size={13} className="text-text-faint" />
-          </div>
+            <p className="text-text text-sm font-semibold truncate flex-1">{profile?.nome ?? '...'}</p>
+            <Settings size={12} className="text-text-faint" />
+          </Link>
         </div>
       </aside>
 
       {/* ── Main ── */}
       <main className="flex-1 ml-64 flex flex-col min-h-screen">
-
         {!resumo ? (
-          /* ── Tela de criação ── */
           <div className="flex-1 flex flex-col items-center justify-center px-6 py-10">
             <div className="w-full max-w-xl">
               <h1 className="text-text text-3xl font-bold tracking-tight mb-1.5 text-center">Resumos com IA</h1>
               <p className="text-text-muted text-center mb-10">Gere resumos bem estruturados de qualquer conteúdo</p>
 
-              {/* Tabs */}
               <div className="flex gap-1 mb-6 bg-bg-card rounded-xl p-1">
                 {([
-                  { id: 'tema' as ModoEntrada,  label: 'Tema',       icon: Pencil        },
-                  { id: 'texto' as ModoEntrada, label: 'Colar texto', icon: ClipboardList },
-                  { id: 'pdf' as ModoEntrada,   label: 'PDF',         icon: FileUp        },
+                  { id: 'tema' as ModoEntrada,  label: 'Tema',        icon: Pencil        },
+                  { id: 'texto' as ModoEntrada, label: 'Colar texto',  icon: ClipboardList },
+                  { id: 'pdf' as ModoEntrada,   label: 'PDF',          icon: FileUp        },
                 ]).map((m) => (
                   <button
                     key={m.id}
@@ -159,7 +272,6 @@ export default function Resumos() {
                 ))}
               </div>
 
-              {/* Entrada */}
               <div className="flex flex-col gap-5">
                 {modoEntrada === 'tema' && (
                   <div>
@@ -198,7 +310,6 @@ export default function Resumos() {
                   </label>
                 )}
 
-                {/* Tamanho */}
                 <div>
                   <label className="text-text-muted text-sm mb-2 block">Tamanho do resumo</label>
                   <div className="flex gap-2">
@@ -232,19 +343,17 @@ export default function Resumos() {
             </div>
           </div>
         ) : (
-          /* ── Resumo gerado ── */
           <div className="flex-1 px-10 py-8 max-w-3xl mx-auto w-full">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-text font-semibold">Resumo gerado</h2>
+              <h2 className="text-text font-semibold">{tema || 'Resumo gerado'}</h2>
               <button
                 onClick={novoResumo}
-                className="flex items-center gap-1.5 text-text-muted hover:text-text text-sm transition-colors"
+                className="flex items-center gap-1.5 text-text-muted hover:text-text text-sm transition-colors border border-border px-4 py-2 rounded-full hover:border-brand/50"
               >
-                <RotateCcw size={13} /> Novo resumo
+                <Plus size={13} /> Novo resumo
               </button>
             </div>
 
-            {/* Conteúdo do resumo */}
             <div className="bg-bg-card rounded-2xl p-8 mb-6">
               <div className="prose prose-sm max-w-none dark:prose-invert prose-headings:text-text prose-headings:font-semibold prose-headings:mt-4 prose-headings:mb-2 prose-p:my-2 prose-p:leading-relaxed prose-p:text-text prose-strong:text-text prose-strong:font-semibold prose-ul:my-2 prose-ol:my-2 prose-li:my-0.5 prose-li:text-text prose-code:text-brand prose-code:bg-bg prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:before:content-none prose-code:after:content-none prose-pre:bg-bg prose-pre:border prose-pre:border-border prose-blockquote:border-l-brand prose-blockquote:text-text-muted prose-a:text-brand">
                 <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath]} rehypePlugins={[rehypeKatex]}>
@@ -253,7 +362,6 @@ export default function Resumos() {
               </div>
             </div>
 
-            {/* Q&A sobre o resumo */}
             <div className="bg-bg-card rounded-2xl p-6">
               <h3 className="text-text font-semibold mb-1 flex items-center gap-2">
                 <MessageCircle size={15} className="text-brand" /> Dúvidas sobre o resumo?
@@ -274,7 +382,7 @@ export default function Resumos() {
                       </div>
                     </div>
                   ))}
-                  {loadingPergunta && (
+                  {loadingQ && (
                     <div className="bg-bg border border-border px-4 py-3 rounded-2xl rounded-tl-sm self-start">
                       <div className="flex gap-1">
                         <span className="w-1.5 h-1.5 bg-text-muted rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
@@ -297,7 +405,7 @@ export default function Resumos() {
                 />
                 <button
                   onClick={enviarPergunta}
-                  disabled={loadingPergunta || !pergunta.trim()}
+                  disabled={loadingQ || !pergunta.trim()}
                   className="w-11 h-11 bg-brand hover:bg-brand-hover disabled:opacity-40 rounded-xl flex items-center justify-center transition-colors flex-shrink-0"
                 >
                   <Send size={15} className="text-white" />
@@ -318,9 +426,7 @@ function SidebarLink({ href, icon: Icon, label, active }: {
     <Link
       href={href}
       className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all ${
-        active
-          ? 'bg-bg-hover text-text font-semibold'
-          : 'text-text-muted hover:text-text hover:bg-bg-hover'
+        active ? 'bg-bg-hover text-text font-semibold' : 'text-text-muted hover:text-text hover:bg-bg-hover'
       }`}
     >
       <Icon size={16} />
