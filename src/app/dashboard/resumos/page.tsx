@@ -1,20 +1,15 @@
 ﻿'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import Image from 'next/image'
-import Link from 'next/link'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import remarkMath from 'remark-math'
 import rehypeKatex from 'rehype-katex'
 import 'katex/dist/katex.min.css'
-import { useTheme } from 'next-themes'
 import {
-  LayoutDashboard, FileQuestion, Layers, FileText, MessageCircle,
-  BarChart3, Calendar, Sun, Moon, Settings, Pencil, ClipboardList,
-  FileUp, Send, Plus, GraduationCap
+  MessageCircle, Pencil, ClipboardList,
+  FileUp, Send, Plus, Trash2,
 } from 'lucide-react'
-import { useProfile } from '@/hooks/useProfile'
 import { DashboardSidebar } from '@/components/DashboardSidebar'
 import { createClient } from '@/lib/supabase'
 
@@ -34,13 +29,6 @@ function dataRelativa(iso: string) {
 }
 
 export default function Resumos() {
-  const { theme, setTheme } = useTheme()
-  const [mounted, setMounted] = useState(false)
-  useEffect(() => setMounted(true), [])
-
-  const { profile } = useProfile()
-  const primeiroNome = profile?.nome?.split(' ')[0] ?? null
-
   const [modoEntrada, setModoEntrada] = useState<ModoEntrada>('tema')
   const [tema,        setTema        ] = useState('')
   const [texto,       setTexto       ] = useState('')
@@ -72,6 +60,14 @@ export default function Resumos() {
   function novoResumo() {
     setResumo(''); setTema(''); setTexto(''); setArquivo(null)
     setPerguntas([]); setPergunta(''); setSessaoId(null)
+  }
+
+  async function removerSessao(id: number, e: React.MouseEvent) {
+    e.stopPropagation()
+    const sb = createClient()
+    await sb.from('sessoes_resumos').delete().eq('id', id)
+    setHistorico(prev => prev.filter(h => h.id !== id))
+    if (sessaoId === id) novoResumo()
   }
 
   async function abrirSessao(id: number) {
@@ -178,8 +174,44 @@ export default function Resumos() {
 
       <DashboardSidebar />
 
+      {/* ── Histórico de resumos ── */}
+      <aside className="fixed left-[80px] top-0 bottom-0 w-56 border-r border-border bg-bg-card flex flex-col z-40">
+        <div className="px-4 py-4 border-b border-border flex-shrink-0">
+          <p className="text-text-faint text-[10px] font-semibold uppercase tracking-widest">Histórico</p>
+        </div>
+        <div className="flex-1 overflow-y-auto py-2 px-2 flex flex-col gap-0.5">
+          {historico.length === 0 ? (
+            <p className="text-text-faint text-xs text-center py-6 px-2 leading-relaxed">
+              Nenhum resumo ainda. Gere o primeiro ao lado!
+            </p>
+          ) : (
+            historico.map(item => (
+              <div
+                key={item.id}
+                onClick={() => abrirSessao(item.id)}
+                className={`group relative px-3 py-2.5 rounded-xl cursor-pointer transition-colors ${
+                  sessaoId === item.id
+                    ? 'bg-brand/10 text-brand'
+                    : 'hover:bg-bg-hover text-text-muted hover:text-text'
+                }`}
+              >
+                <p className="text-sm leading-snug line-clamp-2 pr-7">{item.titulo}</p>
+                <p className="text-[10px] text-text-faint mt-0.5">{dataRelativa(item.criado_em)}</p>
+                <button
+                  onClick={e => removerSessao(item.id, e)}
+                  className="absolute right-2 top-2 hidden group-hover:flex w-6 h-6 text-text-faint hover:text-red-500 rounded-lg items-center justify-center transition-colors"
+                  title="Remover"
+                >
+                  <Trash2 size={11} />
+                </button>
+              </div>
+            ))
+          )}
+        </div>
+      </aside>
+
       {/* ── Main ── */}
-      <main className="flex-1 ml-20 flex flex-col min-h-screen">
+      <main className="flex-1 ml-[304px] flex flex-col min-h-screen">
         {!resumo ? (
           <div className="flex-1 flex flex-col items-center justify-center px-6 py-10">
             <div className="w-full max-w-xl">

@@ -7,7 +7,7 @@ import remarkMath from 'remark-math'
 import rehypeKatex from 'rehype-katex'
 import 'katex/dist/katex.min.css'
 import {
-  MessageCircle, Send, Plus, Pencil, Trash2,
+  MessageCircle, Send, Pencil, Trash2,
 } from 'lucide-react'
 import { useProfile } from '@/hooks/useProfile'
 import { DashboardSidebar } from '@/components/DashboardSidebar'
@@ -202,14 +202,8 @@ export default function IATutora() {
       {/* ── Histórico de conversas ── */}
       <aside className="fixed left-[80px] top-0 bottom-0 w-56 border-r border-border bg-bg-card flex flex-col z-40">
         {/* Cabeçalho */}
-        <div className="p-3 border-b border-border flex-shrink-0">
-          <button
-            onClick={novaConversa}
-            className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-brand text-white text-sm font-medium hover:bg-brand-hover transition-colors"
-          >
-            <Plus size={14} />
-            Nova conversa
-          </button>
+        <div className="px-4 py-4 border-b border-border flex-shrink-0">
+          <p className="text-text-faint text-[10px] font-semibold uppercase tracking-widest">Histórico</p>
         </div>
 
         {/* Lista de chats */}
