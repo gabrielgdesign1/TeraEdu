@@ -1,17 +1,13 @@
 ﻿'use client'
 
 import { useState, useRef, useEffect, useCallback } from 'react'
-import Image from 'next/image'
-import Link from 'next/link'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import remarkMath from 'remark-math'
 import rehypeKatex from 'rehype-katex'
 import 'katex/dist/katex.min.css'
-import { useTheme } from 'next-themes'
 import {
-  LayoutDashboard, FileQuestion, Layers, FileText, MessageCircle,
-  BarChart3, Calendar, Sun, Moon, Settings, Send, Plus, Pencil, GraduationCap
+  MessageCircle, Send, Plus, Pencil, Trash2,
 } from 'lucide-react'
 import { useProfile } from '@/hooks/useProfile'
 import { DashboardSidebar } from '@/components/DashboardSidebar'
@@ -42,10 +38,6 @@ function tempoRelativo(iso: string) {
 }
 
 export default function IATutora() {
-  const { theme, setTheme } = useTheme()
-  const [mounted, setMounted] = useState(false)
-  useEffect(() => setMounted(true), [])
-
   const { profile } = useProfile()
   const primeiroNome = profile?.nome?.split(' ')[0] ?? null
 
@@ -207,8 +199,77 @@ export default function IATutora() {
 
       <DashboardSidebar />
 
+      {/* ── Histórico de conversas ── */}
+      <aside className="fixed left-[80px] top-0 bottom-0 w-56 border-r border-border bg-bg-card flex flex-col z-40">
+        {/* Cabeçalho */}
+        <div className="p-3 border-b border-border flex-shrink-0">
+          <button
+            onClick={novaConversa}
+            className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-brand text-white text-sm font-medium hover:bg-brand-hover transition-colors"
+          >
+            <Plus size={14} />
+            Nova conversa
+          </button>
+        </div>
+
+        {/* Lista de chats */}
+        <div className="flex-1 overflow-y-auto py-2 px-2 flex flex-col gap-0.5">
+          {chats.length === 0 ? (
+            <p className="text-text-faint text-xs text-center py-6 px-2 leading-relaxed">
+              Nenhuma conversa ainda. Comece digitando uma pergunta!
+            </p>
+          ) : (
+            chats.map(chat => (
+              <div
+                key={chat.id}
+                onClick={() => abrirChat(chat.id)}
+                className={`group relative px-3 py-2.5 rounded-xl cursor-pointer transition-colors ${
+                  sessaoId === chat.id
+                    ? 'bg-brand/10 text-brand'
+                    : 'hover:bg-bg-hover text-text-muted hover:text-text'
+                }`}
+              >
+                {editandoId === chat.id ? (
+                  <input
+                    autoFocus
+                    value={tituloEdit}
+                    onChange={e => setTituloEdit(e.target.value)}
+                    onBlur={() => salvarTitulo(chat.id)}
+                    onKeyDown={e => e.key === 'Enter' && salvarTitulo(chat.id)}
+                    className="w-full bg-transparent text-sm text-text focus:outline-none"
+                    onClick={e => e.stopPropagation()}
+                  />
+                ) : (
+                  <>
+                    <p className="text-sm leading-snug line-clamp-2 pr-9">{chat.titulo}</p>
+                    <p className="text-[10px] text-text-faint mt-0.5">{tempoRelativo(chat.atualizado_em)}</p>
+                  </>
+                )}
+                {/* Ações (visíveis no hover) */}
+                <div className="absolute right-2 top-2 hidden group-hover:flex gap-0.5">
+                  <button
+                    onClick={e => { e.stopPropagation(); setEditandoId(chat.id); setTituloEdit(chat.titulo) }}
+                    className="w-6 h-6 text-text-faint hover:text-text rounded-lg flex items-center justify-center transition-colors"
+                    title="Renomear"
+                  >
+                    <Pencil size={11} />
+                  </button>
+                  <button
+                    onClick={e => deletarChat(chat.id, e)}
+                    className="w-6 h-6 text-text-faint hover:text-red-500 rounded-lg flex items-center justify-center transition-colors"
+                    title="Deletar"
+                  >
+                    <Trash2 size={11} />
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </aside>
+
       {/* ── Chat ── */}
-      <main className="flex-1 ml-20 flex flex-col h-screen overflow-hidden">
+      <main className="flex-1 ml-[304px] flex flex-col h-screen overflow-hidden">
         {vazio ? (
           <div className="flex-1 flex flex-col items-center justify-center px-6 pb-10">
             <h1 className="text-text text-4xl font-bold tracking-tight mb-2 text-center">

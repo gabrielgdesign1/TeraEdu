@@ -465,6 +465,22 @@ function BancoQuestoes() {
     const materiaLabel = vestibular === 'ENEM'
       ? (DISCIPLINAS_ENEM.find(d => d.value === materia)?.label ?? materia)
       : materia
+
+    async function salvarQuestaoBanco(q: Questao) {
+      const sb = createClient()
+      const { data: { user } } = await sb.auth.getUser()
+      if (!user) return
+      await sb.from('questoes_salvas').insert({
+        user_id: user.id,
+        materia: materiaLabel,
+        dificuldade: `Banco · ${vestibular}`,
+        enunciado: q.enunciado,
+        alternativas: q.alternativas,
+        gabarito: q.resposta,
+        explicacao: q.explicacao || null,
+      })
+    }
+
     return (
       <SessaoQuestoes
         vestibular={vestibular}
@@ -472,6 +488,7 @@ function BancoQuestoes() {
         conteudo={vestibular === 'ENEM' ? 'Questões de múltiplos anos' : `${vestibular} — múltiplos anos`}
         questoes={questoes}
         onVoltar={() => { setIniciado(false); setQuestoes([]) }}
+        onSalvar={salvarQuestaoBanco}
       />
     )
   }
@@ -1539,7 +1556,7 @@ function QuestoesSalvas() {
     <div className="border border-dashed border-border rounded-2xl p-12 text-center max-w-lg">
       <Bookmark size={32} className="text-text-faint mx-auto mb-3" />
       <p className="text-text font-semibold mb-1">Nenhuma questão salva</p>
-      <p className="text-text-muted text-sm">Ao resolver questões geradas com IA, clique no ícone de marcador para salvá-las aqui.</p>
+      <p className="text-text-muted text-sm">Ao resolver questões do banco ou geradas com IA, clique no ícone de marcador para salvá-las aqui.</p>
     </div>
   )
 
@@ -1558,7 +1575,11 @@ function QuestoesSalvas() {
                     <span className="text-xs bg-brand-soft text-brand px-2.5 py-1 rounded-full font-medium">{q.materia}</span>
                   )}
                   {q.dificuldade && (
-                    <span className="text-xs bg-bg border border-border text-text-muted px-2.5 py-1 rounded-full capitalize">{q.dificuldade}</span>
+                    <span className={`text-xs px-2.5 py-1 rounded-full capitalize border ${
+                      q.dificuldade.startsWith('Banco')
+                        ? 'bg-blue-500/10 border-blue-500/20 text-blue-600 dark:text-blue-400'
+                        : 'bg-bg border-border text-text-muted'
+                    }`}>{q.dificuldade}</span>
                   )}
                 </div>
                 <button

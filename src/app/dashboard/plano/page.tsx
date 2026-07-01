@@ -58,7 +58,7 @@ type ConfigForm = {
 
 // ─── Constantes ───────────────────────────────────────────────────────────────
 
-const VESTIBULARES_OPTS = ['ENEM', 'FUVEST', 'UNICAMP', 'UNESP', 'Outro']
+const VESTIBULARES_OPTS = ['ENEM', 'FUVEST', 'UNICAMP', 'UNESP', 'UERJ', 'UnB', 'UFG', 'UFPR', 'ITA', 'IME', 'Outro']
 
 const MATERIAS = [
   'Português', 'Literatura', 'Matemática', 'Física', 'Química',

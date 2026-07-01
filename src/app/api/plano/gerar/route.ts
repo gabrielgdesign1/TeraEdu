@@ -1,5 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk'
 
+export const maxDuration = 120
+
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
 const DIA_IDX: Record<string, number> = {
@@ -84,15 +86,16 @@ Retorne SOMENTE este JSON (${semanasTotal} semanas, cada semana com ${diasSemana
 }`
 
     const response = await anthropic.messages.create({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 8000,
+      model: 'claude-sonnet-4-6',
+      max_tokens: 16000,
       system,
       messages: [{ role: 'user', content: prompt }],
     })
 
     const texto = response.content[0].type === 'text' ? response.content[0].text : '{}'
-    const jsonLimpo = texto.replace(/```json[\s\S]*?```|```[\s\S]*?```/g, '').replace(/```/g, '').trim()
-    const plano = JSON.parse(jsonLimpo)
+    const jsonMatch = texto.match(/\{[\s\S]*\}/)
+    if (!jsonMatch) throw new Error('JSON não encontrado na resposta')
+    const plano = JSON.parse(jsonMatch[0])
 
     // Adiciona datas reais e status inicial a cada dia
     for (const semana of plano.semanas) {
