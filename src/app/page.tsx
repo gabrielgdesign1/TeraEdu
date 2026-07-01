@@ -10,7 +10,6 @@ import {
   FileText, BarChart3, Calendar, Check, ArrowRight,
   Target, Brain, Trophy, Zap, BookOpen,
 } from "lucide-react"
-import { LandingPatternBackground } from "@/components/LandingPatternBackground"
 
 /* ── animation presets ── */
 const up = (delay = 0) => ({
@@ -57,9 +56,7 @@ export default function Home() {
   useEffect(() => setMounted(true), [])
 
   return (
-    <main className="min-h-screen text-text overflow-x-hidden relative isolate">
-
-      <LandingPatternBackground />
+    <main className="min-h-screen bg-bg text-text overflow-x-hidden">
 
       {/* ── MARQUEE KEYFRAME ── */}
       <style>{`
