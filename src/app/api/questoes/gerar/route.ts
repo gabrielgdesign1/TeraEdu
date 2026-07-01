@@ -37,16 +37,22 @@ Nível de dificuldade: ${nivelMap[dificuldade as keyof typeof nivelMap]}.
 As questões devem testar domínio real do conteúdo "${conteudo}", com enunciados contextualizados como no ${vestibular}.
 Responda APENAS o JSON no formato pedido.`
 
-  const resposta = await anthropic.messages.create({
-    model: 'claude-sonnet-4-6',
-    max_tokens: 4096,
-    system,
-    messages: [{ role: 'user', content: prompt }],
-  })
+  try {
+    const resposta = await anthropic.messages.create({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 8000,
+      system,
+      messages: [{ role: 'user', content: prompt }],
+    })
 
-  const texto = resposta.content[0].type === 'text' ? resposta.content[0].text : '{}'
-  const jsonLimpo = texto.replace(/```json|```/g, '').trim()
-  const dados = JSON.parse(jsonLimpo)
+    const texto = resposta.content[0].type === 'text' ? resposta.content[0].text : '{}'
+    const jsonMatch = texto.match(/\{[\s\S]*\}/)
+    if (!jsonMatch) throw new Error('JSON não encontrado na resposta')
+    const dados = JSON.parse(jsonMatch[0])
 
-  return Response.json(dados)
+    return Response.json(dados)
+  } catch (error) {
+    console.error('[questoes/gerar]', error)
+    return Response.json({ error: 'Erro ao gerar questões' }, { status: 500 })
+  }
 }

@@ -898,6 +898,7 @@ function GerarComIA() {
   const [quantidade,  setQuantidade ] = useState(5)
   const [loading,     setLoading    ] = useState(false)
   const [questoes,    setQuestoes   ] = useState<Questao[]>([])
+  const [erro,        setErro       ] = useState('')
 
   const materias  = vestibular ? MATERIAS[vestibular]             ?? [] : []
   const conteudos = materia    ? CONTEUDOS[vestibular]?.[materia] ?? [] : []
@@ -910,6 +911,7 @@ function GerarComIA() {
   async function gerarQuestoes() {
     if (!pronto || loading) return
     setLoading(true)
+    setErro('')
     setQuestoes([])
     try {
       const res = await fetch('/api/questoes/gerar', {
@@ -918,9 +920,14 @@ function GerarComIA() {
         body: JSON.stringify({ vestibular, materia, conteudo, dificuldade, quantidade }),
       })
       const dados = await res.json()
-      setQuestoes(dados.questoes ?? [])
+      if (!res.ok || !dados.questoes?.length) {
+        setErro('Não foi possível gerar as questões. Tente novamente.')
+        return
+      }
+      setQuestoes(dados.questoes)
     } catch (e) {
       console.error(e)
+      setErro('Erro de conexão. Verifique sua internet e tente novamente.')
     } finally {
       setLoading(false)
     }
@@ -1070,6 +1077,8 @@ function GerarComIA() {
             </div>
           </div>
         )}
+
+        {erro && <p className="text-red-500 text-sm">{erro}</p>}
 
         {/* Botão gerar */}
         {pronto && (
