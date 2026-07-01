@@ -368,42 +368,103 @@ export default function Home() {
       </section>
 
       {/* ── DEPOIMENTOS ── */}
-      <section id="depoimentos" className="py-28 px-6 lg:px-10 border-t border-border">
+      <section id="depoimentos" className="py-28 px-6 lg:px-10 border-t border-border overflow-hidden">
         <div className="max-w-7xl mx-auto">
-          <div className="mb-16">
+          <div className="mb-20 text-center">
             <motion.p className="text-brand text-xs tracking-widest uppercase mb-4" {...inView()}>Depoimentos</motion.p>
             <h2 className="text-[clamp(2.2rem,5vw,5rem)] font-black leading-[0.88] tracking-tight">
               <motion.span className="block text-text-muted font-extralight" {...inView(0.08)}>O que os</motion.span>
               <motion.span className="block text-text" {...inView(0.16)}>alunos dizem.</motion.span>
             </h2>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+
+          {/* Leque de cards */}
+          <div className="hidden md:flex justify-center items-center px-10" style={{ perspective: 1400 }}>
             {[
-              { nome: "Ana Lima",     curso: "Aprovada em Medicina — FUVEST 2024", texto: "O TeraEdu mudou minha forma de estudar. A IA tutora me salvou em Química Orgânica, explicava de um jeito que eu finalmente entendia." },
-              { nome: "Pedro Souza",  curso: "Aprovado em Engenharia — ITA 2024",  texto: "Os flashcards automáticos são incríveis. Nunca conseguia manter consistência na revisão, mas com o sistema de repetição espaçada ficou fácil." },
-              { nome: "Carla Mendes", curso: "Aprovada em Direito — USP 2024",     texto: "O banco de questões é enorme e bem organizado. Fiz mais de 500 questões de Português e minha nota no ENEM subiu 80 pontos." },
+              { nome: "Sarah Costa",   papel: "Aprovada em Medicina",     info: "FUVEST 2024",   texto: "O TeraEdu mudou minha forma de estudar. A IA tutora me salvou em Química Orgânica, explicava de um jeito que eu finalmente entendia.", tag: "Medicina" },
+              { nome: "Miguel Chen",   papel: "Aprovado em Engenharia",   info: "ITA 2024",       texto: "Os flashcards automáticos são incríveis. Nunca conseguia manter consistência na revisão, mas com repetição espaçada ficou fácil.", tag: "Engenharia" },
+              { nome: "Emília Alves",  papel: "Aprovada em Direito",      info: "USP 2024",       texto: "O banco de questões é enorme e bem organizado. Fiz mais de 500 questões de Português e minha nota no ENEM subiu 80 pontos.", tag: "Direito" },
+              { nome: "David Rocha",   papel: "Aprovado em Computação",   info: "UNICAMP 2024",   texto: "Os resumos gerados pela IA economizaram semanas de estudo. O plano de estudos me manteve consistente até a prova.", tag: "Computação" },
+              { nome: "Jéssica Nunes", papel: "Aprovada em Psicologia",   info: "UFMG 2024",      texto: "O plano de estudos personalizado me ajudou a organizar minha rotina caótica entre escola, cursinho e vida pessoal.", tag: "Psicologia" },
+            ].map((d, i, arr) => {
+              const centro  = (arr.length - 1) / 2
+              const offset  = i - centro
+              const rotate  = offset * 7
+              const dy      = Math.abs(offset) * 20
+              const scaleAt = 1 - Math.abs(offset) * 0.06
+              const zBase   = 10 - Math.abs(offset)
+
+              return (
+                <motion.div
+                  key={d.nome}
+                  className="relative w-64 flex-shrink-0 bg-[#161821] border border-white/10 rounded-3xl p-6 cursor-default"
+                  style={{ marginLeft: i === 0 ? 0 : -36, zIndex: zBase, transformOrigin: 'bottom center' }}
+                  initial={{ opacity: 0, y: 60, rotate: 0 }}
+                  whileInView={{ opacity: 1, y: dy, rotate }}
+                  viewport={{ once: true, margin: '-40px' }}
+                  transition={{ duration: 0.6, delay: i * 0.08, ease: [0.22, 1, 0.36, 1] }}
+                  whileHover={{
+                    y: dy - 36,
+                    rotate: 0,
+                    scale: 1.08,
+                    zIndex: 50,
+                    transition: { duration: 0.35, ease: [0.22, 1, 0.36, 1] },
+                  }}
+                  animate={{ scale: scaleAt }}
+                >
+                  {/* glow ao redor no hover */}
+                  <motion.div
+                    className="pointer-events-none absolute -inset-px rounded-3xl opacity-0"
+                    style={{ background: 'radial-gradient(120% 120% at 50% 0%, rgba(249,115,22,0.25), transparent 60%)' }}
+                    whileHover={{ opacity: 1 }}
+                  />
+                  <motion.div
+                    className="pointer-events-none absolute inset-0 rounded-3xl shadow-2xl opacity-0"
+                    style={{ boxShadow: '0 30px 60px -15px rgba(0,0,0,0.5)' }}
+                    whileHover={{ opacity: 1 }}
+                  />
+
+                  <div className="relative z-10 flex items-center gap-2.5 mb-4">
+                    <div className="w-8 h-8 rounded-full bg-brand/20 border border-brand/40 flex items-center justify-center text-brand font-bold text-xs flex-shrink-0">
+                      {d.nome[0]}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-white text-sm font-semibold leading-tight truncate">{d.nome}</p>
+                      <p className="text-white/40 text-[11px] leading-tight truncate">{d.papel}</p>
+                    </div>
+                  </div>
+
+                  <p className="relative z-10 text-white/60 text-[13px] leading-relaxed mb-5">{d.texto}</p>
+
+                  <p className="relative z-10 text-brand text-xs font-semibold">{d.tag}</p>
+                </motion.div>
+              )
+            })}
+          </div>
+
+          {/* Mobile: coluna simples */}
+          <div className="grid grid-cols-1 gap-4 md:hidden">
+            {[
+              { nome: "Sarah Costa",   papel: "Aprovada em Medicina — FUVEST 2024", texto: "O TeraEdu mudou minha forma de estudar. A IA tutora me salvou em Química Orgânica." },
+              { nome: "Miguel Chen",   papel: "Aprovado em Engenharia — ITA 2024",  texto: "Os flashcards automáticos são incríveis. Nunca conseguia manter consistência na revisão." },
+              { nome: "Emília Alves",  papel: "Aprovada em Direito — USP 2024",     texto: "O banco de questões é enorme e bem organizado. Minha nota no ENEM subiu 80 pontos." },
             ].map((d, i) => (
               <motion.div
                 key={d.nome}
-                className="bg-bg-card border border-border rounded-3xl p-8 flex flex-col justify-between gap-8 hover:border-brand/40 transition-colors"
-                initial={{ opacity: 0, y: 32 }}
+                className="bg-bg-card border border-border rounded-3xl p-6 flex flex-col gap-5"
+                initial={{ opacity: 0, y: 24 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: '-40px' }}
-                transition={{ duration: 0.55, delay: i * 0.1, ease: [0.22, 1, 0.36, 1] }}
-                whileHover={{ y: -4, transition: { duration: 0.2 } }}
+                transition={{ duration: 0.5, delay: i * 0.08 }}
               >
-                <p className="text-text text-base leading-relaxed">&ldquo;{d.texto}&rdquo;</p>
-                <div className="flex items-center gap-4">
-                  <motion.div
-                    className="w-10 h-10 bg-brand rounded-2xl flex items-center justify-center text-white font-bold text-sm flex-shrink-0"
-                    whileHover={{ scale: 1.1, rotate: 6 }}
-                    transition={{ duration: 0.2 }}
-                  >
+                <p className="text-text text-sm leading-relaxed">&ldquo;{d.texto}&rdquo;</p>
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 bg-brand rounded-xl flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
                     {d.nome[0]}
-                  </motion.div>
+                  </div>
                   <div>
                     <p className="text-text text-sm font-semibold">{d.nome}</p>
-                    <p className="text-text-faint text-xs mt-0.5">{d.curso}</p>
+                    <p className="text-text-faint text-xs mt-0.5">{d.papel}</p>
                   </div>
                 </div>
               </motion.div>
