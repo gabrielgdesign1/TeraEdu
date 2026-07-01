@@ -397,7 +397,7 @@ export default function Home() {
               return (
                 <motion.div
                   key={d.nome}
-                  className="relative w-64 flex-shrink-0 bg-[#161821] border border-white/10 rounded-3xl p-6 cursor-default"
+                  className="relative w-64 flex-shrink-0 bg-bg-card border border-border rounded-3xl p-6 cursor-default shadow-sm"
                   style={{ marginLeft: i === 0 ? 0 : -36, zIndex: zBase, transformOrigin: 'bottom center' }}
                   initial={{ opacity: 0, y: 60, rotate: 0 }}
                   whileInView={{ opacity: 1, y: dy, rotate }}
@@ -429,12 +429,12 @@ export default function Home() {
                       {d.nome[0]}
                     </div>
                     <div className="min-w-0">
-                      <p className="text-white text-sm font-semibold leading-tight truncate">{d.nome}</p>
-                      <p className="text-white/40 text-[11px] leading-tight truncate">{d.papel}</p>
+                      <p className="text-text text-sm font-semibold leading-tight truncate">{d.nome}</p>
+                      <p className="text-text-faint text-[11px] leading-tight truncate">{d.papel}</p>
                     </div>
                   </div>
 
-                  <p className="relative z-10 text-white/60 text-[13px] leading-relaxed mb-5">{d.texto}</p>
+                  <p className="relative z-10 text-text-muted text-[13px] leading-relaxed mb-5">{d.texto}</p>
 
                   <p className="relative z-10 text-brand text-xs font-semibold">{d.tag}</p>
                 </motion.div>
