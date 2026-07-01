@@ -3,14 +3,14 @@
 import Link from "next/link"
 import Image from "next/image"
 import { useTheme } from "next-themes"
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useState } from "react"
 import { motion } from "framer-motion"
 import {
   Sun, Moon, Sparkles, MessageCircle, FileQuestion, Layers,
   FileText, BarChart3, Calendar, Check, ArrowRight,
   Target, Brain, Trophy, Zap, BookOpen,
 } from "lucide-react"
-import { FallingPattern } from "@/components/ui/falling-pattern"
+import { LandingPatternBackground } from "@/components/LandingPatternBackground"
 
 /* ── animation presets ── */
 const up = (delay = 0) => ({
@@ -53,23 +53,13 @@ export default function Home() {
   const { theme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
   const [activeNav, setActiveNav] = useState('')
-  const spotlightRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => setMounted(true), [])
 
-  function handleHeroMouseMove(e: React.MouseEvent<HTMLElement>) {
-    const rect = e.currentTarget.getBoundingClientRect()
-    const x = ((e.clientX - rect.left) / rect.width) * 100
-    const y = ((e.clientY - rect.top) / rect.height) * 100
-    if (spotlightRef.current) {
-      const mask = `radial-gradient(420px circle at ${x}% ${y}%, black, transparent)`
-      spotlightRef.current.style.maskImage = mask
-      spotlightRef.current.style.webkitMaskImage = mask
-    }
-  }
-
   return (
-    <main className="min-h-screen bg-bg text-text overflow-x-hidden">
+    <main className="min-h-screen text-text overflow-x-hidden relative isolate">
+
+      <LandingPatternBackground />
 
       {/* ── MARQUEE KEYFRAME ── */}
       <style>{`
@@ -157,23 +147,7 @@ export default function Home() {
       </nav>
 
       {/* ── HERO ── */}
-      <section className="relative min-h-screen overflow-hidden pt-20" onMouseMove={handleHeroMouseMove}>
-
-        {/* Falling pattern background */}
-        <div className="absolute inset-0 z-0 pointer-events-none">
-          <FallingPattern
-            color="var(--brand)"
-            backgroundColor="var(--bg)"
-            className="h-full w-full opacity-[0.11] [mask-image:radial-gradient(ellipse_at_center,black,transparent_75%)] [-webkit-mask-image:radial-gradient(ellipse_at_center,black,transparent_75%)]"
-          />
-          <div ref={spotlightRef} className="absolute inset-0">
-            <FallingPattern
-              color="var(--brand)"
-              backgroundColor="var(--bg)"
-              className="h-full w-full opacity-[0.4]"
-            />
-          </div>
-        </div>
+      <section className="relative min-h-screen overflow-hidden pt-20">
 
         {/* Watermark */}
         <div className="absolute inset-0 flex items-center pointer-events-none select-none overflow-hidden z-0">
