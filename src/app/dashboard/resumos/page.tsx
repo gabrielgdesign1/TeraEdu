@@ -13,6 +13,7 @@ import {
 import { DashboardSidebar } from '@/components/DashboardSidebar'
 import { HistoryPanel } from '@/components/HistoryPanel'
 import { createClient } from '@/lib/supabase'
+import { extractPdfText } from '@/lib/extractPdfText'
 
 type ModoEntrada = 'tema' | 'texto' | 'pdf'
 type Tamanho     = 'curto' | 'medio' | 'completo'
@@ -96,11 +97,20 @@ export default function Resumos() {
     setResumo('')
     try {
       const formData = new FormData()
-      formData.append('modo', modoEntrada)
       formData.append('tamanho', tamanho)
-      if (modoEntrada === 'tema') formData.append('tema', tema)
-      if (modoEntrada === 'texto') formData.append('texto', texto)
-      if (modoEntrada === 'pdf' && arquivo) formData.append('arquivo', arquivo)
+      if (modoEntrada === 'tema') {
+        formData.append('modo', 'tema')
+        formData.append('tema', tema)
+      } else if (modoEntrada === 'texto') {
+        formData.append('modo', 'texto')
+        formData.append('texto', texto)
+      } else if (modoEntrada === 'pdf' && arquivo) {
+        // Extrai o texto do PDF no navegador para evitar o limite de tamanho
+        // de payload dos Serverless Functions (envio do arquivo bruto dava 413).
+        const textoExtraido = await extractPdfText(arquivo)
+        formData.append('modo', 'texto')
+        formData.append('texto', textoExtraido)
+      }
       const res = await fetch('/api/resumos', { method: 'POST', body: formData })
       const dados = await res.json()
       const novoResumoTexto = dados.resumo as string
