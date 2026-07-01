@@ -68,10 +68,12 @@ export function DashboardSidebar() {
   const [expanded, setExpanded] = useState(false)
   const [mounted, setMounted] = useState(false)
   const pathname = usePathname()
-  const { theme, setTheme } = useTheme()
+  const { theme, resolvedTheme, setTheme } = useTheme()
   const { profile } = useProfile()
 
   useEffect(() => setMounted(true), [])
+
+  const isDark = mounted && resolvedTheme === 'dark'
 
   const isActive = (href: string) =>
     href === '/dashboard' ? pathname === '/dashboard' : pathname.startsWith(href)
@@ -91,11 +93,16 @@ export function DashboardSidebar() {
       {/* ── Glass background ── */}
       <div
         className="absolute inset-0 rounded-2xl border border-border/50"
-        style={{
-          background: 'var(--sidebar-bg, rgba(26,29,39,0.88))',
+        style={isDark ? {
+          background: 'rgba(26,29,39,0.88)',
           backdropFilter: 'blur(20px) saturate(1.4)',
           WebkitBackdropFilter: 'blur(20px) saturate(1.4)',
           boxShadow: '0 8px 32px rgba(0,0,0,0.28), 0 1px 0 rgba(255,255,255,0.04) inset',
+        } : {
+          background: 'rgba(255,255,255,0.92)',
+          backdropFilter: 'blur(20px) saturate(1.8)',
+          WebkitBackdropFilter: 'blur(20px) saturate(1.8)',
+          boxShadow: '0 4px 24px rgba(0,0,0,0.10), 0 1px 0 rgba(255,255,255,0.8) inset',
         }}
       />
 
@@ -165,9 +172,9 @@ export function DashboardSidebar() {
           {/* Theme toggle */}
           <button
             onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/5 text-text-muted hover:text-text transition-colors overflow-hidden w-full"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-bg-hover text-text-muted hover:text-text transition-colors overflow-hidden w-full"
           >
-            {mounted && theme === 'dark'
+            {isDark
               ? <Sun size={15} className="flex-shrink-0" />
               : <Moon size={15} className="flex-shrink-0" />}
             <AnimatePresence>
@@ -179,7 +186,7 @@ export function DashboardSidebar() {
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.12 }}
                 >
-                  {mounted && theme === 'dark' ? 'Modo claro' : 'Modo escuro'}
+                  {isDark ? 'Modo claro' : 'Modo escuro'}
                 </motion.span>
               )}
             </AnimatePresence>
@@ -188,7 +195,7 @@ export function DashboardSidebar() {
           {/* User */}
           <Link
             href="/dashboard/configuracoes"
-            className="flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-white/5 transition-colors overflow-hidden"
+            className="flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-bg-hover transition-colors overflow-hidden"
           >
             <div className="w-8 h-8 bg-brand rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0 shrink-0">
               {primeiroNome?.[0]?.toUpperCase() ?? '?'}
