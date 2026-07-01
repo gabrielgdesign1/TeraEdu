@@ -1,14 +1,10 @@
 'use client'
 
-import Image from "next/image"
 import Link from "next/link"
-import { useTheme } from "next-themes"
 import { useEffect, useState } from "react"
-import {
-  LayoutDashboard, FileQuestion, Layers, FileText, MessageCircle,
-  BarChart3, Calendar, Sun, Moon, Settings, Save, LogOut, User, GraduationCap, Target
-} from "lucide-react"
+import { Save, LogOut, User, GraduationCap, Target } from "lucide-react"
 import { useProfile } from "@/hooks/useProfile"
+import { DashboardSidebar } from "@/components/DashboardSidebar"
 import { createClient } from "@/lib/supabase"
 import { useRouter } from "next/navigation"
 
@@ -33,9 +29,6 @@ const OBJETIVOS = [
 ]
 
 export default function Configuracoes() {
-  const { theme, setTheme } = useTheme()
-  const [mounted, setMounted] = useState(false)
-  useEffect(() => setMounted(true), [])
 
   const { profile, loading, salvarProfile } = useProfile()
   const router = useRouter()
@@ -72,52 +65,12 @@ export default function Configuracoes() {
     router.push('/login')
   }
 
-  const primeiroNome = profile?.nome?.split(' ')[0] ?? null
-
   return (
     <div className="min-h-screen bg-bg flex">
-
-      {/* Sidebar */}
-      <aside className="w-64 bg-bg border-r border-border/60 flex flex-col fixed h-full">
-        <div className="flex items-center gap-2.5 px-6 py-6">
-          <Image src="/TeraEdu-logo-orange.png" alt="TeraEdu" width={26} height={26} />
-          <span className="text-text font-bold tracking-tight">TeraEdu</span>
-        </div>
-        <nav className="flex flex-col gap-0.5 px-3 flex-1 pt-1">
-          <SidebarLink href="/dashboard"                  icon={LayoutDashboard} label="Início" />
-          <SidebarLink href="/dashboard/questoes"         icon={FileQuestion}    label="Questões" />
-          <SidebarLink href="/dashboard/flashcards"       icon={Layers}          label="Flashcards" />
-          <SidebarLink href="/dashboard/resumos"          icon={FileText}        label="Resumos" />
-          <SidebarLink href="/dashboard/tutora"           icon={MessageCircle}   label="IA Tutora" />
-          <SidebarLink href="/dashboard/vestibulares"    icon={GraduationCap}   label="Vestibulares" />
-          <div className="px-3 mt-8 mb-2">
-            <p className="text-text-faint text-[10px] uppercase tracking-widest font-semibold">Progresso</p>
-          </div>
-          <SidebarLink href="/dashboard/desempenho" icon={BarChart3}  label="Desempenho" />
-          <SidebarLink href="/dashboard/plano"      icon={Calendar}   label="Plano de Estudos" />
-        </nav>
-        <div className="px-3 py-4 border-t border-border/60">
-          <button
-            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-            className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl hover:bg-bg-hover text-text-muted hover:text-text text-sm transition-colors mb-1"
-          >
-            {mounted && theme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}
-            <span>{mounted && theme === 'dark' ? 'Modo claro' : 'Modo escuro'}</span>
-          </button>
-          <Link href="/dashboard/configuracoes" className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-bg-hover cursor-pointer transition-colors">
-            <div className="w-8 h-8 bg-brand rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-              {primeiroNome ? primeiroNome[0].toUpperCase() : '?'}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-text text-sm font-semibold truncate">{profile?.nome ?? '...'}</p>
-            </div>
-            <Settings size={13} className="text-brand" />
-          </Link>
-        </div>
-      </aside>
+      <DashboardSidebar />
 
       {/* Main */}
-      <main className="flex-1 ml-64 px-10 py-10 max-w-3xl">
+      <main className="flex-1 ml-20 px-10 py-10 max-w-3xl">
         <div className="mb-8">
           <h1 className="text-text text-2xl font-bold tracking-tight mb-1">Configurações</h1>
           <p className="text-text-muted text-sm">Suas preferências e informações de perfil.</p>
@@ -288,20 +241,3 @@ export default function Configuracoes() {
   )
 }
 
-function SidebarLink({ href, icon: Icon, label, active }: {
-  href: string; icon: React.ElementType; label: string; active?: boolean
-}) {
-  return (
-    <Link
-      href={href}
-      className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all ${
-        active
-          ? 'bg-bg-hover text-text font-semibold'
-          : 'text-text-muted hover:text-text hover:bg-bg-hover'
-      }`}
-    >
-      <Icon size={16} />
-      {label}
-    </Link>
-  )
-}

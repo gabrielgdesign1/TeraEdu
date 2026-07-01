@@ -1,16 +1,14 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import Image from 'next/image'
 import Link from 'next/link'
-import { useTheme } from 'next-themes'
 import {
-  LayoutDashboard, FileQuestion, Layers, FileText, MessageCircle,
-  BarChart3, Calendar, Sun, Moon, Settings, GraduationCap,
-  ChevronRight, ChevronLeft, Check, Trash2, RefreshCw, RotateCcw,
-  BookOpen, Sparkles, Target, Clock, AlertTriangle,
+  Calendar, ChevronRight, ChevronLeft, Check, Trash2, RefreshCw, RotateCcw,
+  BookOpen, Sparkles, Target, Clock, AlertTriangle, BarChart3,
+  FileQuestion, FileText, Layers, MessageCircle,
 } from 'lucide-react'
 import { useProfile } from '@/hooks/useProfile'
+import { DashboardSidebar } from '@/components/DashboardSidebar'
 import { createClient } from '@/lib/supabase'
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
@@ -135,21 +133,6 @@ function mesAtualDias(): { data: string; diaMes: number; mesOffset: number }[] {
   return result
 }
 
-// ─── SidebarLink ──────────────────────────────────────────────────────────────
-
-function SidebarLink({ href, icon: Icon, label, active }: {
-  href: string; icon: React.ElementType; label: string; active?: boolean
-}) {
-  return (
-    <Link href={href} className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all ${
-      active ? 'bg-bg-hover text-text font-semibold' : 'text-text-muted hover:text-text hover:bg-bg-hover'
-    }`}>
-      <Icon size={16} />
-      <span>{label}</span>
-    </Link>
-  )
-}
-
 // ─── Badge de matéria ─────────────────────────────────────────────────────────
 
 function MateriaBadge({ materia }: { materia: string }) {
@@ -193,10 +176,7 @@ const CONFIG_INICIAL: ConfigForm = {
 }
 
 export default function PlanoPage() {
-  const { theme, setTheme } = useTheme()
-  const [mounted, setMounted] = useState(false)
   const { profile } = useProfile()
-  const primeiroNome = profile?.nome?.split(' ')[0] ?? null
 
   const [plano,       setPlano      ] = useState<Plano | null>(null)
   const [loading,     setLoading    ] = useState(true)
@@ -222,7 +202,7 @@ export default function PlanoPage() {
     setLoading(false)
   }, [])
 
-  useEffect(() => { setMounted(true); carregar() }, [carregar])
+  useEffect(() => { carregar() }, [carregar])
 
   // ── Gerar plano ─────────────────────────────────────────────────────────────
 
@@ -348,44 +328,8 @@ export default function PlanoPage() {
   if (!plano) {
     return (
       <div className="min-h-screen bg-bg flex">
-        <aside className="w-64 bg-bg border-r border-border/60 flex flex-col fixed h-full z-10">
-          <div className="flex items-center gap-2.5 px-6 py-6">
-            <Image src="/TeraEdu-logo-orange.png" alt="TeraEdu" width={26} height={26} />
-            <span className="text-text font-bold tracking-tight">TeraEdu</span>
-          </div>
-          <nav className="flex flex-col gap-0.5 px-3 flex-1 pt-1">
-            <SidebarLink href="/dashboard"              icon={LayoutDashboard} label="Início" />
-            <SidebarLink href="/dashboard/questoes"     icon={FileQuestion}    label="Questões" />
-            <SidebarLink href="/dashboard/flashcards"   icon={Layers}          label="Flashcards" />
-            <SidebarLink href="/dashboard/resumos"      icon={FileText}        label="Resumos" />
-            <SidebarLink href="/dashboard/tutora"       icon={MessageCircle}   label="IA Tutora" />
-            <SidebarLink href="/dashboard/vestibulares" icon={GraduationCap}   label="Vestibulares" />
-            <div className="px-3 mt-8 mb-2">
-              <p className="text-text-faint text-[10px] uppercase tracking-widest font-semibold">Progresso</p>
-            </div>
-            <SidebarLink href="/dashboard/desempenho" icon={BarChart3}  label="Desempenho" />
-            <SidebarLink href="/dashboard/plano"      icon={Calendar}   label="Plano de Estudos" active />
-          </nav>
-          <div className="px-3 py-4 border-t border-border/60">
-            <button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-              className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl hover:bg-bg-hover text-text-muted hover:text-text text-sm transition-colors mb-1">
-              {mounted && theme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}
-              <span>{mounted && theme === 'dark' ? 'Modo claro' : 'Modo escuro'}</span>
-            </button>
-            <Link href="/dashboard/configuracoes" className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-bg-hover cursor-pointer transition-colors">
-              <div className="w-8 h-8 bg-brand rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-                {primeiroNome ? primeiroNome[0].toUpperCase() : '?'}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-text text-sm font-semibold truncate">{profile?.nome ?? '...'}</p>
-                <p className="text-text-faint text-xs truncate">Configurações</p>
-              </div>
-              <Settings size={13} className="text-text-faint" />
-            </Link>
-          </div>
-        </aside>
-
-        <main className="flex-1 ml-64 flex items-start justify-center py-16 px-10">
+        <DashboardSidebar />
+        <main className="flex-1 ml-20 flex items-start justify-center py-16 px-10">
           <div className="w-full max-w-xl">
 
             {/* Header */}
@@ -644,46 +588,10 @@ export default function PlanoPage() {
         </div>
       )}
 
-      {/* Sidebar */}
-      <aside className="w-64 bg-bg border-r border-border/60 flex flex-col fixed h-full z-10">
-        <div className="flex items-center gap-2.5 px-6 py-6">
-          <Image src="/TeraEdu-logo-orange.png" alt="TeraEdu" width={26} height={26} />
-          <span className="text-text font-bold tracking-tight">TeraEdu</span>
-        </div>
-        <nav className="flex flex-col gap-0.5 px-3 flex-1 pt-1">
-          <SidebarLink href="/dashboard"              icon={LayoutDashboard} label="Início" />
-          <SidebarLink href="/dashboard/questoes"     icon={FileQuestion}    label="Questões" />
-          <SidebarLink href="/dashboard/flashcards"   icon={Layers}          label="Flashcards" />
-          <SidebarLink href="/dashboard/resumos"      icon={FileText}        label="Resumos" />
-          <SidebarLink href="/dashboard/tutora"       icon={MessageCircle}   label="IA Tutora" />
-          <SidebarLink href="/dashboard/vestibulares" icon={GraduationCap}   label="Vestibulares" />
-          <div className="px-3 mt-8 mb-2">
-            <p className="text-text-faint text-[10px] uppercase tracking-widest font-semibold">Progresso</p>
-          </div>
-          <SidebarLink href="/dashboard/desempenho" icon={BarChart3}  label="Desempenho" />
-          <SidebarLink href="/dashboard/plano"      icon={Calendar}   label="Plano de Estudos" active />
-        </nav>
-        <div className="px-3 py-4 border-t border-border/60">
-          <button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-            className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl hover:bg-bg-hover text-text-muted hover:text-text text-sm transition-colors mb-1">
-            {mounted && theme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}
-            <span>{mounted && theme === 'dark' ? 'Modo claro' : 'Modo escuro'}</span>
-          </button>
-          <Link href="/dashboard/configuracoes" className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-bg-hover cursor-pointer transition-colors">
-            <div className="w-8 h-8 bg-brand rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-              {primeiroNome ? primeiroNome[0].toUpperCase() : '?'}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-text text-sm font-semibold truncate">{profile?.nome ?? '...'}</p>
-              <p className="text-text-faint text-xs truncate">Configurações</p>
-            </div>
-            <Settings size={13} className="text-text-faint" />
-          </Link>
-        </div>
-      </aside>
+      <DashboardSidebar />
 
       {/* Main */}
-      <main className="flex-1 ml-64 overflow-y-auto">
+      <main className="flex-1 ml-20 overflow-y-auto">
         <div className="max-w-4xl mx-auto px-10 py-10 space-y-8">
 
           {/* Cabeçalho + ações */}

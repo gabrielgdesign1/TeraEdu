@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect, useCallback } from 'react'
 import Image from 'next/image'
@@ -13,6 +13,7 @@ import {
   Bookmark, BookmarkCheck, Trash2
 } from 'lucide-react'
 import { useProfile } from '@/hooks/useProfile'
+import { DashboardSidebar } from '@/components/DashboardSidebar'
 import { createClient } from '@/lib/supabase'
 
 // ─── Tipos ───────────────────────────────────────────────────────────────────
@@ -200,47 +201,10 @@ export default function Questoes() {
 
   return (
     <div className="min-h-screen bg-bg flex">
-      {/* Sidebar */}
-      <aside className="w-64 bg-bg border-r border-border/60 flex flex-col fixed h-full z-10">
-        <div className="flex items-center gap-2.5 px-6 py-6">
-          <Image src="/TeraEdu-logo-orange.png" alt="TeraEdu" width={26} height={26} />
-          <span className="text-text font-bold tracking-tight">TeraEdu</span>
-        </div>
-        <nav className="flex flex-col gap-0.5 px-3 flex-1 pt-1">
-          <SidebarLink href="/dashboard"            icon={LayoutDashboard} label="Início" />
-          <SidebarLink href="/dashboard/questoes"   icon={FileQuestion}    label="Questões"   active />
-          <SidebarLink href="/dashboard/flashcards" icon={Layers}          label="Flashcards" />
-          <SidebarLink href="/dashboard/resumos"    icon={FileText}        label="Resumos" />
-          <SidebarLink href="/dashboard/tutora"          icon={MessageCircle}   label="IA Tutora" />
-          <SidebarLink href="/dashboard/vestibulares"    icon={GraduationCap}   label="Vestibulares" />
-          <div className="px-3 mt-8 mb-2">
-            <p className="text-text-faint text-[10px] uppercase tracking-widest font-semibold">Progresso</p>
-          </div>
-          <SidebarLink href="/dashboard/desempenho" icon={BarChart3}  label="Desempenho" />
-          <SidebarLink href="/dashboard/plano"      icon={Calendar}   label="Plano de Estudos" />
-        </nav>
-        <div className="px-3 py-4 border-t border-border/60">
-          <button
-            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-            className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl hover:bg-bg-hover text-text-muted hover:text-text text-sm transition-colors mb-1"
-          >
-            {mounted && theme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}
-            <span>{mounted && theme === 'dark' ? 'Modo claro' : 'Modo escuro'}</span>
-          </button>
-          <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-bg-hover cursor-pointer transition-colors">
-            <div className="w-8 h-8 bg-brand rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-              {primeiroNome ? primeiroNome[0].toUpperCase() : 'G'}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-text text-sm font-semibold truncate">{nome ?? 'Gabriel'}</p>
-            </div>
-            <Settings size={13} className="text-text-faint" />
-          </div>
-        </div>
-      </aside>
+      <DashboardSidebar />
 
       {/* Conteúdo principal */}
-      <main className="flex-1 ml-64 flex flex-col min-h-screen">
+      <main className="flex-1 ml-20 flex flex-col min-h-screen">
 
         {/* Header */}
         <div className="px-10 pt-8 pb-6 border-b border-border">
@@ -1654,21 +1618,3 @@ function QuestoesSalvas() {
 }
 
 // ─── Sidebar link ─────────────────────────────────────────────────────────────
-
-function SidebarLink({ href, icon: Icon, label, active }: {
-  href: string; icon: React.ElementType; label: string; active?: boolean
-}) {
-  return (
-    <Link
-      href={href}
-      className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all ${
-        active
-          ? 'bg-bg-hover text-text font-semibold'
-          : 'text-text-muted hover:text-text hover:bg-bg-hover'
-      }`}
-    >
-      <Icon size={16} />
-      {label}
-    </Link>
-  )
-}

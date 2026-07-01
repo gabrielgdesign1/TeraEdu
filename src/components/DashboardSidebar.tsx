@@ -1,0 +1,220 @@
+'use client'
+
+import { useState, useEffect } from 'react'
+import Image from 'next/image'
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
+import { useTheme } from 'next-themes'
+import { motion, AnimatePresence } from 'framer-motion'
+import {
+  LayoutDashboard, FileQuestion, Layers, FileText, MessageCircle,
+  BarChart3, Calendar, GraduationCap, Settings, Sun, Moon, LucideIcon,
+} from 'lucide-react'
+import { useProfile } from '@/hooks/useProfile'
+
+const NAV_ITEMS = [
+  { href: '/dashboard',              icon: LayoutDashboard, label: 'Início'       },
+  { href: '/dashboard/questoes',     icon: FileQuestion,    label: 'Questões'     },
+  { href: '/dashboard/flashcards',   icon: Layers,          label: 'Flashcards'   },
+  { href: '/dashboard/resumos',      icon: FileText,        label: 'Resumos'      },
+  { href: '/dashboard/tutora',       icon: MessageCircle,   label: 'IA Tutora'    },
+  { href: '/dashboard/vestibulares', icon: GraduationCap,   label: 'Vestibulares' },
+]
+
+const PROGRESS_ITEMS = [
+  { href: '/dashboard/desempenho', icon: BarChart3, label: 'Desempenho'     },
+  { href: '/dashboard/plano',      icon: Calendar,  label: 'Plano de Estudo' },
+]
+
+function NavItem({
+  href, icon: Icon, label, active, expanded,
+}: {
+  href: string; icon: LucideIcon; label: string; active: boolean; expanded: boolean
+}) {
+  return (
+    <Link
+      href={href}
+      className={`
+        relative flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors duration-150 overflow-hidden
+        ${active ? 'text-brand' : 'text-text-muted hover:text-text'}
+      `}
+    >
+      {active && (
+        <motion.div
+          layoutId="sidebar-active"
+          className="absolute inset-0 rounded-xl bg-brand/10"
+          transition={{ type: 'spring', stiffness: 400, damping: 35 }}
+        />
+      )}
+      <Icon size={16} className="relative z-10 flex-shrink-0" />
+      <AnimatePresence>
+        {expanded && (
+          <motion.span
+            className="relative z-10 text-sm font-medium whitespace-nowrap"
+            initial={{ opacity: 0, x: -6 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -6 }}
+            transition={{ duration: 0.15, delay: 0.04 }}
+          >
+            {label}
+          </motion.span>
+        )}
+      </AnimatePresence>
+    </Link>
+  )
+}
+
+export function DashboardSidebar() {
+  const [expanded, setExpanded] = useState(false)
+  const [mounted, setMounted] = useState(false)
+  const pathname = usePathname()
+  const { theme, setTheme } = useTheme()
+  const { profile } = useProfile()
+
+  useEffect(() => setMounted(true), [])
+
+  const isActive = (href: string) =>
+    href === '/dashboard' ? pathname === '/dashboard' : pathname.startsWith(href)
+
+  const primeiroNome = profile?.nome?.split(' ')[0] ?? null
+
+  return (
+    <aside
+      className="fixed left-3 top-3 bottom-3 z-50 flex flex-col overflow-hidden"
+      style={{
+        width: expanded ? 224 : 68,
+        transition: 'width 280ms cubic-bezier(0.22, 1, 0.36, 1)',
+      }}
+      onMouseEnter={() => setExpanded(true)}
+      onMouseLeave={() => setExpanded(false)}
+    >
+      {/* ── Glass background ── */}
+      <div
+        className="absolute inset-0 rounded-2xl border border-border/50"
+        style={{
+          background: 'var(--sidebar-bg, rgba(26,29,39,0.88))',
+          backdropFilter: 'blur(20px) saturate(1.4)',
+          WebkitBackdropFilter: 'blur(20px) saturate(1.4)',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.28), 0 1px 0 rgba(255,255,255,0.04) inset',
+        }}
+      />
+
+      {/* ── Content ── */}
+      <div className="relative z-10 flex flex-col h-full">
+
+        {/* Logo */}
+        <div className="flex items-center gap-3 px-[22px] py-5 overflow-hidden border-b border-border/30">
+          <Image src="/TeraEdu-logo-orange.png" alt="TeraEdu" width={24} height={24} className="flex-shrink-0" />
+          <AnimatePresence>
+            {expanded && (
+              <motion.span
+                className="text-text font-bold tracking-tight whitespace-nowrap text-sm"
+                initial={{ opacity: 0, x: -8 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -8 }}
+                transition={{ duration: 0.18 }}
+              >
+                TeraEdu
+              </motion.span>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* Nav items */}
+        <nav className="flex flex-col gap-0.5 px-2 py-3 flex-1 overflow-hidden">
+          {NAV_ITEMS.map(item => (
+            <NavItem
+              key={item.href}
+              {...item}
+              active={isActive(item.href)}
+              expanded={expanded}
+            />
+          ))}
+
+          {/* Divider */}
+          <div className="my-2 mx-3 h-px bg-border/40" />
+
+          {/* Progress section label */}
+          <AnimatePresence>
+            {expanded && (
+              <motion.p
+                className="px-3 pb-1 text-[9px] uppercase tracking-widest text-text-faint font-semibold whitespace-nowrap overflow-hidden"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.12 }}
+              >
+                Progresso
+              </motion.p>
+            )}
+          </AnimatePresence>
+
+          {PROGRESS_ITEMS.map(item => (
+            <NavItem
+              key={item.href}
+              {...item}
+              active={isActive(item.href)}
+              expanded={expanded}
+            />
+          ))}
+        </nav>
+
+        {/* Bottom */}
+        <div className="px-2 pb-3 border-t border-border/30 pt-2 flex flex-col gap-0.5">
+
+          {/* Theme toggle */}
+          <button
+            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+            className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/5 text-text-muted hover:text-text transition-colors overflow-hidden w-full"
+          >
+            {mounted && theme === 'dark'
+              ? <Sun size={15} className="flex-shrink-0" />
+              : <Moon size={15} className="flex-shrink-0" />}
+            <AnimatePresence>
+              {expanded && (
+                <motion.span
+                  className="text-sm whitespace-nowrap"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.12 }}
+                >
+                  {mounted && theme === 'dark' ? 'Modo claro' : 'Modo escuro'}
+                </motion.span>
+              )}
+            </AnimatePresence>
+          </button>
+
+          {/* User */}
+          <Link
+            href="/dashboard/configuracoes"
+            className="flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-white/5 transition-colors overflow-hidden"
+          >
+            <div className="w-8 h-8 bg-brand rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0 shrink-0">
+              {primeiroNome?.[0]?.toUpperCase() ?? '?'}
+            </div>
+            <AnimatePresence>
+              {expanded && (
+                <motion.div
+                  className="flex-1 min-w-0 flex items-center justify-between"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.12 }}
+                >
+                  <div className="min-w-0">
+                    <p className="text-text text-sm font-semibold truncate">{profile?.nome ?? '...'}</p>
+                    {profile?.universidade && (
+                      <p className="text-text-faint text-[10px] truncate">{profile.universidade}</p>
+                    )}
+                  </div>
+                  <Settings size={12} className="text-text-faint flex-shrink-0 ml-2" />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </Link>
+        </div>
+      </div>
+    </aside>
+  )
+}

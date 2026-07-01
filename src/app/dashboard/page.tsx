@@ -1,13 +1,12 @@
 'use client'
 
-import Image from "next/image"
 import Link from "next/link"
-import { useTheme } from "next-themes"
 import { useEffect, useState } from "react"
 import {
-  LayoutDashboard, FileQuestion, Layers, FileText, MessageCircle,
-  BarChart3, Calendar, Sun, Moon, Settings, ChevronRight, TrendingUp, Flame, GraduationCap
+  FileQuestion, Layers, FileText, MessageCircle,
+  BarChart3, Calendar, ChevronRight, TrendingUp, Flame,
 } from "lucide-react"
+import { DashboardSidebar } from "@/components/DashboardSidebar"
 import { useProfile } from "@/hooks/useProfile"
 import { useStats, useActivities } from "@/hooks/useStats"
 import { Onboarding } from "@/components/Onboarding"
@@ -117,9 +116,6 @@ function PlanoCardDashboard() {
 // ─── Dashboard ────────────────────────────────────────────────────────────────
 
 export default function Dashboard() {
-  const { theme, setTheme } = useTheme()
-  const [mounted, setMounted] = useState(false)
-  useEffect(() => setMounted(true), [])
 
   const { profile, loading: loadingProfile, salvarProfile } = useProfile()
   const { stats,   loading: loadingStats  } = useStats()
@@ -181,59 +177,15 @@ export default function Dashboard() {
         />
       )}
 
-      {/* ── Sidebar ── */}
-      <aside className="w-64 bg-bg border-r border-border/60 flex flex-col fixed h-full">
-        <div className="flex items-center gap-2.5 px-6 py-6">
-          <Image src="/TeraEdu-logo-orange.png" alt="TeraEdu" width={26} height={26} />
-          <span className="text-text font-bold tracking-tight">TeraEdu</span>
-        </div>
-
-        <nav className="flex flex-col gap-0.5 px-3 flex-1 pt-1">
-          <SidebarLink href="/dashboard"                  icon={LayoutDashboard} label="Início"         active />
-          <SidebarLink href="/dashboard/questoes"         icon={FileQuestion}    label="Questões" />
-          <SidebarLink href="/dashboard/flashcards"       icon={Layers}          label="Flashcards" />
-          <SidebarLink href="/dashboard/resumos"          icon={FileText}        label="Resumos" />
-          <SidebarLink href="/dashboard/tutora"           icon={MessageCircle}   label="IA Tutora" />
-          <SidebarLink href="/dashboard/vestibulares"    icon={GraduationCap}   label="Vestibulares" />
-
-          <div className="px-3 mt-8 mb-2">
-            <p className="text-text-faint text-[10px] uppercase tracking-widest font-semibold">Progresso</p>
-          </div>
-          <SidebarLink href="/dashboard/desempenho" icon={BarChart3}  label="Desempenho" />
-          <SidebarLink href="/dashboard/plano"      icon={Calendar}   label="Plano de Estudos" />
-        </nav>
-
-        <div className="px-3 py-4 border-t border-border/60">
-          <button
-            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-            className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl hover:bg-bg-hover text-text-muted hover:text-text text-sm transition-colors mb-1"
-          >
-            {mounted && theme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}
-            <span>{mounted && theme === 'dark' ? 'Modo claro' : 'Modo escuro'}</span>
-          </button>
-          <Link
-            href="/dashboard/configuracoes"
-            className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-bg-hover cursor-pointer transition-colors"
-          >
-            <div className="w-8 h-8 bg-brand rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-              {primeiroNome ? primeiroNome[0].toUpperCase() : '?'}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-text text-sm font-semibold truncate">{nome ?? '...'}</p>
-              {profile?.universidade && (
-                <p className="text-text-faint text-[10px] truncate">{profile.universidade}</p>
-              )}
-            </div>
-            <Settings size={13} className="text-text-faint" />
-          </Link>
-        </div>
-      </aside>
+      <DashboardSidebar />
 
       {/* ── Main ── */}
-      <main className="flex-1 ml-64">
+      <main className="flex-1 ml-20">
 
         {/* Hero */}
-        <div className="px-10 pt-10 pb-8 border-b border-border/60">
+        <div className="px-10 pt-10 pb-8 border-b border-border/60 relative overflow-hidden">
+          {/* glass sheen on hero */}
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-brand/[0.03] via-transparent to-transparent" />
           <p className="text-text-muted text-sm mb-0.5">{saudacao}</p>
           <h1 className="text-text text-3xl font-bold tracking-tight mb-7">
             {primeiroNome ?? '...'} 👋
@@ -267,18 +219,30 @@ export default function Dashboard() {
           {/* Stats */}
           <div className="grid grid-cols-4 gap-4 mb-8">
             {statsCards.map((c) => (
-              <div key={c.label} className="bg-bg-card rounded-2xl p-5">
-                <div className="flex items-start justify-between mb-4">
-                  <p className="text-text-muted text-xs font-medium leading-tight">{c.label}</p>
-                  <div className="w-8 h-8 bg-brand-soft rounded-xl flex items-center justify-center flex-shrink-0">
-                    <c.icon size={14} className="text-brand" />
+              <div
+                key={c.label}
+                className="relative overflow-hidden rounded-2xl p-5 border border-border/60"
+                style={{
+                  background: 'var(--bg-card)',
+                  backdropFilter: 'blur(12px)',
+                  WebkitBackdropFilter: 'blur(12px)',
+                }}
+              >
+                {/* subtle glass sheen */}
+                <div className="pointer-events-none absolute inset-0 rounded-2xl bg-gradient-to-br from-white/5 via-transparent to-transparent" />
+                <div className="relative z-10">
+                  <div className="flex items-start justify-between mb-4">
+                    <p className="text-text-muted text-xs font-medium leading-tight">{c.label}</p>
+                    <div className="w-8 h-8 bg-brand-soft rounded-xl flex items-center justify-center flex-shrink-0">
+                      <c.icon size={14} className="text-brand" />
+                    </div>
                   </div>
+                  <p className="text-text text-2xl font-bold tracking-tight">{c.value}</p>
+                  <p className={`text-xs mt-1.5 font-medium flex items-center gap-1 ${c.hasDelta ? 'text-brand' : 'text-text-faint'}`}>
+                    {c.flame && <Flame size={11} />}
+                    {c.delta}
+                  </p>
                 </div>
-                <p className="text-text text-2xl font-bold tracking-tight">{c.value}</p>
-                <p className={`text-xs mt-1.5 font-medium flex items-center gap-1 ${c.hasDelta ? 'text-brand' : 'text-text-faint'}`}>
-                  {c.flame && <Flame size={11} />}
-                  {c.delta}
-                </p>
               </div>
             ))}
           </div>
@@ -287,7 +251,7 @@ export default function Dashboard() {
           <div className="grid grid-cols-3 gap-5">
 
             {/* Matérias — placeholder até ter dados reais de progresso */}
-            <div className="col-span-2 bg-bg-card rounded-2xl p-6">
+            <div className="col-span-2 bg-bg-card rounded-2xl p-6 border border-border/60">
               <div className="flex items-center justify-between mb-5">
                 <h2 className="text-text font-semibold">Matérias</h2>
                 <button className="text-brand text-xs font-medium flex items-center gap-1 hover:opacity-75 transition-opacity">
@@ -322,7 +286,7 @@ export default function Dashboard() {
             </div>
 
             {/* Atividade recente */}
-            <div className="bg-bg-card rounded-2xl p-6">
+            <div className="bg-bg-card rounded-2xl p-6 border border-border/60">
               <div className="flex items-center justify-between mb-5">
                 <h2 className="text-text font-semibold">Atividade recente</h2>
                 <button className="text-brand text-xs font-medium flex items-center gap-1 hover:opacity-75 transition-opacity">
@@ -366,20 +330,3 @@ export default function Dashboard() {
   )
 }
 
-function SidebarLink({ href, icon: Icon, label, active }: {
-  href: string; icon: React.ElementType; label: string; active?: boolean
-}) {
-  return (
-    <Link
-      href={href}
-      className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all ${
-        active
-          ? 'bg-bg-hover text-text font-semibold'
-          : 'text-text-muted hover:text-text hover:bg-bg-hover'
-      }`}
-    >
-      <Icon size={16} />
-      {label}
-    </Link>
-  )
-}
