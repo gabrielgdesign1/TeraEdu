@@ -197,8 +197,12 @@ export function DashboardSidebar() {
             href="/dashboard/configuracoes"
             className="flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-bg-hover transition-colors overflow-hidden"
           >
-            <div className="w-8 h-8 bg-brand rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0 shrink-0">
-              {primeiroNome?.[0]?.toUpperCase() ?? '?'}
+            <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0 shrink-0 overflow-hidden bg-brand">
+              {profile?.avatar_url ? (
+                <Image src={profile.avatar_url} alt="" width={32} height={32} className="w-full h-full object-cover" />
+              ) : (
+                primeiroNome?.[0]?.toUpperCase() ?? '?'
+              )}
             </div>
             <AnimatePresence>
               {expanded && (

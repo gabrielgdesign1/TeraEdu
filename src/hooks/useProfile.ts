@@ -11,6 +11,11 @@ export type UserProfile = {
   ano_escolar: string | null
   objetivo: string | null
   onboarding_ok: boolean
+  avatar_url: string | null
+  vestibular_principal: string | null
+  ano_prova: string | null
+  materias_prioritarias: string[]
+  plano: 'gratuito' | 'plus' | 'premium'
 }
 
 export function useProfile() {
@@ -35,7 +40,11 @@ export function useProfile() {
       const nome = (user.user_metadata?.nome as string) ?? user.email?.split('@')[0] ?? null
       const novo = { id: user.id, nome, onboarding_ok: false }
       await supabase.from('user_profiles').upsert(novo)
-      setProfile({ ...novo, universidade: null, curso: null, ano_escolar: null, objetivo: null })
+      setProfile({
+        ...novo, universidade: null, curso: null, ano_escolar: null, objetivo: null,
+        avatar_url: null, vestibular_principal: null, ano_prova: null,
+        materias_prioritarias: [], plano: 'gratuito',
+      })
     }
     setLoading(false)
   }, [])
