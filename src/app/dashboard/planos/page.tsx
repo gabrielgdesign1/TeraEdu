@@ -109,9 +109,7 @@ export default function PlanosPage() {
                     className={`w-full py-3 rounded-full text-sm font-semibold transition-all mb-6 flex items-center justify-center gap-2 ${
                       ehAtual
                         ? 'bg-bg-hover text-text-muted cursor-default border border-border'
-                        : p.popular
-                        ? 'bg-brand hover:bg-brand-hover text-white'
-                        : 'bg-bg-hover hover:bg-border text-text border border-border'
+                        : 'bg-brand hover:bg-brand-hover text-white'
                     } disabled:opacity-60`}
                   >
                     {assinando === p.id ? (

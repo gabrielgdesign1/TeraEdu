@@ -76,7 +76,7 @@ export function DashboardSidebar() {
   const isDark = mounted && resolvedTheme === 'dark'
 
   const isActive = (href: string) =>
-    href === '/dashboard' ? pathname === '/dashboard' : pathname.startsWith(href)
+    href === '/dashboard' ? pathname === '/dashboard' : (pathname === href || pathname.startsWith(href + '/'))
 
   const primeiroNome = profile?.nome?.split(' ')[0] ?? null
 

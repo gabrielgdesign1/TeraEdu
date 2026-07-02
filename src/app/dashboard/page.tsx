@@ -2,12 +2,13 @@
 
 import Link from "next/link"
 import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
 import {
   FileQuestion, Layers, FileText, MessageCircle,
   BarChart3, Calendar, ChevronRight, TrendingUp, Flame,
 } from "lucide-react"
 import { DashboardSidebar } from "@/components/DashboardSidebar"
-import { useProfile } from "@/hooks/useProfile"
+import { useProfile, type UserProfile } from "@/hooks/useProfile"
 import { useStats, useActivities } from "@/hooks/useStats"
 import { Onboarding } from "@/components/Onboarding"
 import { createClient } from "@/lib/supabase"
@@ -120,10 +121,16 @@ export default function Dashboard() {
   const { profile, loading: loadingProfile, salvarProfile } = useProfile()
   const { stats,   loading: loadingStats  } = useStats()
   const activities = useActivities(5)
+  const router = useRouter()
 
   const nome          = profile?.nome ?? null
   const primeiroNome  = nome?.split(' ')[0] ?? null
   const showOnboarding = !loadingProfile && profile !== null && !profile.onboarding_ok
+
+  async function concluirOnboarding(dados: Partial<UserProfile>) {
+    await salvarProfile(dados)
+    router.push('/dashboard/planos')
+  }
 
   const hora = new Date().getHours()
   const saudacao = hora < 12 ? 'Bom dia' : hora < 18 ? 'Boa tarde' : 'Boa noite'
@@ -173,7 +180,7 @@ export default function Dashboard() {
       {showOnboarding && (
         <Onboarding
           nome={nome}
-          onConcluir={salvarProfile}
+          onConcluir={concluirOnboarding}
         />
       )}
 
