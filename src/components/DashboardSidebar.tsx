@@ -8,7 +8,7 @@ import { useTheme } from 'next-themes'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   LayoutDashboard, FileQuestion, Layers, FileText, MessageCircle,
-  BarChart3, Calendar, GraduationCap, Settings, Sun, Moon, LucideIcon,
+  BarChart3, Calendar, GraduationCap, Settings, Sun, Moon, Sparkles, LucideIcon,
 } from 'lucide-react'
 import { useProfile } from '@/hooks/useProfile'
 
@@ -168,6 +168,29 @@ export function DashboardSidebar() {
 
         {/* Bottom */}
         <div className="px-2 pb-3 border-t border-border/30 pt-2 flex flex-col gap-0.5">
+
+          {/* Fazer upgrade */}
+          <Link
+            href="/dashboard/planos"
+            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors overflow-hidden w-full ${
+              isActive('/dashboard/planos') ? 'text-brand' : 'text-brand/90 hover:bg-bg-hover'
+            }`}
+          >
+            <Sparkles size={15} className="flex-shrink-0" />
+            <AnimatePresence>
+              {expanded && (
+                <motion.span
+                  className="text-sm font-medium whitespace-nowrap"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.12 }}
+                >
+                  Fazer upgrade
+                </motion.span>
+              )}
+            </AnimatePresence>
+          </Link>
 
           {/* Theme toggle */}
           <button

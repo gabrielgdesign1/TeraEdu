@@ -1,10 +1,11 @@
 'use client'
 
 import Image from "next/image"
+import Link from "next/link"
 import { useEffect, useRef, useState, useCallback } from "react"
 import {
   Save, LogOut, User, GraduationCap, CreditCard, Camera,
-  Lock, Trash2, AlertTriangle, Check, Crown, Zap, X,
+  Lock, Trash2, AlertTriangle, Check, Crown, Zap,
 } from "lucide-react"
 import { useProfile } from "@/hooks/useProfile"
 import { DashboardSidebar } from "@/components/DashboardSidebar"
@@ -22,9 +23,9 @@ const MATERIAS = [
 ]
 
 const PLANOS = [
-  { id: 'gratuito' as const, nome: 'Gratuito', preco: 'R$ 0', limite: 50,  desc: '50 gerações de IA por mês' },
-  { id: 'plus'     as const, nome: 'Plus',     preco: 'R$ 24,90/mês', limite: 300, desc: '300 gerações de IA por mês' },
-  { id: 'premium'  as const, nome: 'Premium',  preco: 'R$ 49,90/mês', limite: Infinity, desc: 'Gerações de IA ilimitadas' },
+  { id: 'gratuito' as const, nome: 'Gratuito', preco: 'R$ 0',          limite: 150,      desc: '5 questões de IA por dia' },
+  { id: 'plus'     as const, nome: 'Plus',     preco: 'R$ 19,90/mês',  limite: 1000,     desc: 'Uso amplo de IA por mês' },
+  { id: 'premium'  as const, nome: 'Premium',  preco: 'R$ 34,90/mês',  limite: Infinity, desc: 'Gerações de IA ilimitadas' },
 ]
 
 export default function Configuracoes() {
@@ -508,9 +509,7 @@ function Assinatura({ profile, salvarProfile, reload }: {
   reload: () => void
 }) {
   const [usoMes,      setUsoMes     ] = useState<number | null>(null)
-  const [showTrocar,  setShowTrocar ] = useState(false)
   const [showCancelar,setShowCancelar] = useState(false)
-  const [trocando,    setTrocando   ] = useState<string | null>(null)
 
   const carregarUso = useCallback(async () => {
     if (!profile) return
@@ -531,14 +530,6 @@ function Assinatura({ profile, salvarProfile, reload }: {
   const pct = usoMes === null || planoAtual.limite === Infinity
     ? 0
     : Math.min(100, Math.round((usoMes / planoAtual.limite) * 100))
-
-  async function escolherPlano(id: 'gratuito' | 'plus' | 'premium') {
-    setTrocando(id)
-    await salvarProfile({ plano: id })
-    setTrocando(null)
-    setShowTrocar(false)
-    reload()
-  }
 
   async function cancelarAssinatura() {
     await salvarProfile({ plano: 'gratuito' })
@@ -568,12 +559,12 @@ function Assinatura({ profile, salvarProfile, reload }: {
             </div>
           </div>
           <div className="flex gap-2">
-            <button
-              onClick={() => setShowTrocar(true)}
+            <Link
+              href="/dashboard/planos"
               className="bg-brand hover:bg-brand-hover text-white font-semibold px-5 py-2.5 rounded-full text-sm transition-colors"
             >
-              Trocar de plano
-            </button>
+              Ver planos
+            </Link>
             {planoAtual.id !== 'gratuito' && (
               <button
                 onClick={() => setShowCancelar(true)}
@@ -606,52 +597,6 @@ function Assinatura({ profile, salvarProfile, reload }: {
             : `Contabiliza resumos, flashcards, questões e conversas com a IA Tutora geradas neste mês.`}
         </p>
       </section>
-
-      {/* Modal trocar plano */}
-      {showTrocar && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-bg-card border border-border rounded-2xl p-6 max-w-lg w-full">
-            <div className="flex items-center justify-between mb-5">
-              <h3 className="text-text font-bold text-lg">Escolha seu plano</h3>
-              <button onClick={() => setShowTrocar(false)} className="text-text-faint hover:text-text transition-colors">
-                <X size={18} />
-              </button>
-            </div>
-            <div className="flex flex-col gap-3">
-              {PLANOS.map(p => {
-                const Icon = p.id === 'premium' ? Crown : p.id === 'plus' ? Zap : CreditCard
-                const atual = p.id === planoAtual.id
-                return (
-                  <button
-                    key={p.id}
-                    onClick={() => !atual && escolherPlano(p.id)}
-                    disabled={atual || trocando !== null}
-                    className={`flex items-center gap-4 text-left p-4 rounded-2xl border transition-all ${
-                      atual ? 'border-brand bg-brand-soft cursor-default' : 'border-border hover:border-brand/50'
-                    }`}
-                  >
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${atual ? 'bg-brand text-white' : 'bg-bg-hover text-text-muted'}`}>
-                      <Icon size={17} />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <p className="text-text font-semibold text-sm">{p.nome}</p>
-                        {atual && <span className="text-[10px] bg-brand text-white px-2 py-0.5 rounded-full font-medium">Atual</span>}
-                      </div>
-                      <p className="text-text-faint text-xs mt-0.5">{p.desc}</p>
-                    </div>
-                    <div className="text-text font-semibold text-sm flex-shrink-0">
-                      {trocando === p.id
-                        ? <div className="w-4 h-4 border-2 border-border border-t-brand rounded-full animate-spin" />
-                        : p.preco}
-                    </div>
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Modal cancelar */}
       {showCancelar && (
