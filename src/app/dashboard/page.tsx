@@ -175,7 +175,7 @@ export default function Dashboard() {
   ]
 
   return (
-    <div className="min-h-screen bg-bg flex">
+    <div className="min-h-screen bg-bg flex app-atmosphere">
 
       {showOnboarding && (
         <Onboarding
@@ -190,26 +190,31 @@ export default function Dashboard() {
       <main className="flex-1 ml-20">
 
         {/* Hero */}
-        <div className="px-10 pt-10 pb-8 border-b border-border/60 relative overflow-hidden">
-          {/* glass sheen on hero */}
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-brand/[0.03] via-transparent to-transparent" />
-          <p className="text-text-muted text-sm mb-0.5">{saudacao}</p>
-          <h1 className="text-text text-3xl font-bold tracking-tight mb-7">
-            {primeiroNome ?? '...'} 👋
+        <div className="px-10 pt-11 pb-9 border-b border-border/60 relative overflow-hidden">
+          {/* aurora sutil */}
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-brand/[0.05] via-transparent to-transparent" />
+          <div className="pointer-events-none absolute -top-24 right-[15%] w-80 h-56 bg-brand/[0.07] blur-[80px] rounded-full" />
+          <p className="text-text-muted text-sm mb-1">{saudacao}</p>
+          <h1 className="text-[2.2rem] font-black tracking-tight mb-8 leading-tight">
+            <span className="text-gradient-brand">{primeiroNome ?? '...'}</span> 👋
           </h1>
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2.5 flex-wrap">
             {[
-              { href: '/dashboard/questoes',   label: 'Questões',   icon: FileQuestion  },
-              { href: '/dashboard/flashcards', label: 'Flashcards', icon: Layers        },
-              { href: '/dashboard/resumos',    label: 'Resumos',    icon: FileText      },
-              { href: '/dashboard/tutora',     label: 'IA Tutora',  icon: MessageCircle },
+              { href: '/dashboard/questoes',   label: 'Questões',   icon: FileQuestion,  primary: true  },
+              { href: '/dashboard/flashcards', label: 'Flashcards', icon: Layers,        primary: false },
+              { href: '/dashboard/resumos',    label: 'Resumos',    icon: FileText,      primary: false },
+              { href: '/dashboard/tutora',     label: 'IA Tutora',  icon: MessageCircle, primary: false },
             ].map((a) => (
               <Link
                 key={a.label}
                 href={a.href}
-                className="flex items-center gap-2 bg-brand hover:bg-brand-hover text-white px-5 py-2.5 rounded-full text-sm font-medium transition-colors"
+                className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium transition-all cursor-pointer ${
+                  a.primary
+                    ? 'bg-brand hover:bg-brand-hover text-white shadow-[0_10px_24px_-8px_rgba(249,115,22,0.5)] hover:shadow-[0_12px_28px_-8px_rgba(249,115,22,0.6)]'
+                    : 'bg-bg-card border border-border text-text-muted hover:text-text hover:border-brand/40'
+                }`}
               >
-                <a.icon size={14} />
+                <a.icon size={14} className={a.primary ? '' : 'text-brand'} />
                 {a.label}
               </Link>
             ))}
@@ -228,23 +233,18 @@ export default function Dashboard() {
             {statsCards.map((c) => (
               <div
                 key={c.label}
-                className="relative overflow-hidden rounded-2xl p-5 border border-border/60"
-                style={{
-                  background: 'var(--bg-card)',
-                  backdropFilter: 'blur(12px)',
-                  WebkitBackdropFilter: 'blur(12px)',
-                }}
+                className="card-premium group relative overflow-hidden rounded-2xl p-5 hover:-translate-y-0.5"
               >
-                {/* subtle glass sheen */}
-                <div className="pointer-events-none absolute inset-0 rounded-2xl bg-gradient-to-br from-white/5 via-transparent to-transparent" />
+                {/* brilho no hover */}
+                <div className="pointer-events-none absolute -top-12 -right-12 w-28 h-28 bg-brand/10 blur-2xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 <div className="relative z-10">
                   <div className="flex items-start justify-between mb-4">
                     <p className="text-text-muted text-xs font-medium leading-tight">{c.label}</p>
-                    <div className="w-8 h-8 bg-brand-soft rounded-xl flex items-center justify-center flex-shrink-0">
+                    <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 bg-gradient-to-br from-brand/20 to-brand/5 border border-brand/15">
                       <c.icon size={14} className="text-brand" />
                     </div>
                   </div>
-                  <p className="text-text text-2xl font-bold tracking-tight">{c.value}</p>
+                  <p className="text-text text-[1.7rem] font-black tracking-tight tabular-nums">{c.value}</p>
                   <p className={`text-xs mt-1.5 font-medium flex items-center gap-1 ${c.hasDelta ? 'text-brand' : 'text-text-faint'}`}>
                     {c.flame && <Flame size={11} />}
                     {c.delta}
@@ -258,7 +258,7 @@ export default function Dashboard() {
           <div className="grid grid-cols-3 gap-5">
 
             {/* Matérias — placeholder até ter dados reais de progresso */}
-            <div className="col-span-2 bg-bg-card rounded-2xl p-6 border border-border/60">
+            <div className="card-premium col-span-2 rounded-2xl p-6">
               <div className="flex items-center justify-between mb-5">
                 <h2 className="text-text font-semibold">Matérias</h2>
                 <button className="text-brand text-xs font-medium flex items-center gap-1 hover:opacity-75 transition-opacity">
@@ -293,7 +293,7 @@ export default function Dashboard() {
             </div>
 
             {/* Atividade recente */}
-            <div className="bg-bg-card rounded-2xl p-6 border border-border/60">
+            <div className="card-premium rounded-2xl p-6">
               <div className="flex items-center justify-between mb-5">
                 <h2 className="text-text font-semibold">Atividade recente</h2>
                 <button className="text-brand text-xs font-medium flex items-center gap-1 hover:opacity-75 transition-opacity">

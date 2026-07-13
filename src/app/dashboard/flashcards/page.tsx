@@ -165,7 +165,7 @@ export default function Flashcards() {
   const progresso = flashcards.length ? ((indiceAtual + 1) / flashcards.length) * 100 : 0
 
   return (
-    <div className="min-h-screen bg-bg flex">
+    <div className="min-h-screen bg-bg flex app-atmosphere">
 
       <DashboardSidebar />
 

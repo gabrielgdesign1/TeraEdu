@@ -42,9 +42,11 @@ function NavItem({
       {active && (
         <motion.div
           layoutId="sidebar-active"
-          className="absolute inset-0 rounded-xl bg-brand/10"
+          className="absolute inset-0 rounded-xl bg-gradient-to-r from-brand/15 to-brand/5 shadow-[inset_0_1px_0_rgba(249,115,22,0.15),0_4px_14px_-6px_rgba(249,115,22,0.35)]"
           transition={{ type: 'spring', stiffness: 400, damping: 35 }}
-        />
+        >
+          <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-4 bg-brand rounded-r-full" />
+        </motion.div>
       )}
       <Icon size={16} className="relative z-10 flex-shrink-0" />
       <AnimatePresence>

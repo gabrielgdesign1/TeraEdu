@@ -327,7 +327,7 @@ export default function PlanoPage() {
 
   if (!plano) {
     return (
-      <div className="min-h-screen bg-bg flex">
+      <div className="min-h-screen bg-bg flex app-atmosphere">
         <DashboardSidebar />
         <main className="flex-1 ml-20 flex items-start justify-center py-16 px-10">
           <div className="w-full max-w-xl">
@@ -566,7 +566,7 @@ export default function PlanoPage() {
   }))
 
   return (
-    <div className="min-h-screen bg-bg flex">
+    <div className="min-h-screen bg-bg flex app-atmosphere">
       {/* Modal de confirmação de deleção */}
       {showDelete && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">

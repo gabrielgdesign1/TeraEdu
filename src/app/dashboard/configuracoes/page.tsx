@@ -34,7 +34,7 @@ export default function Configuracoes() {
   const [aba, setAba] = useState<Aba>('conta')
 
   return (
-    <div className="min-h-screen bg-bg flex">
+    <div className="min-h-screen bg-bg flex app-atmosphere">
       <DashboardSidebar />
 
       <main className="flex-1 ml-20 px-10 py-10 max-w-3xl">

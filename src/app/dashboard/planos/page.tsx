@@ -23,7 +23,7 @@ export default function PlanosPage() {
   }
 
   return (
-    <div className="min-h-screen bg-bg flex">
+    <div className="min-h-screen bg-bg flex app-atmosphere">
       <DashboardSidebar />
 
       <main className="flex-1 ml-20 px-10 py-16">
@@ -76,8 +76,10 @@ export default function PlanosPage() {
               return (
                 <div
                   key={p.id}
-                  className={`relative bg-bg-card rounded-3xl p-7 flex flex-col border transition-colors ${
-                    p.popular ? 'border-brand shadow-lg shadow-brand/5' : 'border-border'
+                  className={`relative bg-bg-card rounded-3xl p-7 flex flex-col border transition-all duration-300 hover:-translate-y-1 ${
+                    p.popular
+                      ? 'border-brand/70 shadow-[0_0_0_1px_rgba(249,115,22,0.25),0_24px_60px_-24px_rgba(249,115,22,0.4)]'
+                      : 'border-border hover:border-brand/30 hover:shadow-[0_16px_40px_-20px_rgba(249,115,22,0.25)]'
                   }`}
                 >
                   {p.popular && (

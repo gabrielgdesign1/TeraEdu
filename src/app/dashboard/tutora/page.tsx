@@ -196,7 +196,7 @@ export default function IATutora() {
   )
 
   return (
-    <div className="min-h-screen bg-bg flex">
+    <div className="min-h-screen bg-bg flex app-atmosphere">
 
       <DashboardSidebar />
 

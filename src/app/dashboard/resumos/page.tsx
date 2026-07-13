@@ -181,7 +181,7 @@ export default function Resumos() {
     (modoEntrada === 'pdf' && arquivo)
 
   return (
-    <div className="min-h-screen bg-bg flex">
+    <div className="min-h-screen bg-bg flex app-atmosphere">
 
       <DashboardSidebar />
 
