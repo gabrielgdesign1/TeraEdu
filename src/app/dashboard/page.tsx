@@ -191,10 +191,10 @@ export default function Dashboard() {
       <DashboardSidebar />
 
       {/* ── Main ── */}
-      <main className="flex-1 ml-20">
+      <main className="flex-1 min-w-0 ml-0 md:ml-20 pb-24 md:pb-0">
 
         {/* Hero */}
-        <div className="px-10 pt-11 pb-9 border-b border-border/60 relative overflow-hidden">
+        <div className="px-4 md:px-10 pt-8 md:pt-11 pb-9 border-b border-border/60 relative overflow-hidden">
           {/* aurora sutil */}
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-brand/[0.05] via-transparent to-transparent" />
           <div className="pointer-events-none absolute -top-24 right-[15%] w-80 h-56 bg-brand/[0.07] blur-[80px] rounded-full" />
@@ -225,7 +225,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className="px-10 py-8">
+        <div className="px-4 md:px-10 py-6 md:py-8">
 
           {/* Card do plano */}
           <div className="mb-7">
@@ -233,7 +233,7 @@ export default function Dashboard() {
           </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-4 gap-4 mb-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-8">
             {statsCards.map((c) => (
               <div
                 key={c.label}
@@ -259,10 +259,10 @@ export default function Dashboard() {
           </div>
 
           {/* Matérias + Atividade */}
-          <div className="grid grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
 
             {/* Matérias — placeholder até ter dados reais de progresso */}
-            <div className="card-premium col-span-2 rounded-2xl p-6">
+            <div className="card-premium md:col-span-2 rounded-2xl p-6">
               <div className="flex items-center justify-between mb-5">
                 <h2 className="text-text font-semibold">Matérias</h2>
                 <button className="text-brand text-xs font-medium flex items-center gap-1 hover:opacity-75 transition-opacity">

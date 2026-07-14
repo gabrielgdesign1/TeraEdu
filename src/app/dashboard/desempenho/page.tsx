@@ -317,8 +317,8 @@ export default function DesempenhoPage() {
       <DashboardSidebar />
 
       {/* ── Main ── */}
-      <main className="flex-1 ml-20 overflow-y-auto">
-        <div className="max-w-4xl mx-auto px-10 py-10 space-y-12">
+      <main className="flex-1 min-w-0 ml-0 md:ml-20 overflow-y-auto pb-24 md:pb-0">
+        <div className="max-w-4xl mx-auto px-4 md:px-10 py-6 md:py-10 space-y-12">
 
           {/* Cabeçalho */}
           <div>
@@ -329,7 +329,7 @@ export default function DesempenhoPage() {
           {/* ── 1. Visão geral ── */}
           <section>
             <h2 className="text-text font-semibold text-sm uppercase tracking-wider text-text-muted mb-4">Visão geral</h2>
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 md:gap-4">
               <OverviewCard label="Questões respondidas" value={stats.questoes_total.toLocaleString('pt-BR')} icon="📝" />
               <OverviewCard label="Taxa de acerto" value={totalTotal > 0 ? `${taxaAcerto}%` : '—'} icon="🎯" corClasse={totalTotal > 0 ? corTexto(taxaAcerto) : 'text-text-faint'} />
               <OverviewCard label="Horas estudadas" value={`${horasEstudadas}h`} icon="⏱️" />
@@ -435,7 +435,7 @@ export default function DesempenhoPage() {
             {!temDados || porMateria.every(m => m.t < 5) ? (
               <EmptyState mensagem="Responda ao menos 5 questões de cada matéria para ver sua análise." />
             ) : (
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="bg-bg-card border border-border rounded-2xl p-5">
                   <div className="flex items-center gap-2 mb-4">
                     <TrendingUp size={15} className="text-green-500" />
@@ -496,7 +496,7 @@ export default function DesempenhoPage() {
               <h2 className="text-text font-semibold text-sm uppercase tracking-wider text-text-muted">Conquistas</h2>
               <span className="text-text-faint text-xs">{conquistadas} de {conquistas.length} desbloqueadas</span>
             </div>
-            <div className="grid grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {conquistas.map(c => (
                 <div
                   key={c.id}

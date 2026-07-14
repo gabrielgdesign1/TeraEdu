@@ -205,9 +205,9 @@ export default function Flashcards() {
       </HistoryPanel>
 
       {/* ── Main ── */}
-      <main className="flex-1 ml-[344px] flex flex-col min-h-screen">
+      <main className="flex-1 min-w-0 ml-0 md:ml-[344px] flex flex-col min-h-screen pb-24 md:pb-0">
         {modoEstudo ? (
-          <div className="flex-1 flex flex-col items-center justify-center px-6 py-10">
+          <div className="flex-1 flex flex-col items-center justify-center px-4 md:px-6 py-8 md:py-10">
             <div className="w-full max-w-xl">
               <div className="flex items-center justify-between mb-3">
                 <span className="text-text-muted text-sm">{indiceAtual + 1} / {flashcards.length}</span>
@@ -234,7 +234,7 @@ export default function Flashcards() {
                 >
                   {/* Frente — Pergunta */}
                   <div
-                    className="absolute inset-0 bg-bg-card rounded-2xl p-12 flex flex-col items-center justify-center group-hover:ring-1 group-hover:ring-brand/40 transition-shadow"
+                    className="absolute inset-0 bg-bg-card rounded-2xl p-6 md:p-12 flex flex-col items-center justify-center group-hover:ring-1 group-hover:ring-brand/40 transition-shadow"
                     style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}
                   >
                     <p className="text-text-faint text-xs uppercase tracking-widest mb-5">Pergunta</p>
@@ -246,7 +246,7 @@ export default function Flashcards() {
 
                   {/* Verso — Resposta */}
                   <div
-                    className="absolute inset-0 bg-bg-card rounded-2xl p-12 flex flex-col items-center justify-center group-hover:ring-1 group-hover:ring-brand/40 transition-shadow"
+                    className="absolute inset-0 bg-bg-card rounded-2xl p-6 md:p-12 flex flex-col items-center justify-center group-hover:ring-1 group-hover:ring-brand/40 transition-shadow"
                     style={{
                       backfaceVisibility: 'hidden',
                       WebkitBackfaceVisibility: 'hidden',
@@ -281,7 +281,7 @@ export default function Flashcards() {
             </div>
           </div>
         ) : (
-          <div className="flex-1 flex flex-col items-center justify-center px-6 py-10">
+          <div className="flex-1 flex flex-col items-center justify-center px-4 md:px-6 py-8 md:py-10">
             <div className="w-full max-w-xl">
               <h1 className="text-text text-3xl font-bold tracking-tight mb-1.5 text-center">Flashcards</h1>
               <p className="text-text-muted text-center mb-10">A IA cria flashcards a partir de qualquer conteúdo</p>

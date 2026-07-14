@@ -256,13 +256,13 @@ export default function IATutora() {
       </HistoryPanel>
 
       {/* ── Chat ── */}
-      <main className="flex-1 ml-[344px] flex flex-col h-screen overflow-hidden">
+      <main className="flex-1 min-w-0 ml-0 md:ml-[344px] flex flex-col h-[calc(100dvh-4rem)] md:h-screen overflow-hidden">
         {vazio ? (
-          <div className="flex-1 flex flex-col items-center justify-center px-6 pb-10">
-            <h1 className="text-text text-4xl font-bold tracking-tight mb-2 text-center">
+          <div className="flex-1 flex flex-col items-center justify-center px-4 md:px-6 pb-10">
+            <h1 className="text-text text-3xl md:text-4xl font-bold tracking-tight mb-2 text-center">
               Olá{primeiroNome ? `, ${primeiroNome}` : ''}
             </h1>
-            <p className="text-text-muted text-xl mb-10 text-center">Sobre o que quer aprender hoje?</p>
+            <p className="text-text-muted text-lg md:text-xl mb-10 text-center">Sobre o que quer aprender hoje?</p>
             <div className="flex flex-wrap gap-2 justify-center mb-10 max-w-xl">
               {SUGESTOES.map(s => (
                 <button

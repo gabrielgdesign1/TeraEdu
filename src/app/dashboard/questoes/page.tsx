@@ -191,18 +191,18 @@ export default function Questoes() {
       <DashboardSidebar />
 
       {/* Conteúdo principal */}
-      <main className="flex-1 ml-20 flex flex-col min-h-screen">
+      <main className="flex-1 min-w-0 ml-0 md:ml-20 flex flex-col min-h-screen pb-24 md:pb-0">
 
         {/* Header */}
-        <div className="px-10 pt-8 pb-6 border-b border-border">
+        <div className="px-4 md:px-10 pt-6 md:pt-8 pb-6 border-b border-border">
           <h1 className="text-text text-2xl font-bold tracking-tight mb-1">Questões</h1>
           <p className="text-text-muted text-sm">Pratique com questões do ENEM e vestibulares ou gere com IA</p>
 
           {/* Abas */}
-          <div className="flex gap-1 mt-6 bg-bg-card border border-border rounded-xl p-1 w-fit">
+          <div className="flex gap-1 mt-6 bg-bg-card border border-border rounded-xl p-1 w-fit max-w-full overflow-x-auto">
             <button
               onClick={() => setAba('banco')}
-              className={`flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-medium transition-all ${
+              className={`flex items-center gap-2 px-3.5 md:px-5 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
                 aba === 'banco'
                   ? 'bg-bg shadow-sm text-text border border-border'
                   : 'text-text-muted hover:text-text'
@@ -213,7 +213,7 @@ export default function Questoes() {
             </button>
             <button
               onClick={() => setAba('ia')}
-              className={`flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-medium transition-all ${
+              className={`flex items-center gap-2 px-3.5 md:px-5 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
                 aba === 'ia'
                   ? 'bg-bg shadow-sm text-text border border-border'
                   : 'text-text-muted hover:text-text'
@@ -224,7 +224,7 @@ export default function Questoes() {
             </button>
             <button
               onClick={() => setAba('salvas')}
-              className={`flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-medium transition-all ${
+              className={`flex items-center gap-2 px-3.5 md:px-5 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
                 aba === 'salvas'
                   ? 'bg-bg shadow-sm text-text border border-border'
                   : 'text-text-muted hover:text-text'
@@ -237,7 +237,7 @@ export default function Questoes() {
         </div>
 
         {/* Conteúdo da aba */}
-        <div className="flex-1 px-10 py-8">
+        <div className="flex-1 px-4 md:px-10 py-6 md:py-8">
           {aba === 'banco' && <BancoQuestoes />}
           {aba === 'ia'    && <GerarComIA />}
           {aba === 'salvas' && <QuestoesSalvas />}
@@ -1132,7 +1132,7 @@ function GerarComIA() {
 
         {/* Dificuldade + quantidade */}
         {pronto && (
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="text-text-muted text-xs font-medium uppercase tracking-wider mb-2 block">Dificuldade</label>
               <div className="flex gap-2">

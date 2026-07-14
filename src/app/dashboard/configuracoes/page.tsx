@@ -37,14 +37,14 @@ export default function Configuracoes() {
     <div className="min-h-screen bg-bg flex app-atmosphere">
       <DashboardSidebar />
 
-      <main className="flex-1 ml-20 px-10 py-10 max-w-3xl">
+      <main className="flex-1 min-w-0 ml-0 md:ml-20 px-4 md:px-10 py-6 md:py-10 pb-24 md:pb-10 max-w-3xl">
         <div className="mb-8">
           <h1 className="text-text text-2xl font-bold tracking-tight mb-1">Configurações</h1>
           <p className="text-text-muted text-sm">Sua conta, seus estudos e sua assinatura.</p>
         </div>
 
         {/* Abas */}
-        <div className="flex gap-1 mb-8 bg-bg-card border border-border rounded-xl p-1 w-fit">
+        <div className="flex gap-1 mb-8 bg-bg-card border border-border rounded-xl p-1 w-fit max-w-full overflow-x-auto">
           {([
             { id: 'conta'       as Aba, label: 'Minha Conta',  icon: User         },
             { id: 'estudos'     as Aba, label: 'Meus Estudos', icon: GraduationCap },
@@ -53,7 +53,7 @@ export default function Configuracoes() {
             <button
               key={t.id}
               onClick={() => setAba(t.id)}
-              className={`flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-medium transition-all ${
+              className={`flex items-center gap-2 px-3.5 md:px-5 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
                 aba === t.id
                   ? 'bg-bg shadow-sm text-text border border-border'
                   : 'text-text-muted hover:text-text'

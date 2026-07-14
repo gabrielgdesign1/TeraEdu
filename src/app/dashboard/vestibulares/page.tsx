@@ -405,7 +405,7 @@ export default function Vestibulares() {
       <DashboardSidebar />
 
       {/* ── Main ── */}
-      <main className="flex-1 ml-20 px-10 py-10">
+      <main className="flex-1 min-w-0 ml-0 md:ml-20 px-4 md:px-10 py-6 md:py-10 pb-24 md:pb-10">
         <div className="mb-6">
           <h1 className="text-text text-2xl font-bold tracking-tight mb-1">Vestibulares</h1>
           <p className="text-text-muted text-sm">Datas, inscrições e links oficiais — atualizado em 30/06/2026</p>
@@ -437,7 +437,7 @@ export default function Vestibulares() {
         </div>
 
         {/* Cards */}
-        <div className="grid grid-cols-2 gap-4 max-w-5xl">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-5xl">
           {lista.map(v => {
             const st = hoje ? statusMap[v.id] : null
             const aberto = expandido === v.id

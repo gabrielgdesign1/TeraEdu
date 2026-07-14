@@ -217,9 +217,9 @@ export default function Resumos() {
       </HistoryPanel>
 
       {/* ── Main ── */}
-      <main className="flex-1 ml-[344px] flex flex-col min-h-screen">
+      <main className="flex-1 min-w-0 ml-0 md:ml-[344px] flex flex-col min-h-screen pb-24 md:pb-0">
         {!resumo ? (
-          <div className="flex-1 flex flex-col items-center justify-center px-6 py-10">
+          <div className="flex-1 flex flex-col items-center justify-center px-4 md:px-6 py-8 md:py-10">
             <div className="w-full max-w-xl">
               <h1 className="text-text text-3xl font-bold tracking-tight mb-1.5 text-center">Resumos com IA</h1>
               <p className="text-text-muted text-center mb-10">Gere resumos bem estruturados de qualquer conteúdo</p>
@@ -313,7 +313,7 @@ export default function Resumos() {
             </div>
           </div>
         ) : (
-          <div className="flex-1 px-10 py-8 max-w-3xl mx-auto w-full">
+          <div className="flex-1 px-4 md:px-10 py-6 md:py-8 max-w-3xl mx-auto w-full">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-text font-semibold">{tema || 'Resumo gerado'}</h2>
               <button

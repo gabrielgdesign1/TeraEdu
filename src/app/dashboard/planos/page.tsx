@@ -26,7 +26,7 @@ export default function PlanosPage() {
     <div className="min-h-screen bg-bg flex app-atmosphere">
       <DashboardSidebar />
 
-      <main className="flex-1 ml-20 px-10 py-16">
+      <main className="flex-1 min-w-0 ml-0 md:ml-20 px-4 md:px-10 py-8 md:py-16 pb-24 md:pb-16">
         <div className="max-w-5xl mx-auto">
 
           {/* Cabeçalho */}
@@ -82,9 +82,9 @@ export default function PlanosPage() {
                       : 'border-border hover:border-brand/30 hover:shadow-[0_16px_40px_-20px_rgba(249,115,22,0.25)]'
                   }`}
                 >
-                  {p.popular && (
+                  {p.badge && (
                     <span className="absolute -top-3 right-6 text-[11px] bg-brand text-white px-3 py-1 rounded-full font-semibold">
-                      Popular
+                      {p.badge}
                     </span>
                   )}
 

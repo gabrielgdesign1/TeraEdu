@@ -332,7 +332,7 @@ export default function PlanoPage() {
     return (
       <div className="min-h-screen bg-bg flex app-atmosphere">
         <DashboardSidebar />
-        <main className="flex-1 ml-20 flex items-start justify-center py-16 px-10">
+        <main className="flex-1 min-w-0 ml-0 md:ml-20 flex items-start justify-center py-8 md:py-16 px-4 md:px-10 pb-24 md:pb-16">
           <div className="w-full max-w-xl">
 
             {/* Header */}
@@ -614,16 +614,16 @@ export default function PlanoPage() {
       <DashboardSidebar />
 
       {/* Main */}
-      <main className="flex-1 ml-20 overflow-y-auto">
-        <div className="max-w-4xl mx-auto px-10 py-10 space-y-8">
+      <main className="flex-1 min-w-0 ml-0 md:ml-20 overflow-y-auto pb-24 md:pb-0">
+        <div className="max-w-4xl mx-auto px-4 md:px-10 py-6 md:py-10 space-y-8">
 
           {/* Cabeçalho + ações */}
-          <div className="flex items-start justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
             <div>
               <h1 className="text-text text-2xl font-bold tracking-tight mb-1">Plano de Estudos</h1>
               <p className="text-text-muted text-sm">{plano.vestibular} · {plano.curso ? `${plano.curso} · ` : ''}{plano.horas_por_dia}h/dia</p>
             </div>
-            <div className="flex gap-2 flex-wrap justify-end">
+            <div className="flex gap-2 flex-wrap sm:justify-end">
               {diasPerdidos > 0 && (
                 <button onClick={reagendar} disabled={reagendando}
                   className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-border text-text-muted hover:text-text hover:border-brand text-sm transition-colors disabled:opacity-50">
@@ -664,7 +664,7 @@ export default function PlanoPage() {
           </div>
 
           {/* 2. Tarefa de hoje */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="bg-bg-card border border-border rounded-2xl p-5">
               <div className="flex items-center gap-2 mb-4">
                 <Target size={15} className="text-brand" />
@@ -743,7 +743,7 @@ export default function PlanoPage() {
           {/* 4. Cronograma em abas */}
           <div className="bg-bg-card border border-border rounded-2xl overflow-hidden">
             {/* Abas */}
-            <div className="flex border-b border-border">
+            <div className="flex border-b border-border overflow-x-auto">
               {[
                 { id: 'semana' as const, label: 'Esta semana' },
                 { id: 'mes'   as const, label: 'Mês completo' },
@@ -751,7 +751,7 @@ export default function PlanoPage() {
               ].map(aba => (
                 <button key={aba.id}
                   onClick={() => setAbaAtiva(aba.id)}
-                  className={`px-6 py-3.5 text-sm font-medium transition-all border-b-2 -mb-px ${
+                  className={`px-4 md:px-6 py-3.5 text-sm font-medium transition-all border-b-2 -mb-px whitespace-nowrap flex-shrink-0 ${
                     abaAtiva === aba.id
                       ? 'border-brand text-brand'
                       : 'border-transparent text-text-muted hover:text-text'
@@ -760,7 +760,7 @@ export default function PlanoPage() {
               ))}
             </div>
 
-            <div className="p-6">
+            <div className="p-4 md:p-6">
 
               {/* Aba: Esta semana */}
               {abaAtiva === 'semana' && (

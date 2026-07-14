@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Space_Grotesk } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import "./globals.css";
@@ -11,6 +11,12 @@ const spaceGrotesk = Space_Grotesk({
 export const metadata: Metadata = {
   title: "TeraEdu — Estudos com IA para o ENEM e vestibulares",
   description: "Plataforma de estudos com IA para o ENEM e vestibulares",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
 };
 
 export default function RootLayout({

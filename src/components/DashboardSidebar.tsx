@@ -9,8 +9,17 @@ import { motion } from 'framer-motion'
 import {
   LayoutDashboard, FileQuestion, Layers, FileText, MessageCircle,
   BarChart3, Calendar, GraduationCap, Settings, Sun, Moon, Sparkles, LucideIcon,
+  Menu, X,
 } from 'lucide-react'
 import { useProfile } from '@/hooks/useProfile'
+
+/* Itens de acesso rápido na barra inferior mobile (os mais usados no dia a dia) */
+const MOBILE_QUICK_ITEMS = [
+  { href: '/dashboard',            icon: LayoutDashboard, label: 'Início'     },
+  { href: '/dashboard/questoes',   icon: FileQuestion,    label: 'Questões'   },
+  { href: '/dashboard/flashcards', icon: Layers,          label: 'Flashcards' },
+  { href: '/dashboard/plano',      icon: Calendar,        label: 'Plano'      },
+]
 
 /* ── Dimensões (o ícone fica sempre centralizado no estado recolhido) ── */
 const COLLAPSED = 68           // largura recolhida da sidebar
@@ -92,11 +101,17 @@ function NavItem({
 export function DashboardSidebar() {
   const [expanded, setExpanded] = useState(false)
   const [mounted, setMounted] = useState(false)
+  const [menuAberto, setMenuAberto] = useState(false)
   const pathname = usePathname()
   const { theme, resolvedTheme, setTheme } = useTheme()
   const { profile } = useProfile()
 
   useEffect(() => setMounted(true), [])
+  useEffect(() => setMenuAberto(false), [pathname])
+  useEffect(() => {
+    document.body.style.overflow = menuAberto ? 'hidden' : ''
+    return () => { document.body.style.overflow = '' }
+  }, [menuAberto])
 
   const isDark = mounted && resolvedTheme === 'dark'
 
@@ -106,8 +121,10 @@ export function DashboardSidebar() {
   const primeiroNome = profile?.nome?.split(' ')[0] ?? null
 
   return (
+    <>
+    {/* ══════════ Desktop: sidebar lateral (inalterada) ══════════ */}
     <aside
-      className="motion-safe-ui fixed left-3 top-3 bottom-3 z-50 flex flex-col overflow-hidden"
+      className="motion-safe-ui hidden md:flex fixed left-3 top-3 bottom-3 z-50 flex-col overflow-hidden"
       style={{
         width: expanded ? EXPANDED : COLLAPSED,
         transition: 'width 300ms cubic-bezier(0.4, 0, 0.2, 1)',
@@ -225,5 +242,155 @@ export function DashboardSidebar() {
         </div>
       </div>
     </aside>
+
+    {/* ══════════ Mobile: barra inferior + menu completo ══════════ */}
+    <nav
+      className="md:hidden fixed left-0 right-0 bottom-0 z-50 flex items-stretch justify-around border-t border-border/50"
+      style={{
+        paddingBottom: 'env(safe-area-inset-bottom)',
+        ...(isDark ? {
+          background: 'rgba(26,29,39,0.94)',
+          backdropFilter: 'blur(20px) saturate(1.4)',
+          WebkitBackdropFilter: 'blur(20px) saturate(1.4)',
+        } : {
+          background: 'rgba(255,255,255,0.94)',
+          backdropFilter: 'blur(20px) saturate(1.8)',
+          WebkitBackdropFilter: 'blur(20px) saturate(1.8)',
+        }),
+      }}
+    >
+      {MOBILE_QUICK_ITEMS.map(item => {
+        const active = isActive(item.href)
+        return (
+          <Link
+            key={item.href}
+            href={item.href}
+            className={`flex-1 flex flex-col items-center justify-center gap-0.5 h-16 transition-colors ${
+              active ? 'text-brand' : 'text-text-muted'
+            }`}
+          >
+            <item.icon size={20} />
+            <span className="text-[10px] font-medium">{item.label}</span>
+          </Link>
+        )
+      })}
+      <button
+        onClick={() => setMenuAberto(true)}
+        className="flex-1 flex flex-col items-center justify-center gap-0.5 h-16 text-text-muted transition-colors"
+      >
+        <Menu size={20} />
+        <span className="text-[10px] font-medium">Mais</span>
+      </button>
+    </nav>
+
+    {/* Backdrop do menu completo */}
+    <div
+      onClick={() => setMenuAberto(false)}
+      className={`motion-safe-ui md:hidden fixed inset-0 z-[60] bg-black/50 transition-opacity duration-300 ${
+        menuAberto ? 'opacity-100' : 'opacity-0 pointer-events-none'
+      }`}
+    />
+
+    {/* Drawer com o menu completo (mesmos itens da sidebar desktop) */}
+    <div
+      className="motion-safe-ui md:hidden fixed left-0 right-0 bottom-0 z-[70] rounded-t-3xl overflow-hidden transition-transform duration-300 ease-out"
+      style={{ transform: menuAberto ? 'translateY(0)' : 'translateY(100%)' }}
+      aria-hidden={!menuAberto}
+    >
+      <div className="relative flex flex-col" style={{ maxHeight: '85vh' }}>
+        <div
+          className="absolute inset-0"
+          style={isDark ? {
+            background: 'rgba(26,29,39,0.97)',
+            backdropFilter: 'blur(20px) saturate(1.4)',
+            WebkitBackdropFilter: 'blur(20px) saturate(1.4)',
+          } : {
+            background: 'rgba(255,255,255,0.97)',
+            backdropFilter: 'blur(20px) saturate(1.8)',
+            WebkitBackdropFilter: 'blur(20px) saturate(1.8)',
+          }}
+        />
+        <div className="relative z-10 flex flex-col overflow-y-auto" style={{ maxHeight: '85vh', paddingBottom: 'env(safe-area-inset-bottom)' }}>
+          <div className="flex items-center justify-between px-5 py-4 border-b border-border/30 flex-shrink-0">
+            <span className="text-text font-bold text-base">Menu</span>
+            <button
+              onClick={() => setMenuAberto(false)}
+              className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-bg-hover text-text-muted"
+            >
+              <X size={18} />
+            </button>
+          </div>
+
+          <div className="flex flex-col gap-0.5 px-3 py-3">
+            {NAV_ITEMS.map(item => (
+              <MobileMenuItem key={item.href} {...item} active={isActive(item.href)} />
+            ))}
+
+            <div className="my-2 mx-3 h-px bg-border/40" />
+            <p className="px-3 pb-1 text-[10px] uppercase tracking-widest text-text-faint font-semibold">Progresso</p>
+
+            {PROGRESS_ITEMS.map(item => (
+              <MobileMenuItem key={item.href} {...item} active={isActive(item.href)} />
+            ))}
+
+            <div className="my-2 mx-3 h-px bg-border/40" />
+
+            <Link
+              href="/dashboard/planos"
+              className={`flex items-center gap-3 h-12 px-3 rounded-xl ${
+                isActive('/dashboard/planos') ? 'text-brand' : 'text-brand/90 hover:bg-bg-hover'
+              }`}
+            >
+              <Sparkles size={18} />
+              <span className="text-sm font-medium">Fazer upgrade</span>
+            </Link>
+
+            <button
+              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+              className="flex items-center gap-3 h-12 px-3 rounded-xl text-text-muted hover:bg-bg-hover"
+            >
+              {isDark ? <Sun size={18} /> : <Moon size={18} />}
+              <span className="text-sm font-medium">{isDark ? 'Modo claro' : 'Modo escuro'}</span>
+            </button>
+
+            <Link href="/dashboard/configuracoes" className="flex items-center gap-3 h-14 px-3 rounded-xl hover:bg-bg-hover">
+              <span className="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-bold overflow-hidden bg-brand flex-shrink-0">
+                {profile?.avatar_url ? (
+                  <Image src={profile.avatar_url} alt="" width={36} height={36} className="w-full h-full object-cover" />
+                ) : (
+                  primeiroNome?.[0]?.toUpperCase() ?? '?'
+                )}
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="text-text text-sm font-semibold truncate block">{profile?.nome ?? '...'}</span>
+                {profile?.universidade && (
+                  <span className="text-text-faint text-[11px] truncate block">{profile.universidade}</span>
+                )}
+              </span>
+              <Settings size={14} className="text-text-faint flex-shrink-0" />
+            </Link>
+          </div>
+        </div>
+      </div>
+    </div>
+    </>
+  )
+}
+
+function MobileMenuItem({
+  href, icon: Icon, label, active,
+}: {
+  href: string; icon: LucideIcon; label: string; active: boolean
+}) {
+  return (
+    <Link
+      href={href}
+      className={`flex items-center gap-3 h-12 px-3 rounded-xl transition-colors ${
+        active ? 'text-brand bg-brand/10' : 'text-text-muted hover:bg-bg-hover'
+      }`}
+    >
+      <Icon size={18} />
+      <span className="text-sm font-medium">{label}</span>
+    </Link>
   )
 }
