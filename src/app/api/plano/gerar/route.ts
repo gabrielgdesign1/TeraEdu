@@ -1,4 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk'
+import { withLogging } from '@/lib/apiHandler'
 
 export const maxDuration = 120
 
@@ -25,7 +26,7 @@ function addDateToDay(startMonday: Date, semanaNum: number, diaSemana: string): 
   return d.toISOString().slice(0, 10)
 }
 
-export async function POST(request: Request) {
+export const POST = withLogging('plano/gerar', async (request, { log }) => {
   try {
     const { vestibular, dataProva, curso, horasPorDia, materiasPorDia = 1, diasSemana, materiasBoas, materiasDificeis } = await request.json()
     const duasMaterias = Number(materiasPorDia) >= 2
@@ -102,7 +103,10 @@ Retorne SOMENTE este JSON (${semanasTotal} semanas, cada semana com ${diasSemana
 
     const texto = response.content[0].type === 'text' ? response.content[0].text : '{}'
     const jsonMatch = texto.match(/\{[\s\S]*\}/)
-    if (!jsonMatch) throw new Error('JSON não encontrado na resposta')
+    if (!jsonMatch) {
+      log.warn({ vestibular, outputChars: texto.length }, 'plano da IA sem JSON válido')
+      return Response.json({ error: 'A IA retornou um formato inesperado. Tente novamente.' }, { status: 502 })
+    }
     const plano = JSON.parse(jsonMatch[0])
 
     // Adiciona datas reais e status inicial a cada dia
@@ -113,9 +117,13 @@ Retorne SOMENTE este JSON (${semanasTotal} semanas, cada semana com ${diasSemana
       }
     }
 
+    log.info({ vestibular, semanas: plano.semanas?.length ?? 0, duasMaterias }, 'plano gerado')
     return Response.json(plano)
   } catch (error) {
-    console.error('[plano/gerar]', error)
-    return Response.json({ error: 'Erro ao gerar plano' }, { status: 500 })
+    log.error(
+      { err: error instanceof Error ? { name: error.name, message: error.message } : String(error) },
+      'falha ao gerar plano'
+    )
+    return Response.json({ error: 'Erro ao gerar plano. Tente novamente.' }, { status: 500 })
   }
-}
+})

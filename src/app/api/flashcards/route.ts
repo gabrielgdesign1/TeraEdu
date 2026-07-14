@@ -1,10 +1,11 @@
 import Anthropic from '@anthropic-ai/sdk'
+import { withLogging } from '@/lib/apiHandler'
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY
 })
 
-export async function POST(request: Request) {
+export const POST = withLogging('flashcards', async (request, { log }) => {
   const formData = await request.formData()
   const modo = formData.get('modo') as string
   const quantidade = formData.get('quantidade') as string
@@ -64,7 +65,16 @@ Responda APENAS o JSON no formato: {"flashcards": [{"pergunta": "...", "resposta
 
   const texto = resposta.content[0].type === 'text' ? resposta.content[0].text : '{}'
   const jsonLimpo = texto.replace(/```json|```/g, '').trim()
-  const dados = JSON.parse(jsonLimpo)
 
+  let dados
+  try {
+    dados = JSON.parse(jsonLimpo)
+  } catch {
+    // A IA retornou algo que não é JSON válido — antes isso virava um 500 cru (falha silenciosa)
+    log.warn({ modo, outputChars: texto.length }, 'resposta da IA não é JSON válido')
+    return Response.json({ error: 'A IA retornou um formato inesperado. Tente novamente.' }, { status: 502 })
+  }
+
+  log.info({ modo, quantidade, total: dados?.flashcards?.length ?? 0 }, 'flashcards gerados')
   return Response.json(dados)
-}
+})

@@ -1,6 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
+import { withLogging } from '@/lib/apiHandler'
 
-export async function GET(req: NextRequest) {
+export const GET = withLogging('questoes/banco', async (req, { log }) => {
   const { searchParams } = new URL(req.url)
   const year       = searchParams.get('year')       ?? '2023'
   const discipline = searchParams.get('discipline') ?? ''
@@ -12,14 +13,12 @@ export async function GET(req: NextRequest) {
   url.searchParams.set('offset', offset)
   if (discipline) url.searchParams.set('discipline', discipline)
 
-  try {
-    const res = await fetch(url.toString(), { next: { revalidate: 86400 } })
-    if (!res.ok) {
-      return NextResponse.json({ error: 'Falha ao buscar questões' }, { status: res.status })
-    }
-    const data = await res.json()
-    return NextResponse.json(data)
-  } catch {
-    return NextResponse.json({ error: 'Erro de conexão com a API do ENEM' }, { status: 502 })
+  const res = await fetch(url.toString(), { next: { revalidate: 86400 } })
+  if (!res.ok) {
+    log.warn({ year, discipline, upstreamStatus: res.status }, 'API do ENEM respondeu com erro')
+    return NextResponse.json({ error: 'Falha ao buscar questões do ENEM' }, { status: res.status })
   }
-}
+  const data = await res.json()
+  log.info({ year, discipline, total: data?.questions?.length ?? 0 }, 'questões ENEM obtidas')
+  return NextResponse.json(data)
+})

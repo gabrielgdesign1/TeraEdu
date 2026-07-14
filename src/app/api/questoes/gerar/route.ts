@@ -1,8 +1,9 @@
 import Anthropic from '@anthropic-ai/sdk'
+import { withLogging } from '@/lib/apiHandler'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
-export async function POST(request: Request) {
+export const POST = withLogging('questoes/gerar', async (request, { log }) => {
   const { vestibular, materia, conteudo, dificuldade, quantidade } = await request.json()
 
   const nivelMap = {
@@ -47,12 +48,19 @@ Responda APENAS o JSON no formato pedido.`
 
     const texto = resposta.content[0].type === 'text' ? resposta.content[0].text : '{}'
     const jsonMatch = texto.match(/\{[\s\S]*\}/)
-    if (!jsonMatch) throw new Error('JSON não encontrado na resposta')
+    if (!jsonMatch) {
+      log.warn({ vestibular, materia, outputChars: texto.length }, 'questões da IA sem JSON válido')
+      return Response.json({ error: 'A IA retornou um formato inesperado. Tente novamente.' }, { status: 502 })
+    }
     const dados = JSON.parse(jsonMatch[0])
 
+    log.info({ vestibular, materia, conteudo, dificuldade, total: dados?.questoes?.length ?? 0 }, 'questões geradas')
     return Response.json(dados)
   } catch (error) {
-    console.error('[questoes/gerar]', error)
-    return Response.json({ error: 'Erro ao gerar questões' }, { status: 500 })
+    log.error(
+      { vestibular, materia, err: error instanceof Error ? { name: error.name, message: error.message } : String(error) },
+      'falha ao gerar questões'
+    )
+    return Response.json({ error: 'Erro ao gerar questões. Tente novamente.' }, { status: 500 })
   }
-}
+})

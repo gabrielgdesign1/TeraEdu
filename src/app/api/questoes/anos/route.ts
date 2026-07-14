@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { withLogging } from '@/lib/apiHandler'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -7,7 +8,7 @@ const supabase = createClient(
 )
 
 // Retorna os anos distintos disponíveis para um vestibular + matéria
-export async function GET(req: NextRequest) {
+export const GET = withLogging('questoes/anos', async (req, { log }) => {
   const { searchParams } = new URL(req.url)
   const vestibular = searchParams.get('vestibular')?.toLowerCase()
   const subject    = searchParams.get('subject')
@@ -24,11 +25,12 @@ export async function GET(req: NextRequest) {
     .not('exam_year', 'is', null)
 
   if (error) {
-    return NextResponse.json({ anos: [], error: error.message }, { status: 500 })
+    log.error({ vestibular, subject, dbError: error.message }, 'erro ao buscar anos')
+    return NextResponse.json({ anos: [] }, { status: 500 })
   }
 
   const anos = Array.from(new Set((data ?? []).map(r => r.exam_year as number)))
     .sort((a, b) => b - a)
 
   return NextResponse.json({ anos })
-}
+})

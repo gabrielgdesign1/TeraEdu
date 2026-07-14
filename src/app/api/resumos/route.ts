@@ -1,10 +1,11 @@
 import Anthropic from '@anthropic-ai/sdk'
+import { withLogging } from '@/lib/apiHandler'
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY
 })
 
-export async function POST(request: Request) {
+export const POST = withLogging('resumos', async (request, { log }) => {
   const formData = await request.formData()
   const modo = formData.get('modo') as string
   const tamanho = formData.get('tamanho') as string
@@ -76,5 +77,6 @@ Estruture bem em Markdown com títulos, subtítulos e listas. Destaque os pontos
   })
 
   const texto = resposta.content[0].type === 'text' ? resposta.content[0].text : ''
+  log.info({ modo, tamanho, outputChars: texto.length }, 'resumo gerado')
   return Response.json({ resumo: texto })
-}
+})
