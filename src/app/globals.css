@@ -134,9 +134,13 @@ body {
   -webkit-text-fill-color: transparent;
 }
 
-/* Respeita usuários com movimento reduzido */
+/* Respeita usuários com movimento reduzido — exceto transições curtas e
+   estruturais de UI (sidebar, flip de flashcard) marcadas com .motion-safe-ui,
+   que não são o tipo de movimento (parallax, loop, zoom) que causa desconforto. */
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
+  *:not(.motion-safe-ui):not(.motion-safe-ui *),
+  *::before,
+  *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;

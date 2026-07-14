@@ -38,7 +38,7 @@ function SideLabel({ expanded, className = '', children }: {
 }) {
   return (
     <span
-      className={`relative z-10 whitespace-nowrap pr-3 will-change-[opacity] ${className}`}
+      className={`motion-safe-ui relative z-10 whitespace-nowrap pr-3 will-change-[opacity] ${className}`}
       style={{
         opacity: expanded ? 1 : 0,
         transition: `opacity 180ms ease ${expanded ? '90ms' : '0ms'}`,
@@ -107,7 +107,7 @@ export function DashboardSidebar() {
 
   return (
     <aside
-      className="fixed left-3 top-3 bottom-3 z-50 flex flex-col overflow-hidden"
+      className="motion-safe-ui fixed left-3 top-3 bottom-3 z-50 flex flex-col overflow-hidden"
       style={{
         width: expanded ? EXPANDED : COLLAPSED,
         transition: 'width 300ms cubic-bezier(0.4, 0, 0.2, 1)',
@@ -155,7 +155,7 @@ export function DashboardSidebar() {
 
           {/* Label "Progresso" — altura reservada sempre (só a opacidade muda) */}
           <p
-            className="h-4 px-3 pb-1 text-[9px] uppercase tracking-widest text-text-faint font-semibold whitespace-nowrap overflow-hidden"
+            className="motion-safe-ui h-4 px-3 pb-1 text-[9px] uppercase tracking-widest text-text-faint font-semibold whitespace-nowrap overflow-hidden"
             style={{ opacity: expanded ? 1 : 0, transition: `opacity 180ms ease ${expanded ? '90ms' : '0ms'}` }}
           >
             Progresso
@@ -209,7 +209,7 @@ export function DashboardSidebar() {
               </span>
             </IconSlot>
             <span
-              className="relative z-10 flex-1 min-w-0 flex items-center justify-between pr-3 will-change-[opacity]"
+              className="motion-safe-ui relative z-10 flex-1 min-w-0 flex items-center justify-between pr-3 will-change-[opacity]"
               style={{ opacity: expanded ? 1 : 0, transition: `opacity 180ms ease ${expanded ? '90ms' : '0ms'}` }}
               aria-hidden={!expanded}
             >

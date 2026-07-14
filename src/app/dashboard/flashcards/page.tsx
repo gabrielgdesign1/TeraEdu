@@ -123,7 +123,10 @@ export default function Flashcards() {
     setLoading(false)
   }
 
+  const FLIP_MS = 480
+
   function proximo() {
+    const delay = virado ? FLIP_MS : 0
     setVirado(false)
     setTimeout(() => {
       if (indiceAtual < flashcards.length - 1) {
@@ -136,12 +139,13 @@ export default function Flashcards() {
           quantidade: flashcards.length,
         })
       }
-    }, 120)
+    }, delay)
   }
 
   function anterior() {
+    const delay = virado ? FLIP_MS : 0
     setVirado(false)
-    setTimeout(() => { if (indiceAtual > 0) setIndiceAtual(indiceAtual - 1) }, 120)
+    setTimeout(() => { if (indiceAtual > 0) setIndiceAtual(indiceAtual - 1) }, delay)
   }
 
   function reiniciar() {
@@ -217,17 +221,45 @@ export default function Flashcards() {
 
               <div
                 onClick={() => setVirado(!virado)}
-                className="bg-bg-card rounded-2xl p-12 min-h-72 flex flex-col items-center justify-center cursor-pointer hover:ring-1 hover:ring-brand/40 transition-all select-none"
+                className="group cursor-pointer select-none min-h-72"
+                style={{ perspective: '1600px' }}
               >
-                <p className="text-text-faint text-xs uppercase tracking-widest mb-5">
-                  {virado ? 'Resposta' : 'Pergunta'}
-                </p>
-                <p className="text-text text-xl text-center leading-relaxed">
-                  {virado ? flashcards[indiceAtual]?.resposta : flashcards[indiceAtual]?.pergunta}
-                </p>
-                <p className="text-text-faint text-xs mt-8">
-                  Clique para {virado ? 'voltar' : 'ver a resposta'}
-                </p>
+                <div
+                  className="motion-safe-ui relative w-full h-full min-h-72"
+                  style={{
+                    transformStyle: 'preserve-3d',
+                    transition: 'transform 480ms cubic-bezier(0.4, 0, 0.2, 1)',
+                    transform: virado ? 'rotateY(180deg)' : 'rotateY(0deg)',
+                  }}
+                >
+                  {/* Frente — Pergunta */}
+                  <div
+                    className="absolute inset-0 bg-bg-card rounded-2xl p-12 flex flex-col items-center justify-center group-hover:ring-1 group-hover:ring-brand/40 transition-shadow"
+                    style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}
+                  >
+                    <p className="text-text-faint text-xs uppercase tracking-widest mb-5">Pergunta</p>
+                    <p className="text-text text-xl text-center leading-relaxed">
+                      {flashcards[indiceAtual]?.pergunta}
+                    </p>
+                    <p className="text-text-faint text-xs mt-8">Clique para ver a resposta</p>
+                  </div>
+
+                  {/* Verso — Resposta */}
+                  <div
+                    className="absolute inset-0 bg-bg-card rounded-2xl p-12 flex flex-col items-center justify-center group-hover:ring-1 group-hover:ring-brand/40 transition-shadow"
+                    style={{
+                      backfaceVisibility: 'hidden',
+                      WebkitBackfaceVisibility: 'hidden',
+                      transform: 'rotateY(180deg)',
+                    }}
+                  >
+                    <p className="text-text-faint text-xs uppercase tracking-widest mb-5">Resposta</p>
+                    <p className="text-text text-xl text-center leading-relaxed">
+                      {flashcards[indiceAtual]?.resposta}
+                    </p>
+                    <p className="text-text-faint text-xs mt-8">Clique para voltar</p>
+                  </div>
+                </div>
               </div>
 
               <div className="flex gap-3 mt-5">
