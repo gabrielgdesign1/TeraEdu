@@ -97,8 +97,6 @@ function MinhaConta({ profile, salvarProfile, router }: {
   const [erroFoto,  setErroFoto ] = useState('')
   const fileRef = useRef<HTMLInputElement>(null)
 
-  const [senhaNova,    setSenhaNova   ] = useState('')
-  const [senhaConfirma,setSenhaConfirma] = useState('')
   const [salvandoSenha,setSalvandoSenha] = useState(false)
   const [erroSenha,    setErroSenha   ] = useState('')
   const [senhaOk,      setSenhaOk     ] = useState(false)
@@ -145,18 +143,18 @@ function MinhaConta({ profile, salvarProfile, router }: {
     setEnviandoFoto(false)
   }
 
-  async function alterarSenha() {
+  async function enviarResetSenha() {
     setErroSenha('')
-    if (senhaNova.length < 6) { setErroSenha('A senha deve ter pelo menos 6 caracteres.'); return }
-    if (senhaNova !== senhaConfirma) { setErroSenha('As senhas não coincidem.'); return }
+    if (!email) { setErroSenha('E-mail não carregado. Recarregue a página.'); return }
     setSalvandoSenha(true)
     const sb = createClient()
-    const { error } = await sb.auth.updateUser({ password: senhaNova })
+    const { error } = await sb.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/redefinir-senha`,
+    })
     setSalvandoSenha(false)
-    if (error) { setErroSenha('Erro ao atualizar a senha. Tente novamente.'); return }
-    setSenhaNova(''); setSenhaConfirma('')
+    if (error) { setErroSenha('Não foi possível enviar o e-mail. Tente novamente.'); return }
     setSenhaOk(true)
-    setTimeout(() => setSenhaOk(false), 2500)
+    setTimeout(() => setSenhaOk(false), 5000)
   }
 
   async function excluirConta() {
@@ -261,47 +259,33 @@ function MinhaConta({ profile, salvarProfile, router }: {
         </div>
       </section>
 
-      {/* Alterar senha */}
+      {/* Alterar senha — fluxo seguro por e-mail */}
       <section className="bg-bg-card rounded-2xl p-6">
-        <div className="flex items-center gap-2 mb-5">
+        <div className="flex items-center gap-2 mb-2">
           <Lock size={16} className="text-brand" />
-          <h2 className="text-text font-semibold">Alterar senha</h2>
+          <h2 className="text-text font-semibold">Senha e segurança</h2>
         </div>
-        <div className="flex flex-col gap-4 max-w-sm">
-          <label className="flex flex-col gap-1.5">
-            <span className="text-text-muted text-xs font-medium uppercase tracking-wider">Nova senha</span>
-            <input
-              type="password"
-              value={senhaNova}
-              onChange={e => setSenhaNova(e.target.value)}
-              placeholder="Mínimo 6 caracteres"
-              className="bg-bg border border-border rounded-xl px-4 py-2.5 text-text text-sm placeholder:text-text-faint focus:outline-none focus:border-brand transition-colors"
-            />
-          </label>
-          <label className="flex flex-col gap-1.5">
-            <span className="text-text-muted text-xs font-medium uppercase tracking-wider">Confirmar nova senha</span>
-            <input
-              type="password"
-              value={senhaConfirma}
-              onChange={e => setSenhaConfirma(e.target.value)}
-              placeholder="Repita a senha"
-              className="bg-bg border border-border rounded-xl px-4 py-2.5 text-text text-sm placeholder:text-text-faint focus:outline-none focus:border-brand transition-colors"
-            />
-          </label>
-          {erroSenha && <p className="text-red-500 text-xs">{erroSenha}</p>}
-          <button
-            onClick={alterarSenha}
-            disabled={salvandoSenha || !senhaNova || !senhaConfirma}
-            className="self-start flex items-center gap-2 border border-border hover:border-brand text-text-muted hover:text-text disabled:opacity-50 font-medium px-5 py-2.5 rounded-full text-sm transition-colors"
-          >
-            {salvandoSenha
-              ? <><div className="w-4 h-4 border-2 border-border border-t-brand rounded-full animate-spin" /> Atualizando...</>
-              : senhaOk
-              ? <><Check size={14} className="text-green-500" /> Senha atualizada!</>
-              : <><Lock size={14} /> Atualizar senha</>
-            }
-          </button>
-        </div>
+        <p className="text-text-muted text-sm mb-5 max-w-md">
+          Por segurança, a troca de senha é feita por e-mail. Enviaremos um link seguro para{' '}
+          {email ? <span className="text-text font-medium">{email}</span> : 'o seu endereço'}; abra o link
+          e defina a nova senha. Ninguém consegue alterar sua senha sem acesso ao seu e-mail.
+        </p>
+        {erroSenha && <p className="text-red-500 text-sm mb-3 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-2.5 max-w-md">{erroSenha}</p>}
+        {senhaOk && (
+          <p className="text-green-600 dark:text-green-400 text-sm mb-3 bg-green-500/10 border border-green-500/20 rounded-xl px-4 py-2.5 max-w-md flex items-center gap-2">
+            <Check size={14} /> Link enviado! Verifique sua caixa de entrada.
+          </p>
+        )}
+        <button
+          onClick={enviarResetSenha}
+          disabled={salvandoSenha}
+          className="flex items-center gap-2 border border-border hover:border-brand text-text-muted hover:text-text disabled:opacity-50 font-medium px-5 py-2.5 rounded-full text-sm transition-colors"
+        >
+          {salvandoSenha
+            ? <><div className="w-4 h-4 border-2 border-border border-t-brand rounded-full animate-spin" /> Enviando...</>
+            : <><Lock size={14} /> Enviar link de redefinição</>
+          }
+        </button>
       </section>
 
       {/* Excluir conta */}

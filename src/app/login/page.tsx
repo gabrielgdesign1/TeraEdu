@@ -49,6 +49,19 @@ export default function Login() {
     setLoading(false)
   }
 
+  async function handleForgotPassword() {
+    setErro('')
+    setMensagem('')
+    if (!email) { setErro('Digite seu e-mail acima para receber o link de redefinição.'); return }
+    setLoading(true)
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/redefinir-senha`,
+    })
+    setLoading(false)
+    if (error) setErro('Não foi possível enviar o e-mail. Verifique o endereço e tente novamente.')
+    else setMensagem('Enviamos um link de redefinição para o seu e-mail. Verifique a caixa de entrada.')
+  }
+
   const inputCls = "w-full bg-bg border border-border rounded-xl pl-11 pr-4 py-3.5 text-text text-sm placeholder:text-text-faint focus:outline-none focus:border-brand/70 focus:ring-4 focus:ring-brand/10 transition-all"
 
   return (
@@ -153,7 +166,7 @@ export default function Login() {
                   <input type="checkbox" className="accent-brand w-4 h-4" />
                   <span className="text-text-muted text-sm">Lembrar de mim</span>
                 </label>
-                <a href="#" className="text-brand text-sm hover:underline">Esqueci a senha</a>
+                <button type="button" onClick={handleForgotPassword} className="text-brand text-sm hover:underline cursor-pointer">Esqueci a senha</button>
               </div>
             )}
 
