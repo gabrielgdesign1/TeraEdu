@@ -21,6 +21,10 @@ type DiaPlano = {
   questoes: number
   concluido: boolean
   pulado?: boolean
+  // 2ª matéria opcional do dia (planos antigos ficam sem)
+  materia2?: string
+  topico2?: string
+  questoes2?: number
 }
 
 type SemanaPlano = {
@@ -50,6 +54,7 @@ type ConfigForm = {
   dataProva: string
   curso: string
   horasPorDia: number
+  materiasPorDia: number
   diasSemana: string[]
   materiasBoas: string[]
   materiasDificeis: string[]
@@ -170,7 +175,7 @@ function AcoesRapidas({ materia, vestibular }: { materia: string; vestibular: st
 
 const CONFIG_INICIAL: ConfigForm = {
   vestibular: '', dataProva: '', curso: '',
-  horasPorDia: 2, diasSemana: [],
+  horasPorDia: 2, materiasPorDia: 1, diasSemana: [],
   materiasBoas: [], materiasDificeis: [],
 }
 
@@ -215,6 +220,7 @@ export default function PlanoPage() {
           dataProva: config.dataProva,
           curso: config.curso || null,
           horasPorDia: config.horasPorDia,
+          materiasPorDia: config.materiasPorDia,
           diasSemana: config.diasSemana,
           materiasBoas: config.materiasBoas,
           materiasDificeis: config.materiasDificeis,
@@ -420,6 +426,26 @@ export default function PlanoPage() {
                           config.horasPorDia === h ? 'bg-brand text-white border-brand' : 'border-border text-text-muted hover:border-brand hover:text-text'
                         }`}
                       >{h === 4 ? '4h+' : `${h}h`}</button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-text-muted text-xs font-medium uppercase tracking-wider mb-3 block">Quantas matérias por dia?</label>
+                  <div className="flex gap-2">
+                    {[
+                      { n: 1, label: '1 matéria', desc: 'Foco total' },
+                      { n: 2, label: '2 matérias', desc: 'Mais variedade' },
+                    ].map(o => (
+                      <button key={o.n}
+                        onClick={() => setConfig(c => ({ ...c, materiasPorDia: o.n }))}
+                        className={`flex-1 py-3 px-4 rounded-xl text-sm font-semibold border transition-all text-left ${
+                          config.materiasPorDia === o.n ? 'bg-brand text-white border-brand' : 'border-border text-text-muted hover:border-brand hover:text-text'
+                        }`}
+                      >
+                        <div>{o.label}</div>
+                        <div className={`text-xs font-normal ${config.materiasPorDia === o.n ? 'text-white/70' : 'text-text-faint'}`}>{o.desc}</div>
+                      </button>
                     ))}
                   </div>
                 </div>
@@ -769,6 +795,17 @@ export default function PlanoPage() {
                             <span className="text-text-faint text-xs">{tarefa.horas}h · {tarefa.questoes} questões</span>
                           </div>
                           {!tarefa.concluido && <AcoesRapidas materia={tarefa.materia} vestibular={plano.vestibular} />}
+
+                          {tarefa.materia2 && (
+                            <div className="mt-3 pt-3 border-t border-border/50">
+                              <MateriaBadge materia={tarefa.materia2} />
+                              <p className="text-text text-sm mt-1.5">{tarefa.topico2}</p>
+                              <div className="flex items-center gap-3 mt-1">
+                                <span className="text-text-faint text-xs">{tarefa.horas}h · {tarefa.questoes2 ?? tarefa.questoes} questões</span>
+                              </div>
+                              {!tarefa.concluido && <AcoesRapidas materia={tarefa.materia2} vestibular={plano.vestibular} />}
+                            </div>
+                          )}
                         </div>
                         {tarefa.concluido && !tarefa.pulado && (
                           <div className="w-7 h-7 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
@@ -874,6 +911,17 @@ export default function PlanoPage() {
                                         <span className="text-text-faint text-xs">{dia.horas}h · {dia.questoes} questões</span>
                                       </div>
                                       {!dia.concluido && <AcoesRapidas materia={dia.materia} vestibular={plano.vestibular} />}
+
+                                      {dia.materia2 && (
+                                        <div className="mt-2.5 pt-2.5 border-t border-border/50">
+                                          <MateriaBadge materia={dia.materia2} />
+                                          <p className={`text-sm mt-1 ${dia.concluido ? 'text-text-muted line-through' : 'text-text'}`}>{dia.topico2}</p>
+                                          <div className="flex items-center gap-3 mt-1">
+                                            <span className="text-text-faint text-xs">{dia.horas}h · {dia.questoes2 ?? dia.questoes} questões</span>
+                                          </div>
+                                          {!dia.concluido && <AcoesRapidas materia={dia.materia2} vestibular={plano.vestibular} />}
+                                        </div>
+                                      )}
                                     </div>
                                   </div>
                                 )

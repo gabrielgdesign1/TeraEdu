@@ -27,7 +27,8 @@ function addDateToDay(startMonday: Date, semanaNum: number, diaSemana: string): 
 
 export async function POST(request: Request) {
   try {
-    const { vestibular, dataProva, curso, horasPorDia, diasSemana, materiasBoas, materiasDificeis } = await request.json()
+    const { vestibular, dataProva, curso, horasPorDia, materiasPorDia = 1, diasSemana, materiasBoas, materiasDificeis } = await request.json()
+    const duasMaterias = Number(materiasPorDia) >= 2
 
     const inicioSemana = getMondayOfNextWeek()
     const provaDate = new Date(dataProva + 'T12:00:00')
@@ -41,6 +42,9 @@ export async function POST(request: Request) {
     const semFinal = Math.max(1, semanasTotal - semBase - semApro - semRev)
 
     const questoesPorDia = Math.round(horasPorDia * 7)
+    // Com 2 matérias/dia, divide as horas/questões entre os dois blocos
+    const horasBloco    = duasMaterias ? Math.max(1, Math.round(horasPorDia / 2)) : horasPorDia
+    const questoesBloco = duasMaterias ? Math.max(1, Math.round(questoesPorDia / 2)) : questoesPorDia
 
     const system = `Você é um especialista em planos de estudos para vestibulares brasileiros.
 Crie planos personalizados e progressivos. Priorize matérias difíceis nas primeiras fases.
@@ -65,7 +69,9 @@ Distribuição das fases:
 
 Regras:
 - Use APENAS os dias: ${diasSemana.join(', ')} em cada semana
-- ${horasPorDia}h e ${questoesPorDia} questões por sessão
+- ${duasMaterias
+    ? `DUAS matérias DIFERENTES por dia (dois blocos): cada bloco com ${horasBloco}h e ${questoesBloco} questões`
+    : `${horasPorDia}h e ${questoesPorDia} questões por sessão`}
 - Na Fase Base: priorize matérias difíceis (aparecerão mais vezes), matérias fáceis menos
 - Na Fase Aprofundamento: aprofunde os tópicos, mais questões complexas
 - Na Fase Revisão: revise todas as matérias, foco nas difíceis
@@ -79,11 +85,13 @@ Retorne SOMENTE este JSON (${semanasTotal} semanas, cada semana com ${diasSemana
       "numero": 1,
       "fase": "Base",
       "dias": [
-        { "diaSemana": "Segunda", "materia": "Matemática", "topico": "Funções do 1º grau: domínio e imagem", "horas": ${horasPorDia}, "questoes": ${questoesPorDia} }
+        ${duasMaterias
+          ? `{ "diaSemana": "Segunda", "materia": "Matemática", "topico": "Funções do 1º grau: domínio e imagem", "horas": ${horasBloco}, "questoes": ${questoesBloco}, "materia2": "Química", "topico2": "Estequiometria: cálculos básicos", "horas2": ${horasBloco}, "questoes2": ${questoesBloco} }`
+          : `{ "diaSemana": "Segunda", "materia": "Matemática", "topico": "Funções do 1º grau: domínio e imagem", "horas": ${horasPorDia}, "questoes": ${questoesPorDia} }`}
       ]
     }
   ]
-}`
+}${duasMaterias ? '\n\nIMPORTANTE: materia e materia2 devem ser DIFERENTES em cada dia.' : ''}`
 
     const response = await anthropic.messages.create({
       model: 'claude-sonnet-4-6',

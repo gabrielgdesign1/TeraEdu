@@ -52,7 +52,7 @@ function PlanoCardDashboard() {
   const [plano, setPlano] = useState<{
     vestibular: string
     data_prova: string
-    cronograma: { semanas: { numero: number; fase: string; dias: { data: string; materia: string; topico: string; horas: number; questoes: number; concluido: boolean }[] }[] }
+    cronograma: { semanas: { numero: number; fase: string; dias: { data: string; materia: string; topico: string; horas: number; questoes: number; concluido: boolean; materia2?: string; topico2?: string }[] }[] }
   } | null | undefined>(undefined) // undefined = ainda carregando
 
   useEffect(() => {
@@ -98,11 +98,15 @@ function PlanoCardDashboard() {
         <div>
           <p className="text-text font-semibold text-sm mb-0.5">
             {tarefaHoje
-              ? `📅 Hoje: ${tarefaHoje.materia} — ${tarefaHoje.topico}`
+              ? `📅 Hoje: ${tarefaHoje.materia}${tarefaHoje.materia2 ? ` + ${tarefaHoje.materia2}` : ` — ${tarefaHoje.topico}`}`
               : `📅 Plano ${plano.vestibular} — ${diasParaProva > 0 ? `${diasParaProva} dias para a prova` : 'Prova chegou!'}`}
           </p>
           {tarefaHoje && (
-            <p className="text-text-muted text-xs">{tarefaHoje.horas}h · {tarefaHoje.questoes} questões</p>
+            <p className="text-text-muted text-xs">
+              {tarefaHoje.materia2
+                ? `${tarefaHoje.materia}: ${tarefaHoje.topico} · ${tarefaHoje.materia2}: ${tarefaHoje.topico2}`
+                : `${tarefaHoje.horas}h · ${tarefaHoje.questoes} questões`}
+            </p>
           )}
         </div>
       </div>
