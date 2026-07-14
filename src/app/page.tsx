@@ -9,7 +9,7 @@ import {
   useMotionValue, useMotionTemplate,
 } from "framer-motion"
 import {
-  Sun, Moon, Sparkles, MessageCircle, FileQuestion, Layers,
+  Sun, Moon, MessageCircle, FileQuestion, Layers,
   FileText, BarChart3, Calendar, Check, ArrowRight,
   Target, Brain, Trophy, Zap, BookOpen, LayoutDashboard,
   GraduationCap, Flame, ChevronDown,

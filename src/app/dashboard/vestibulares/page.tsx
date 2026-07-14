@@ -1,15 +1,9 @@
 ﻿'use client'
 
 import { useState, useEffect } from 'react'
-import Image from 'next/image'
-import Link from 'next/link'
-import { useTheme } from 'next-themes'
 import {
-  LayoutDashboard, FileQuestion, Layers, FileText, MessageCircle,
-  BarChart3, Calendar, Sun, Moon, Settings, GraduationCap,
   ChevronDown, ExternalLink, Clock, DollarSign, CalendarDays, Info
 } from 'lucide-react'
-import { useProfile } from '@/hooks/useProfile'
 import { DashboardSidebar } from '@/components/DashboardSidebar'
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
@@ -381,19 +375,12 @@ const FILTROS: { id: Status | 'todos'; label: string }[] = [
 // ─── Página ────────────────────────────────────────────────────────────────────
 
 export default function Vestibulares() {
-  const { theme, setTheme } = useTheme()
-  const [mounted, setMounted] = useState(false)
-
   // hoje é null no server/hydration, setado no cliente para evitar mismatch
   const [hoje, setHoje] = useState<Date | null>(null)
 
   useEffect(() => {
-    setMounted(true)
     setHoje(new Date())
   }, [])
-
-  const { profile } = useProfile()
-  const primeiroNome = profile?.nome?.split(' ')[0] ?? null
 
   const [filtro,    setFiltro   ] = useState<Status | 'todos'>('todos')
   const [expandido, setExpandido] = useState<string | null>(null)

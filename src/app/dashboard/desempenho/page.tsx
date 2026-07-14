@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { TrendingUp, TrendingDown, Lock } from 'lucide-react'
-import { useProfile } from '@/hooks/useProfile'
 import { DashboardSidebar } from '@/components/DashboardSidebar'
 import { createClient } from '@/lib/supabase'
 
@@ -179,7 +178,6 @@ const STATS_VAZIO: Stats = {
 }
 
 export default function DesempenhoPage() {
-  const { profile } = useProfile()
 
   const [stats,      setStats     ] = useState<Stats>(STATS_VAZIO)
   const [desempenho, setDesempenho] = useState<DesempenhoRow[]>([])

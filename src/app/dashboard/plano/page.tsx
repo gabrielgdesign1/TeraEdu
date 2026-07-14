@@ -4,10 +4,9 @@ import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import {
   Calendar, ChevronRight, ChevronLeft, Check, Trash2, RefreshCw, RotateCcw,
-  BookOpen, Sparkles, Target, Clock, AlertTriangle, BarChart3,
+  Sparkles, Target, Clock, AlertTriangle, BarChart3,
   FileQuestion, FileText, Layers, MessageCircle,
 } from 'lucide-react'
-import { useProfile } from '@/hooks/useProfile'
 import { DashboardSidebar } from '@/components/DashboardSidebar'
 import { createClient } from '@/lib/supabase'
 
@@ -147,8 +146,7 @@ function MateriaBadge({ materia }: { materia: string }) {
 
 // ─── Ações rápidas ────────────────────────────────────────────────────────────
 
-function AcoesRapidas({ materia }: { materia: string }) {
-  const mat = encodeURIComponent(materia)
+function AcoesRapidas() {
   return (
     <div className="flex gap-1.5 flex-wrap mt-2">
       <Link href={`/dashboard/questoes`} className="text-[11px] px-2.5 py-1 rounded-full bg-bg-hover text-text-muted hover:text-text hover:bg-brand/10 hover:text-brand transition-colors flex items-center gap-1">
@@ -176,8 +174,6 @@ const CONFIG_INICIAL: ConfigForm = {
 }
 
 export default function PlanoPage() {
-  const { profile } = useProfile()
-
   const [plano,       setPlano      ] = useState<Plano | null>(null)
   const [loading,     setLoading    ] = useState(true)
   const [gerando,     setGerando    ] = useState(false)
@@ -249,7 +245,7 @@ export default function PlanoPage() {
 
       if (error) throw error
       setPlano(data as Plano)
-    } catch (e) {
+    } catch {
       setErroGerar('Erro ao gerar o plano. Verifique sua conexão e tente novamente.')
     }
     setGerando(false)
@@ -771,7 +767,7 @@ export default function PlanoPage() {
                           <div className="flex items-center gap-3 mt-1">
                             <span className="text-text-faint text-xs">{tarefa.horas}h · {tarefa.questoes} questões</span>
                           </div>
-                          {!tarefa.concluido && <AcoesRapidas materia={tarefa.materia} />}
+                          {!tarefa.concluido && <AcoesRapidas />}
                         </div>
                         {tarefa.concluido && !tarefa.pulado && (
                           <div className="w-7 h-7 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
@@ -850,7 +846,6 @@ export default function PlanoPage() {
                             <p className="text-text-faint text-xs font-medium mb-2">Semana {semana.numero}</p>
                             <div className="space-y-2">
                               {semana.dias.map((dia, i) => {
-                                const cor = corMateria(dia.materia)
                                 const passado = dia.data < hj
                                 return (
                                   <div key={i} className={`flex items-start gap-3 p-3.5 rounded-xl border transition-all ${
@@ -877,7 +872,7 @@ export default function PlanoPage() {
                                       <div className="flex items-center gap-3 mt-1">
                                         <span className="text-text-faint text-xs">{dia.horas}h · {dia.questoes} questões</span>
                                       </div>
-                                      {!dia.concluido && <AcoesRapidas materia={dia.materia} />}
+                                      {!dia.concluido && <AcoesRapidas />}
                                     </div>
                                   </div>
                                 )

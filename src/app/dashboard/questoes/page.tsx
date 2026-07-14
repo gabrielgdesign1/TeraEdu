@@ -1,18 +1,13 @@
 ﻿'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import Image from 'next/image'
-import Link from 'next/link'
 import { registrarAtividade } from '@/lib/registrarAtividade'
-import { useTheme } from 'next-themes'
 import {
-  LayoutDashboard, FileQuestion, Layers, FileText, MessageCircle,
-  BarChart3, Calendar, Sun, Moon, Settings, Sparkles, BookOpen,
+  Sparkles, BookOpen,
   ChevronRight, ChevronDown, CheckCircle2, XCircle, RotateCcw,
-  Trophy, Target, GraduationCap, Timer, Pencil, AlertCircle,
+  Trophy, GraduationCap, Timer, Pencil,
   Bookmark, BookmarkCheck, Trash2
 } from 'lucide-react'
-import { useProfile } from '@/hooks/useProfile'
 import { DashboardSidebar } from '@/components/DashboardSidebar'
 import { createClient } from '@/lib/supabase'
 
@@ -27,8 +22,6 @@ type Questao = {
   resposta: string
   explicacao: string
 }
-
-type EstadoQuestao = 'pendente' | 'respondida' | 'revisada'
 
 type QuestaoDiscursiva = {
   id: number
@@ -190,13 +183,6 @@ const CONTEUDOS: Record<string, Record<string, string[]>> = {
 // ─── Página principal ─────────────────────────────────────────────────────────
 
 export default function Questoes() {
-  const { theme, setTheme } = useTheme()
-  const [mounted, setMounted] = useState(false)
-  useEffect(() => setMounted(true), [])
-  const { profile } = useProfile()
-  const primeiroNome = profile?.nome?.split(' ')[0] ?? null
-  const nome = profile?.nome ?? null
-
   const [aba, setAba] = useState<Aba>('banco')
 
   return (

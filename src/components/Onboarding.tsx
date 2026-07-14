@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { GraduationCap, BookOpen, Calendar, Target, ChevronRight, Check } from 'lucide-react'
+import { BookOpen, Calendar, Target, ChevronRight, Check } from 'lucide-react'
 import type { UserProfile } from '@/hooks/useProfile'
 
 const UNIVERSIDADES = [
