@@ -9,7 +9,7 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
-  title: "TeraEdu",
+  title: "TeraEdu — Estudos com IA para o ENEM e vestibulares",
   description: "Plataforma de estudos com IA para o ENEM e vestibulares",
 };
 
