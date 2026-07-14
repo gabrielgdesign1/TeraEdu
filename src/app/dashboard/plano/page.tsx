@@ -403,7 +403,7 @@ export default function PlanoPage() {
                 <button
                   onClick={() => setStep(2)}
                   disabled={!config.vestibular || !config.dataProva}
-                  className="w-full bg-brand hover:bg-brand-hover disabled:opacity-40 disabled:cursor-not-allowed text-white py-3 rounded-xl font-medium text-sm transition-colors flex items-center justify-center gap-2"
+                  className="w-full bg-brand hover:bg-brand-hover disabled:opacity-40 disabled:cursor-not-allowed text-white py-3 rounded-full font-medium text-sm transition-colors flex items-center justify-center gap-2"
                 >
                   Continuar <ChevronRight size={16} />
                 </button>
@@ -449,13 +449,13 @@ export default function PlanoPage() {
 
                 <div className="flex gap-3">
                   <button onClick={() => setStep(1)}
-                    className="flex items-center gap-2 border border-border text-text-muted hover:text-text px-5 py-3 rounded-xl text-sm transition-colors">
+                    className="flex items-center gap-2 border border-border text-text-muted hover:text-text px-5 py-3 rounded-full text-sm transition-colors">
                     <ChevronLeft size={16} /> Voltar
                   </button>
                   <button
                     onClick={() => setStep(3)}
                     disabled={!config.diasSemana.length}
-                    className="flex-1 bg-brand hover:bg-brand-hover disabled:opacity-40 disabled:cursor-not-allowed text-white py-3 rounded-xl font-medium text-sm transition-colors flex items-center justify-center gap-2"
+                    className="flex-1 bg-brand hover:bg-brand-hover disabled:opacity-40 disabled:cursor-not-allowed text-white py-3 rounded-full font-medium text-sm transition-colors flex items-center justify-center gap-2"
                   >
                     Continuar <ChevronRight size={16} />
                   </button>
@@ -517,13 +517,13 @@ export default function PlanoPage() {
 
                 <div className="flex gap-3">
                   <button onClick={() => setStep(2)} disabled={gerando}
-                    className="flex items-center gap-2 border border-border text-text-muted hover:text-text disabled:opacity-40 px-5 py-3 rounded-xl text-sm transition-colors">
+                    className="flex items-center gap-2 border border-border text-text-muted hover:text-text disabled:opacity-40 px-5 py-3 rounded-full text-sm transition-colors">
                     <ChevronLeft size={16} /> Voltar
                   </button>
                   <button
                     onClick={gerarPlano}
                     disabled={gerando}
-                    className="flex-1 bg-brand hover:bg-brand-hover disabled:opacity-70 text-white py-3 rounded-xl font-medium text-sm transition-colors flex items-center justify-center gap-2"
+                    className="flex-1 bg-brand hover:bg-brand-hover disabled:opacity-70 text-white py-3 rounded-full font-medium text-sm transition-colors flex items-center justify-center gap-2"
                   >
                     {gerando ? (
                       <>
@@ -576,11 +576,11 @@ export default function PlanoPage() {
               Seu plano de estudos será apagado permanentemente. Você poderá criar um novo plano depois.
             </p>
             <div className="flex gap-3">
-              <button onClick={() => setShowDelete(false)} className="flex-1 border border-border text-text-muted hover:text-text py-2.5 rounded-xl text-sm transition-colors">
+              <button onClick={() => setShowDelete(false)} className="flex-1 border border-border text-text-muted hover:text-text py-2.5 rounded-full text-sm transition-colors">
                 Cancelar
               </button>
               <button onClick={deletarPlano} disabled={deletando}
-                className="flex-1 bg-red-500 hover:bg-red-600 disabled:opacity-60 text-white py-2.5 rounded-xl text-sm font-medium transition-colors">
+                className="flex-1 bg-red-500 hover:bg-red-600 disabled:opacity-60 text-white py-2.5 rounded-full text-sm font-medium transition-colors">
                 {deletando ? 'Apagando...' : 'Apagar'}
               </button>
             </div>
@@ -670,7 +670,7 @@ export default function PlanoPage() {
                     <span className="text-text-faint text-xs flex items-center gap-1"><Target size={10} /> {tarefaHoje.questoes} questões</span>
                   </div>
                   <button onClick={() => concluirDia(tarefaHoje.data)}
-                    className="w-full bg-brand hover:bg-brand-hover text-white py-2 rounded-xl text-sm font-medium transition-colors flex items-center justify-center gap-2">
+                    className="w-full bg-brand hover:bg-brand-hover text-white py-2 rounded-full text-sm font-medium transition-colors flex items-center justify-center gap-2">
                     <Check size={14} /> Marcar como concluído
                   </button>
                 </div>

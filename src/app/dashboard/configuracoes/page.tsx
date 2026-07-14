@@ -336,14 +336,14 @@ function MinhaConta({ profile, salvarProfile, router }: {
               <button
                 onClick={() => setShowExcluir(false)}
                 disabled={excluindo}
-                className="flex-1 border border-border text-text-muted hover:text-text py-2.5 rounded-xl text-sm transition-colors"
+                className="flex-1 border border-border text-text-muted hover:text-text py-2.5 rounded-full text-sm transition-colors"
               >
                 Cancelar
               </button>
               <button
                 onClick={excluirConta}
                 disabled={excluindo}
-                className="flex-1 bg-red-500 hover:bg-red-600 disabled:opacity-60 text-white py-2.5 rounded-xl text-sm font-medium transition-colors"
+                className="flex-1 bg-red-500 hover:bg-red-600 disabled:opacity-60 text-white py-2.5 rounded-full text-sm font-medium transition-colors"
               >
                 {excluindo ? 'Excluindo...' : 'Excluir'}
               </button>
@@ -607,10 +607,10 @@ function Assinatura({ profile, salvarProfile, reload }: {
               Você voltará para o plano Gratuito imediatamente e perderá os benefícios do plano {planoAtual.nome}.
             </p>
             <div className="flex gap-3">
-              <button onClick={() => setShowCancelar(false)} className="flex-1 border border-border text-text-muted hover:text-text py-2.5 rounded-xl text-sm transition-colors">
+              <button onClick={() => setShowCancelar(false)} className="flex-1 border border-border text-text-muted hover:text-text py-2.5 rounded-full text-sm transition-colors">
                 Manter plano
               </button>
-              <button onClick={cancelarAssinatura} className="flex-1 bg-red-500 hover:bg-red-600 text-white py-2.5 rounded-xl text-sm font-medium transition-colors">
+              <button onClick={cancelarAssinatura} className="flex-1 bg-red-500 hover:bg-red-600 text-white py-2.5 rounded-full text-sm font-medium transition-colors">
                 Cancelar assinatura
               </button>
             </div>

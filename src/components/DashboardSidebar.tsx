@@ -12,6 +12,11 @@ import {
 } from 'lucide-react'
 import { useProfile } from '@/hooks/useProfile'
 
+/* ── Dimensões (o ícone fica sempre centralizado no estado recolhido) ── */
+const COLLAPSED = 68           // largura recolhida da sidebar
+const EXPANDED  = 224          // largura expandida
+const ICON_SLOT = COLLAPSED - 16 // = 52px — largura do slot do ícone (nav tem px-2 → 8+8)
+
 const NAV_ITEMS = [
   { href: '/dashboard',              icon: LayoutDashboard, label: 'Início'       },
   { href: '/dashboard/questoes',     icon: FileQuestion,    label: 'Questões'     },
@@ -34,8 +39,9 @@ function NavItem({
   return (
     <Link
       href={href}
+      title={label}
       className={`
-        relative flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors duration-150 overflow-hidden
+        relative flex items-center h-11 rounded-xl transition-colors duration-150 overflow-hidden
         ${active ? 'text-brand' : 'text-text-muted hover:text-text'}
       `}
     >
@@ -48,15 +54,21 @@ function NavItem({
           <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-4 bg-brand rounded-r-full" />
         </motion.div>
       )}
-      <Icon size={16} className="relative z-10 flex-shrink-0" />
+      {/* slot de ícone fixo — centralizado e imóvel ao expandir/recolher */}
+      <span
+        className="relative z-10 flex items-center justify-center flex-shrink-0"
+        style={{ width: ICON_SLOT }}
+      >
+        <Icon size={17} />
+      </span>
       <AnimatePresence>
         {expanded && (
           <motion.span
-            className="relative z-10 text-sm font-medium whitespace-nowrap"
-            initial={{ opacity: 0, x: -6 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -6 }}
-            transition={{ duration: 0.15, delay: 0.04 }}
+            className="relative z-10 text-sm font-medium whitespace-nowrap pr-3"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
           >
             {label}
           </motion.span>
@@ -64,6 +76,43 @@ function NavItem({
       </AnimatePresence>
     </Link>
   )
+}
+
+/* Item genérico do rodapé (mesma estrutura de slot para alinhar ícones) */
+function BottomItem({
+  icon: Icon, label, active, expanded, onClick, href, children,
+}: {
+  icon: LucideIcon; label: string; active?: boolean; expanded: boolean
+  onClick?: () => void; href?: string; children?: React.ReactNode
+}) {
+  const cls = `relative flex items-center h-11 rounded-xl transition-colors overflow-hidden w-full ${
+    active ? 'text-brand' : 'text-text-muted hover:text-text hover:bg-bg-hover'
+  }`
+  const inner = (
+    <>
+      <span
+        className="relative z-10 flex items-center justify-center flex-shrink-0"
+        style={{ width: ICON_SLOT }}
+      >
+        <Icon size={17} />
+      </span>
+      <AnimatePresence>
+        {expanded && (
+          <motion.span
+            className="relative z-10 text-sm font-medium whitespace-nowrap pr-3"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.12 }}
+          >
+            {children ?? label}
+          </motion.span>
+        )}
+      </AnimatePresence>
+    </>
+  )
+  if (href) return <Link href={href} title={label} className={cls}>{inner}</Link>
+  return <button onClick={onClick} title={label} className={cls}>{inner}</button>
 }
 
 export function DashboardSidebar() {
@@ -86,7 +135,7 @@ export function DashboardSidebar() {
     <aside
       className="fixed left-3 top-3 bottom-3 z-50 flex flex-col overflow-hidden"
       style={{
-        width: expanded ? 224 : 68,
+        width: expanded ? EXPANDED : COLLAPSED,
         transition: 'width 280ms cubic-bezier(0.22, 1, 0.36, 1)',
       }}
       onMouseEnter={() => setExpanded(true)}
@@ -111,17 +160,22 @@ export function DashboardSidebar() {
       {/* ── Content ── */}
       <div className="relative z-10 flex flex-col h-full">
 
-        {/* Logo */}
-        <div className="flex items-center gap-3 px-[22px] py-5 overflow-hidden border-b border-border/30">
-          <Image src="/TeraEdu-logo-orange.png" alt="TeraEdu" width={24} height={24} className="flex-shrink-0" />
+        {/* Logo — logo no mesmo eixo central dos ícones (34px) */}
+        <div className="flex items-center h-[68px] flex-shrink-0 overflow-hidden border-b border-border/30">
+          <span
+            className="flex items-center justify-center flex-shrink-0"
+            style={{ width: ICON_SLOT + 8 }}
+          >
+            <Image src="/TeraEdu-logo-orange.png" alt="TeraEdu" width={26} height={26} className="flex-shrink-0" />
+          </span>
           <AnimatePresence>
             {expanded && (
               <motion.span
-                className="text-text font-bold tracking-tight whitespace-nowrap text-sm"
-                initial={{ opacity: 0, x: -8 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -8 }}
-                transition={{ duration: 0.18 }}
+                className="text-text font-bold tracking-tight whitespace-nowrap text-base"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.15 }}
               >
                 TeraEdu
               </motion.span>
@@ -143,20 +197,13 @@ export function DashboardSidebar() {
           {/* Divider */}
           <div className="my-2 mx-3 h-px bg-border/40" />
 
-          {/* Progress section label */}
-          <AnimatePresence>
-            {expanded && (
-              <motion.p
-                className="px-3 pb-1 text-[9px] uppercase tracking-widest text-text-faint font-semibold whitespace-nowrap overflow-hidden"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.12 }}
-              >
-                Progresso
-              </motion.p>
-            )}
-          </AnimatePresence>
+          {/* Label "Progresso" — altura reservada sempre (só a opacidade muda) */}
+          <p
+            className="h-4 px-3 pb-1 text-[9px] uppercase tracking-widest text-text-faint font-semibold whitespace-nowrap overflow-hidden transition-opacity duration-150"
+            style={{ opacity: expanded ? 1 : 0 }}
+          >
+            Progresso
+          </p>
 
           {PROGRESS_ITEMS.map(item => (
             <NavItem
@@ -169,20 +216,26 @@ export function DashboardSidebar() {
         </nav>
 
         {/* Bottom */}
-        <div className="px-2 pb-3 border-t border-border/30 pt-2 flex flex-col gap-0.5">
+        <div className="px-2 pb-3 border-t border-border/30 pt-2 flex flex-col gap-0.5 flex-shrink-0">
 
           {/* Fazer upgrade */}
           <Link
             href="/dashboard/planos"
-            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors overflow-hidden w-full ${
+            title="Fazer upgrade"
+            className={`relative flex items-center h-11 rounded-xl transition-colors overflow-hidden w-full ${
               isActive('/dashboard/planos') ? 'text-brand' : 'text-brand/90 hover:bg-bg-hover'
             }`}
           >
-            <Sparkles size={15} className="flex-shrink-0" />
+            <span
+              className="relative z-10 flex items-center justify-center flex-shrink-0"
+              style={{ width: ICON_SLOT }}
+            >
+              <Sparkles size={17} />
+            </span>
             <AnimatePresence>
               {expanded && (
                 <motion.span
-                  className="text-sm font-medium whitespace-nowrap"
+                  className="relative z-10 text-sm font-medium whitespace-nowrap pr-3"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
@@ -195,44 +248,35 @@ export function DashboardSidebar() {
           </Link>
 
           {/* Theme toggle */}
-          <button
+          <BottomItem
+            icon={isDark ? Sun : Moon}
+            label={isDark ? 'Modo claro' : 'Modo escuro'}
+            expanded={expanded}
             onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-bg-hover text-text-muted hover:text-text transition-colors overflow-hidden w-full"
-          >
-            {isDark
-              ? <Sun size={15} className="flex-shrink-0" />
-              : <Moon size={15} className="flex-shrink-0" />}
-            <AnimatePresence>
-              {expanded && (
-                <motion.span
-                  className="text-sm whitespace-nowrap"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.12 }}
-                >
-                  {isDark ? 'Modo claro' : 'Modo escuro'}
-                </motion.span>
-              )}
-            </AnimatePresence>
-          </button>
+          />
 
           {/* User */}
           <Link
             href="/dashboard/configuracoes"
-            className="flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-bg-hover transition-colors overflow-hidden"
+            title="Configurações"
+            className="relative flex items-center h-12 rounded-xl hover:bg-bg-hover transition-colors overflow-hidden w-full"
           >
-            <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0 shrink-0 overflow-hidden bg-brand">
-              {profile?.avatar_url ? (
-                <Image src={profile.avatar_url} alt="" width={32} height={32} className="w-full h-full object-cover" />
-              ) : (
-                primeiroNome?.[0]?.toUpperCase() ?? '?'
-              )}
-            </div>
+            <span
+              className="flex items-center justify-center flex-shrink-0"
+              style={{ width: ICON_SLOT }}
+            >
+              <span className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold overflow-hidden bg-brand">
+                {profile?.avatar_url ? (
+                  <Image src={profile.avatar_url} alt="" width={32} height={32} className="w-full h-full object-cover" />
+                ) : (
+                  primeiroNome?.[0]?.toUpperCase() ?? '?'
+                )}
+              </span>
+            </span>
             <AnimatePresence>
               {expanded && (
                 <motion.div
-                  className="flex-1 min-w-0 flex items-center justify-between"
+                  className="flex-1 min-w-0 flex items-center justify-between pr-3"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}

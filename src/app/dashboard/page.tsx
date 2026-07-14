@@ -78,7 +78,7 @@ function PlanoCardDashboard() {
           <p className="text-text-muted text-xs">Não sabe por onde começar? A IA organiza tudo para você.</p>
         </div>
         <Link href="/dashboard/plano"
-          className="flex-shrink-0 ml-4 bg-brand hover:bg-brand-hover text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors whitespace-nowrap">
+          className="flex-shrink-0 ml-4 bg-brand hover:bg-brand-hover text-white px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap">
           Criar meu plano →
         </Link>
       </div>
@@ -107,7 +107,7 @@ function PlanoCardDashboard() {
         </div>
       </div>
       <Link href="/dashboard/plano"
-        className="flex-shrink-0 ml-4 border border-brand/30 text-brand hover:bg-brand hover:text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors whitespace-nowrap">
+        className="flex-shrink-0 ml-4 border border-brand/30 text-brand hover:bg-brand hover:text-white px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap">
         Ver plano →
       </Link>
     </div>

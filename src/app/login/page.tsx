@@ -163,7 +163,7 @@ export default function Login() {
             <button
               onClick={handleSubmit}
               disabled={loading}
-              className="group w-full bg-brand hover:bg-brand-hover disabled:opacity-50 text-white font-semibold py-3.5 rounded-xl transition-all mt-1 flex items-center justify-center gap-2 shadow-[0_12px_28px_-10px_rgba(249,115,22,0.55)] hover:shadow-[0_16px_36px_-10px_rgba(249,115,22,0.65)] cursor-pointer"
+              className="group w-full bg-brand hover:bg-brand-hover disabled:opacity-50 text-white font-semibold py-3.5 rounded-full transition-all mt-1 flex items-center justify-center gap-2 shadow-[0_12px_28px_-10px_rgba(249,115,22,0.55)] hover:shadow-[0_16px_36px_-10px_rgba(249,115,22,0.65)] cursor-pointer"
             >
               {loading ? (
                 <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Aguarde...</>

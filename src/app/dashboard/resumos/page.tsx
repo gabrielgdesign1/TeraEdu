@@ -376,7 +376,7 @@ export default function Resumos() {
                 <button
                   onClick={enviarPergunta}
                   disabled={loadingQ || !pergunta.trim()}
-                  className="w-11 h-11 bg-brand hover:bg-brand-hover disabled:opacity-40 rounded-xl flex items-center justify-center transition-colors flex-shrink-0"
+                  className="w-11 h-11 bg-brand hover:bg-brand-hover disabled:opacity-40 rounded-full flex items-center justify-center transition-colors flex-shrink-0"
                 >
                   <Send size={15} className="text-white" />
                 </button>
