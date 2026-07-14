@@ -21,6 +21,7 @@ type Questao = {
   alternativas: { letra: string; texto: string }[]
   resposta: string
   explicacao: string
+  ano?: number | null
 }
 
 type QuestaoDiscursiva = {
@@ -290,6 +291,23 @@ const MATERIAS_UNESP = [
   'Língua Inglesa',
 ]
 
+// Mapeia a matéria do Plano de Estudos para a área de conhecimento do ENEM
+const ENEM_AREA: Record<string, string> = {
+  'Matemática':      'matematica',
+  'Física':          'ciencias-natureza',
+  'Química':         'ciencias-natureza',
+  'Biologia':        'ciencias-natureza',
+  'História':        'ciencias-humanas',
+  'Geografia':       'ciencias-humanas',
+  'Filosofia':       'ciencias-humanas',
+  'Sociologia':      'ciencias-humanas',
+  'Português':       'linguagens',
+  'Literatura':      'linguagens',
+  'Inglês':          'linguagens',
+  'Artes':           'linguagens',
+  'Educação Física': 'linguagens',
+}
+
 // Matérias reais encontradas no dataset por vestibular
 const MATERIAS_VESTIBULAR: Record<string, string[]> = {
   FUVEST:  ['Biologia','Filosofia','Física','Geografia','História','Matemática','Português','Química','Sociologia'],
@@ -317,6 +335,8 @@ type DbQuestao = {
 function BancoQuestoes() {
   const [vestibular,    setVestibular   ] = useState('')
   const [materia,       setMateria      ] = useState('')
+  const [ano,           setAno          ] = useState('')          // '' = qualquer ano
+  const [anosBanco,     setAnosBanco    ] = useState<number[]>([]) // anos disponíveis (banco vestibulares)
   const [quantidade,    setQuantidade   ] = useState(10)
   const [loading,       setLoading      ] = useState(false)
   const [erro,          setErro         ] = useState('')
@@ -331,22 +351,72 @@ function BancoQuestoes() {
   const tipoVestibular = VESTIBULARES_BANCO.find(v => v.id === vestibular)?.tipo ?? 'objetiva'
 
   function escolherVestibular(v: string) {
-    setVestibular(v); setMateria(''); setErro(''); setAviso('')
+    setVestibular(v); setMateria(''); setAno(''); setAnosBanco([]); setErro(''); setAviso('')
     setIniciado(false); setIniciadoDisc(false)
   }
+
+  function escolherMateria(m: string) {
+    setMateria(m); setAno('')
+    // Busca anos disponíveis para os vestibulares do banco interno (não-ENEM, objetivas)
+    if (vestibular && vestibular !== 'ENEM' && tipoVestibular === 'objetiva') {
+      fetch(`/api/questoes/anos?vestibular=${vestibular.toLowerCase()}&subject=${encodeURIComponent(m)}`)
+        .then(r => r.json())
+        .then(d => setAnosBanco(d.anos ?? []))
+        .catch(() => setAnosBanco([]))
+    } else {
+      setAnosBanco([])
+    }
+  }
+
+  // Anos oferecidos no seletor: ENEM usa a lista fixa; banco usa os detectados
+  const anosDisponiveis = vestibular === 'ENEM' ? ANOS_ENEM.map(Number) : anosBanco
+
+  // Pré-seleção vinda do Plano de Estudos (?vestibular=&materia=)
+  useEffect(() => {
+    const p = new URLSearchParams(window.location.search)
+    const v = p.get('vestibular')
+    const m = p.get('materia')
+    if (!v && !m) return
+
+    // Vestibular alvo: usa o do plano se for objetivo disponível; senão ENEM (universal)
+    const vb = VESTIBULARES_BANCO.find(x => x.id === v && x.disponivel && x.tipo === 'objetiva')
+    const vest = vb ? vb.id : 'ENEM'
+    setVestibular(vest)
+
+    if (!m) return
+    if (vest === 'ENEM') {
+      const area = ENEM_AREA[m]
+      if (area) setMateria(area)
+    } else {
+      const mats = MATERIAS_VESTIBULAR[vest] ?? []
+      if (mats.includes(m)) {
+        setMateria(m)
+        fetch(`/api/questoes/anos?vestibular=${vest.toLowerCase()}&subject=${encodeURIComponent(m)}`)
+          .then(r => r.json()).then(d => setAnosBanco(d.anos ?? [])).catch(() => {})
+      }
+    }
+  }, [])
 
   // ── ENEM: busca pela api.enem.dev ──────────────────────────────────────────
   async function buscarEnem() {
     setLoading(true); setErro(''); setAviso('')
     try {
-      const numAnos = quantidade <= 10 ? 1 : quantidade <= 25 ? 2 : 3
-      const anosEmbaralhados = [...ANOS_ENEM].sort(() => Math.random() - 0.5).slice(0, numAnos)
-      const porAno = Math.ceil(quantidade / numAnos)
+      // Ano específico escolhido → só ele; senão múltiplos anos aleatórios
+      let anosParaBuscar: string[]
+      let porAno: number
+      if (ano) {
+        anosParaBuscar = [ano]
+        porAno = quantidade
+      } else {
+        const numAnos = quantidade <= 10 ? 1 : quantidade <= 25 ? 2 : 3
+        anosParaBuscar = [...ANOS_ENEM].sort(() => Math.random() - 0.5).slice(0, numAnos)
+        porAno = Math.ceil(quantidade / numAnos)
+      }
 
       const resultados = await Promise.all(
-        anosEmbaralhados.map(async (ano) => {
+        anosParaBuscar.map(async (a) => {
           const offset = Math.floor(Math.random() * 30)
-          const res = await fetch(`/api/questoes/banco?year=${ano}&discipline=${materia}&limit=${porAno}&offset=${offset}`)
+          const res = await fetch(`/api/questoes/banco?year=${a}&discipline=${materia}&limit=${porAno}&offset=${offset}`)
           if (!res.ok) return [] as ApiQuestao[]
           const data = await res.json()
           return (data.questions ?? []) as ApiQuestao[]
@@ -362,6 +432,7 @@ function BancoQuestoes() {
         alternativas: q.alternatives.map(a => ({ letra: a.letter, texto: a.text })),
         resposta: q.correctAlternative,
         explicacao: '',
+        ano: q.year ?? null,
       }))
       setQuestoes(mapped); setIniciado(true)
     } catch { setErro('Erro de conexão. Verifique sua internet e tente novamente.') }
@@ -377,6 +448,7 @@ function BancoQuestoes() {
         subject: materia,
         quantidade: String(quantidade),
       })
+      if (ano) params.set('year', ano)
       const res = await fetch(`/api/questoes/vestibular?${params}`)
       const data = await res.json()
 
@@ -401,6 +473,7 @@ function BancoQuestoes() {
         ].filter(a => a.texto),
         resposta: q.correct_answer.toUpperCase(),
         explicacao: '',
+        ano: q.exam_year ?? null,
       }))
       setQuestoes(mapped); setIniciado(true)
     } catch { setErro('Erro de conexão. Verifique sua internet e tente novamente.') }
@@ -530,7 +603,7 @@ function BancoQuestoes() {
             {DISCIPLINAS_ENEM.map(d => (
               <button
                 key={d.value}
-                onClick={() => setMateria(d.value)}
+                onClick={() => escolherMateria(d.value)}
                 className={`py-3 px-4 rounded-full text-sm font-medium border transition-all ${
                   materia === d.value ? 'bg-brand text-white border-brand' : 'bg-bg-card border-border text-text-muted hover:text-text hover:border-brand'
                 }`}
@@ -549,12 +622,42 @@ function BancoQuestoes() {
             {materiasDisponiveis.map(m => (
               <button
                 key={m}
-                onClick={() => setMateria(m)}
+                onClick={() => escolherMateria(m)}
                 className={`px-4 py-2 rounded-full text-sm font-medium border transition-all ${
                   materia === m ? 'bg-brand text-white border-brand' : 'bg-bg-card border-border text-text-muted hover:text-text hover:border-brand'
                 }`}
               >
                 {m}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Passo 2b — Ano (opcional) — ENEM e vestibulares objetivos do banco */}
+      {materia && tipoVestibular === 'objetiva' && anosDisponiveis.length > 0 && (
+        <div className="mb-6">
+          <label className="text-text-muted text-xs font-medium uppercase tracking-wider mb-3 block">
+            Ano <span className="text-text-faint normal-case tracking-normal">(opcional)</span>
+          </label>
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => setAno('')}
+              className={`px-3.5 py-1.5 rounded-full text-sm font-medium border transition-all ${
+                ano === '' ? 'bg-brand text-white border-brand' : 'bg-bg-card border-border text-text-muted hover:text-text hover:border-brand'
+              }`}
+            >
+              Qualquer ano
+            </button>
+            {anosDisponiveis.map(a => (
+              <button
+                key={a}
+                onClick={() => setAno(String(a))}
+                className={`px-3.5 py-1.5 rounded-full text-sm font-medium border transition-all tabular-nums ${
+                  ano === String(a) ? 'bg-brand text-white border-brand' : 'bg-bg-card border-border text-text-muted hover:text-text hover:border-brand'
+                }`}
+              >
+                {a}
               </button>
             ))}
           </div>
@@ -810,6 +913,11 @@ function SessaoQuestoes({
 
       {/* Questão */}
       <div className="bg-bg-card border border-border rounded-2xl p-7 mb-4">
+        {questao.ano && (
+          <span className="inline-block text-[10px] font-bold uppercase tracking-widest text-brand bg-brand-soft border border-brand/20 rounded-full px-2.5 py-1 mb-3">
+            {vestibular} {questao.ano}
+          </span>
+        )}
         <p className="text-text text-sm leading-relaxed">{questao.enunciado}</p>
       </div>
 

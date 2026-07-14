@@ -146,10 +146,11 @@ function MateriaBadge({ materia }: { materia: string }) {
 
 // ─── Ações rápidas ────────────────────────────────────────────────────────────
 
-function AcoesRapidas() {
+function AcoesRapidas({ materia, vestibular }: { materia: string; vestibular: string }) {
+  const questoesHref = `/dashboard/questoes?vestibular=${encodeURIComponent(vestibular)}&materia=${encodeURIComponent(materia)}`
   return (
     <div className="flex gap-1.5 flex-wrap mt-2">
-      <Link href={`/dashboard/questoes`} className="text-[11px] px-2.5 py-1 rounded-full bg-bg-hover text-text-muted hover:text-text hover:bg-brand/10 hover:text-brand transition-colors flex items-center gap-1">
+      <Link href={questoesHref} className="text-[11px] px-2.5 py-1 rounded-full bg-bg-hover text-text-muted hover:text-text hover:bg-brand/10 hover:text-brand transition-colors flex items-center gap-1">
         <FileQuestion size={10} /> Questões
       </Link>
       <Link href={`/dashboard/resumos`} className="text-[11px] px-2.5 py-1 rounded-full bg-bg-hover text-text-muted hover:text-text hover:bg-brand/10 hover:text-brand transition-colors flex items-center gap-1">
@@ -767,7 +768,7 @@ export default function PlanoPage() {
                           <div className="flex items-center gap-3 mt-1">
                             <span className="text-text-faint text-xs">{tarefa.horas}h · {tarefa.questoes} questões</span>
                           </div>
-                          {!tarefa.concluido && <AcoesRapidas />}
+                          {!tarefa.concluido && <AcoesRapidas materia={tarefa.materia} vestibular={plano.vestibular} />}
                         </div>
                         {tarefa.concluido && !tarefa.pulado && (
                           <div className="w-7 h-7 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
@@ -872,7 +873,7 @@ export default function PlanoPage() {
                                       <div className="flex items-center gap-3 mt-1">
                                         <span className="text-text-faint text-xs">{dia.horas}h · {dia.questoes} questões</span>
                                       </div>
-                                      {!dia.concluido && <AcoesRapidas />}
+                                      {!dia.concluido && <AcoesRapidas materia={dia.materia} vestibular={plano.vestibular} />}
                                     </div>
                                   </div>
                                 )

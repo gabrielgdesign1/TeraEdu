@@ -10,18 +10,22 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
   const vestibular = searchParams.get('vestibular')?.toLowerCase()
   const subject    = searchParams.get('subject')
+  const yearParam  = searchParams.get('year')
+  const year       = yearParam ? Number(yearParam) : null
   const quantidade = Math.min(50, Math.max(1, Number(searchParams.get('quantidade') ?? '10')))
 
   if (!vestibular || !subject) {
     return NextResponse.json({ error: 'Parâmetros vestibular e subject são obrigatórios' }, { status: 400 })
   }
 
-  // Conta total disponível para esse filtro
-  const { count, error: countErr } = await supabase
+  // Conta total disponível para esse filtro (com ano opcional)
+  let countQuery = supabase
     .from('banco_questoes')
     .select('*', { count: 'exact', head: true })
     .eq('exam_type', vestibular)
     .eq('subject', subject)
+  if (year) countQuery = countQuery.eq('exam_year', year)
+  const { count, error: countErr } = await countQuery
 
   if (countErr) {
     return NextResponse.json({ error: countErr.message }, { status: 500 })
@@ -36,12 +40,13 @@ export async function GET(req: NextRequest) {
   const maxOffset = Math.max(0, total - quantidade)
   const offset    = Math.floor(Math.random() * (maxOffset + 1))
 
-  const { data, error } = await supabase
+  let dataQuery = supabase
     .from('banco_questoes')
     .select('*')
     .eq('exam_type', vestibular)
     .eq('subject', subject)
-    .range(offset, offset + quantidade - 1)
+  if (year) dataQuery = dataQuery.eq('exam_year', year)
+  const { data, error } = await dataQuery.range(offset, offset + quantidade - 1)
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
