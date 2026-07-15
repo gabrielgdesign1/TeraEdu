@@ -88,9 +88,11 @@ export default function Flashcards() {
       } else if (modoEntrada === 'pdf' && arquivo) {
         // Extrai o texto do PDF no navegador para evitar o limite de tamanho
         // de payload dos Serverless Functions (envio do arquivo bruto dava 413).
+        // "origem" marca que veio de PDF pro servidor aplicar o rate limit de upload.
         const textoExtraido = await extractPdfText(arquivo)
         formData.append('modo', 'texto')
         formData.append('texto', textoExtraido)
+        formData.append('origem', 'pdf')
       }
       const res = await fetch('/api/flashcards', { method: 'POST', body: formData })
       const dados = await res.json()

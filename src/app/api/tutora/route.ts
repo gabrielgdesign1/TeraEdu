@@ -1,5 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { withLogging } from '@/lib/apiHandler'
+import { iaCategoryByPlano } from '@/lib/rateLimit'
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY
@@ -31,4 +32,4 @@ Responda sempre em português brasileiro.`,
   const texto = resposta.content[0].type === 'text' ? resposta.content[0].text : ''
   log.info({ msgCount: mensagens.length, outputChars: texto.length }, 'resposta gerada')
   return Response.json({ resposta: texto })
-})
+}, { rateLimit: iaCategoryByPlano })

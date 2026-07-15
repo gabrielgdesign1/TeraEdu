@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { withLogging } from '@/lib/apiHandler'
+import { publicOrAuthCategory } from '@/lib/rateLimit'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -65,4 +66,4 @@ export const GET = withLogging('questoes/vestibular', async (req, { log }) => {
     total,
     disponivel: total,
   })
-})
+}, { rateLimit: publicOrAuthCategory })

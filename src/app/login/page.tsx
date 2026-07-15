@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
-import { createClient } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import { useTheme } from 'next-themes'
 import { motion } from 'framer-motion'
@@ -27,7 +26,6 @@ export default function Login() {
   const [mensagem, setMensagem] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const router = useRouter()
-  const supabase = createClient()
 
   async function handleSubmit() {
     setLoading(true)
@@ -35,16 +33,30 @@ export default function Login() {
     setMensagem('')
 
     if (isLogin) {
-      const { error } = await supabase.auth.signInWithPassword({ email, password })
-      if (error) setErro('E-mail ou senha incorretos.')
-      else router.push('/dashboard')
-    } else {
-      const { error } = await supabase.auth.signUp({
-        email, password,
-        options: { data: { nome } }
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
       })
-      if (error) setErro('Erro ao criar conta. Tente novamente.')
-      else setMensagem('Conta criada! Verifique seu e-mail para confirmar.')
+      const dados = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        setErro(res.status === 429 ? dados.error : 'E-mail ou senha incorretos.')
+      } else {
+        router.push('/dashboard')
+        router.refresh()
+      }
+    } else {
+      const res = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, nome }),
+      })
+      const dados = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        setErro(res.status === 429 ? dados.error : 'Erro ao criar conta. Tente novamente.')
+      } else {
+        setMensagem('Conta criada! Verifique seu e-mail para confirmar.')
+      }
     }
     setLoading(false)
   }
@@ -54,12 +66,18 @@ export default function Login() {
     setMensagem('')
     if (!email) { setErro('Digite seu e-mail acima para receber o link de redefinição.'); return }
     setLoading(true)
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/redefinir-senha`,
+    const res = await fetch('/api/auth/recuperar-senha', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
     })
+    const dados = await res.json().catch(() => ({}))
     setLoading(false)
-    if (error) setErro('Não foi possível enviar o e-mail. Verifique o endereço e tente novamente.')
-    else setMensagem('Enviamos um link de redefinição para o seu e-mail. Verifique a caixa de entrada.')
+    if (!res.ok) {
+      setErro(res.status === 429 ? dados.error : 'Não foi possível enviar o e-mail. Verifique o endereço e tente novamente.')
+    } else {
+      setMensagem('Enviamos um link de redefinição para o seu e-mail. Verifique a caixa de entrada.')
+    }
   }
 
   const inputCls = "w-full bg-bg border border-border rounded-xl pl-11 pr-4 py-3.5 text-text text-sm placeholder:text-text-faint focus:outline-none focus:border-brand/70 focus:ring-4 focus:ring-brand/10 transition-all"

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { withLogging } from '@/lib/apiHandler'
+import { publicOrAuthCategory } from '@/lib/rateLimit'
 
 export const GET = withLogging('questoes/banco', async (req, { log }) => {
   const { searchParams } = new URL(req.url)
@@ -21,4 +22,4 @@ export const GET = withLogging('questoes/banco', async (req, { log }) => {
   const data = await res.json()
   log.info({ year, discipline, total: data?.questions?.length ?? 0 }, 'questões ENEM obtidas')
   return NextResponse.json(data)
-})
+}, { rateLimit: publicOrAuthCategory })

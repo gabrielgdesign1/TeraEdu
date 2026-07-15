@@ -1,14 +1,22 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { withLogging } from '@/lib/apiHandler'
+import { rateLimitResponse } from '@/lib/rateLimit'
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY
 })
 
-export const POST = withLogging('resumos', async (request, { log }) => {
+export const POST = withLogging('resumos', async (request, { log, identifier }) => {
   const formData = await request.formData()
   const modo = formData.get('modo') as string
   const tamanho = formData.get('tamanho') as string
+
+  // upload de PDF tem um teto próprio, mais apertado, além do limite geral de geração
+  // ("origem" vem do cliente, que extrai o texto do PDF no navegador antes de enviar)
+  if (formData.get('origem') === 'pdf') {
+    const blocked = await rateLimitResponse('uploadPdf', identifier)
+    if (blocked) return blocked
+  }
 
   const instrucaoTamanho = {
     curto: 'Faça um resumo CURTO, focando apenas nos pontos mais importantes (cerca de 200-300 palavras).',
@@ -79,4 +87,4 @@ Estruture bem em Markdown com títulos, subtítulos e listas. Destaque os pontos
   const texto = resposta.content[0].type === 'text' ? resposta.content[0].text : ''
   log.info({ modo, tamanho, outputChars: texto.length }, 'resumo gerado')
   return Response.json({ resumo: texto })
-})
+}, { rateLimit: 'geracaoConteudo' })

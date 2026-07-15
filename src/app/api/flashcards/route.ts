@@ -1,14 +1,21 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { withLogging } from '@/lib/apiHandler'
+import { rateLimitResponse } from '@/lib/rateLimit'
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY
 })
 
-export const POST = withLogging('flashcards', async (request, { log }) => {
+export const POST = withLogging('flashcards', async (request, { log, identifier }) => {
   const formData = await request.formData()
   const modo = formData.get('modo') as string
   const quantidade = formData.get('quantidade') as string
+
+  // upload de PDF tem um teto próprio, mais apertado, além do limite geral de geração
+  if (formData.get('origem') === 'pdf') {
+    const blocked = await rateLimitResponse('uploadPdf', identifier)
+    if (blocked) return blocked
+  }
 
   const systemPrompt = `Você cria flashcards de estudo para estudantes brasileiros do ensino médio se preparando para o ENEM e vestibulares.
 Cada flashcard tem uma pergunta curta e uma resposta clara e direta.
@@ -77,4 +84,4 @@ Responda APENAS o JSON no formato: {"flashcards": [{"pergunta": "...", "resposta
 
   log.info({ modo, quantidade, total: dados?.flashcards?.length ?? 0 }, 'flashcards gerados')
   return Response.json(dados)
-})
+}, { rateLimit: 'geracaoConteudo' })

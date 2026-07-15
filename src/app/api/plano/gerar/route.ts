@@ -126,4 +126,4 @@ Retorne SOMENTE este JSON (${semanasTotal} semanas, cada semana com ${diasSemana
     )
     return Response.json({ error: 'Erro ao gerar plano. Tente novamente.' }, { status: 500 })
   }
-})
+}, { rateLimit: 'geracaoConteudo' })

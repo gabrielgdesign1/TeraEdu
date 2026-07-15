@@ -147,12 +147,17 @@ function MinhaConta({ profile, salvarProfile, router }: {
     setErroSenha('')
     if (!email) { setErroSenha('E-mail não carregado. Recarregue a página.'); return }
     setSalvandoSenha(true)
-    const sb = createClient()
-    const { error } = await sb.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/redefinir-senha`,
+    const res = await fetch('/api/auth/recuperar-senha', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
     })
+    const dados = await res.json().catch(() => ({}))
     setSalvandoSenha(false)
-    if (error) { setErroSenha('Não foi possível enviar o e-mail. Tente novamente.'); return }
+    if (!res.ok) {
+      setErroSenha(res.status === 429 ? dados.error : 'Não foi possível enviar o e-mail. Tente novamente.')
+      return
+    }
     setSenhaOk(true)
     setTimeout(() => setSenhaOk(false), 5000)
   }
