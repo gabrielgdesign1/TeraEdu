@@ -173,7 +173,7 @@ export default function IATutora() {
   const vazio = mensagens.length === 0
 
   const inputBar = (
-    <div className="w-full bg-bg-card border border-border rounded-2xl px-4 py-3 focus-within:border-brand/60 transition-colors shadow-sm">
+    <div className="w-full bg-bg-card border border-border rounded-2xl px-4 py-3 transition-all shadow-sm focus-within:border-brand/50 focus-within:shadow-[0_0_0_4px_rgba(249,115,22,0.12)]">
       <textarea
         ref={textareaRef}
         value={input}

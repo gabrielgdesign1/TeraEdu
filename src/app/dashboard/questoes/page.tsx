@@ -45,6 +45,71 @@ type ResultadoCorrecao = {
   resposta_oficial: string
 }
 
+// ─── Enunciado com citação/fonte destacada em fonte menor e discreta ─────────
+
+/** Divide o texto em trechos normais e trechos de citação (ex: "BILAC, O. Disponível em: ... Acesso em: 29 out. 2021."). */
+function dividirCitacoes(texto: string): { texto: string; citacao: boolean }[] {
+  const regexDisponivel = /Dispon[íi]vel em:/gi
+  const partes: { texto: string; citacao: boolean }[] = []
+  let cursor = 0
+  let match: RegExpExecArray | null
+
+  while ((match = regexDisponivel.exec(texto))) {
+    const idxDisp = match.index
+    if (idxDisp < cursor) continue
+
+    // início: tenta capturar "SOBRENOME, X." (autor) logo antes de "Disponível em";
+    // evita parar em iniciais abreviadas ("O.") ao procurar só o último "."
+    const janela = texto.slice(Math.max(0, idxDisp - 60), idxDisp)
+    const autorMatch = janela.match(/[A-ZÀ-Ú]{2,}(?:\s+[A-ZÀ-Ú]{2,})*,\s*[A-Z]\.\s*$/)
+    let inicio: number
+    if (autorMatch) {
+      inicio = Math.max(0, idxDisp - 60) + janela.lastIndexOf(autorMatch[0])
+    } else {
+      const p = texto.lastIndexOf('. ', idxDisp)
+      inicio = p === -1 ? 0 : p + 2
+    }
+    if (inicio < cursor) inicio = cursor
+
+    // fim: procura "Acesso em: <data completa>", sem parar no "." de mês abreviado ("out.")
+    const idxAcesso = texto.indexOf('Acesso em:', idxDisp)
+    let fim: number
+    if (idxAcesso === -1) {
+      const idxFimAlt = texto.indexOf('. ', idxDisp)
+      fim = idxFimAlt === -1 ? texto.length : idxFimAlt + 1
+    } else {
+      const restante = texto.slice(idxAcesso)
+      const dataMatch = restante.match(/Acesso em:\s*\d{1,2}\s*[a-zà-ú]+\.?\s*(?:de\s*)?\d{4}\.?/i)
+      if (dataMatch) {
+        fim = idxAcesso + dataMatch[0].length
+      } else {
+        const p = texto.indexOf('. ', idxAcesso)
+        fim = p === -1 ? texto.length : p + 1
+      }
+    }
+
+    if (inicio > cursor) partes.push({ texto: texto.slice(cursor, inicio), citacao: false })
+    partes.push({ texto: texto.slice(inicio, fim), citacao: true })
+    cursor = fim
+    regexDisponivel.lastIndex = fim
+  }
+  if (cursor < texto.length) partes.push({ texto: texto.slice(cursor), citacao: false })
+  return partes.length ? partes : [{ texto, citacao: false }]
+}
+
+function EnunciadoTexto({ texto, className = '' }: { texto: string; className?: string }) {
+  const partes = dividirCitacoes(texto)
+  return (
+    <p className={className}>
+      {partes.map((p, i) =>
+        p.citacao
+          ? <span key={i} className="text-text-faint/70 text-xs">{p.texto}</span>
+          : <span key={i}>{p.texto}</span>
+      )}
+    </p>
+  )
+}
+
 // ─── Dados reais dos vestibulares ────────────────────────────────────────────
 
 const VESTIBULARES = ['ENEM', 'FUVEST', 'UNICAMP', 'UNESP', 'UERJ', 'UnB', 'UFG', 'UFPR', 'ITA', 'IME']
@@ -528,8 +593,8 @@ function BancoQuestoes() {
     async function salvarQuestaoBanco(q: Questao) {
       const sb = createClient()
       const { data: { user } } = await sb.auth.getUser()
-      if (!user) return
-      await sb.from('questoes_salvas').insert({
+      if (!user) throw new Error('Usuário não autenticado')
+      const { error } = await sb.from('questoes_salvas').insert({
         user_id: user.id,
         materia: materiaLabel,
         dificuldade: `Banco · ${vestibular}`,
@@ -538,6 +603,7 @@ function BancoQuestoes() {
         gabarito: q.resposta,
         explicacao: q.explicacao || null,
       })
+      if (error) { console.error('Erro ao salvar questão do banco:', error); throw error }
     }
 
     return (
@@ -561,7 +627,7 @@ function BancoQuestoes() {
   const prontoParaBuscar = !!materia
 
   return (
-    <div className="max-w-lg">
+    <div className="max-w-lg mx-auto">
       <h2 className="text-text font-semibold text-lg mb-1">Banco de Questões</h2>
       <p className="text-text-muted text-sm mb-8">Escolha o vestibular e pratique com questões reais.</p>
 
@@ -735,6 +801,7 @@ function SessaoQuestoes({
   const [tempos,      setTempos     ] = useState<number[]>([])
   const [salvas,      setSalvas     ] = useState<Set<number>>(new Set())
   const [salvando,    setSalvando   ] = useState<number | null>(null)
+  const [erroSalvar,  setErroSalvar ] = useState(false)
 
   const questao   = questoes[atual]
   const acertos   = Object.entries(respostas).filter(([i, r]) => r === questoes[Number(i)].resposta).length
@@ -810,9 +877,16 @@ function SessaoQuestoes({
     if (!onSalvar || salvando !== null) return
     const q = questoes[atual]
     setSalvando(q.id)
-    await onSalvar(q)
-    setSalvas(prev => new Set(prev).add(q.id))
-    setSalvando(null)
+    setErroSalvar(false)
+    try {
+      await onSalvar(q)
+      setSalvas(prev => new Set(prev).add(q.id))
+    } catch (e) {
+      console.error('Falha ao salvar questão:', e)
+      setErroSalvar(true)
+    } finally {
+      setSalvando(null)
+    }
   }
 
   // Tela de resultado final
@@ -863,7 +937,7 @@ function SessaoQuestoes({
   }
 
   return (
-    <div className="max-w-2xl">
+    <div className="max-w-2xl mx-auto">
       {/* Header da sessão */}
       <div className="flex items-center justify-between mb-6">
         <button onClick={onVoltar} className="text-text-muted hover:text-text text-sm flex items-center gap-1.5 transition-colors">
@@ -872,18 +946,31 @@ function SessaoQuestoes({
         <div className="flex items-center gap-3">
           {/* Salvar questão */}
           {onSalvar && (
-            <button
-              onClick={salvarQuestao}
-              disabled={salvando === questao.id}
-              title={salvas.has(questao.id) ? 'Questão salva' : 'Salvar questão'}
-              className={`w-8 h-8 rounded-full border flex items-center justify-center transition-colors ${
-                salvas.has(questao.id)
-                  ? 'bg-brand border-brand text-white'
-                  : 'border-border text-text-muted hover:border-brand hover:text-brand'
-              }`}
-            >
-              {salvas.has(questao.id) ? <BookmarkCheck size={14} /> : <Bookmark size={14} />}
-            </button>
+            <div className="relative">
+              <button
+                onClick={salvarQuestao}
+                disabled={salvando === questao.id}
+                title={salvas.has(questao.id) ? 'Questão salva' : 'Salvar questão'}
+                className={`w-8 h-8 rounded-full border flex items-center justify-center transition-colors ${
+                  salvas.has(questao.id)
+                    ? 'bg-brand border-brand text-white'
+                    : 'border-border text-text-muted hover:border-brand hover:text-brand'
+                }`}
+              >
+                {salvando === questao.id ? (
+                  <div className="w-3.5 h-3.5 border-2 border-current/30 border-t-current rounded-full animate-spin" />
+                ) : salvas.has(questao.id) ? (
+                  <BookmarkCheck size={14} />
+                ) : (
+                  <Bookmark size={14} />
+                )}
+              </button>
+              {erroSalvar && (
+                <p className="absolute top-full right-0 mt-1.5 text-red-500 text-xs whitespace-nowrap bg-bg-card border border-red-500/30 rounded-lg px-2.5 py-1.5 shadow-lg">
+                  Não foi possível salvar. Tente de novo.
+                </p>
+              )}
+            </div>
           )}
           {/* Cronômetro */}
           <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-sm tabular-nums font-medium transition-colors ${
@@ -918,7 +1005,7 @@ function SessaoQuestoes({
             {vestibular} {questao.ano}
           </span>
         )}
-        <p className="text-text text-sm leading-relaxed">{questao.enunciado}</p>
+        <EnunciadoTexto texto={questao.enunciado} className="text-text text-sm leading-relaxed" />
       </div>
 
       {/* Alternativas */}
@@ -993,6 +1080,7 @@ function GerarComIA() {
   const [loading,     setLoading    ] = useState(false)
   const [questoes,    setQuestoes   ] = useState<Questao[]>([])
   const [erro,        setErro       ] = useState('')
+  const [progresso,   setProgresso  ] = useState(0)
 
   const materias  = vestibular ? MATERIAS[vestibular]             ?? [] : []
   const conteudos = materia    ? CONTEUDOS[vestibular]?.[materia] ?? [] : []
@@ -1007,14 +1095,33 @@ function GerarComIA() {
     setLoading(true)
     setErro('')
     setQuestoes([])
+    setProgresso(0)
     try {
       const res = await fetch('/api/questoes/gerar', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ vestibular, materia, conteudo, dificuldade, quantidade }),
       })
-      const dados = await res.json()
-      if (!res.ok || !dados.questoes?.length) {
+      if (!res.ok || !res.body) {
+        setErro('Não foi possível gerar as questões. Tente novamente.')
+        return
+      }
+
+      // Lê o stream conforme chega, estimando progresso pelo nº de questões já concluídas
+      const reader = res.body.getReader()
+      const decoder = new TextDecoder()
+      let acumulado = ''
+      for (;;) {
+        const { done, value } = await reader.read()
+        if (done) break
+        acumulado += decoder.decode(value, { stream: true })
+        const concluidas = (acumulado.match(/"resposta"\s*:/g) || []).length
+        setProgresso(Math.min(concluidas, quantidade))
+      }
+
+      const jsonMatch = acumulado.match(/\{[\s\S]*\}/)
+      const dados = jsonMatch ? JSON.parse(jsonMatch[0]) : null
+      if (!dados?.questoes?.length) {
         setErro('Não foi possível gerar as questões. Tente novamente.')
         return
       }
@@ -1030,8 +1137,8 @@ function GerarComIA() {
   async function salvarQuestao(q: Questao) {
     const sb = createClient()
     const { data: { user } } = await sb.auth.getUser()
-    if (!user) return
-    await sb.from('questoes_salvas').insert({
+    if (!user) throw new Error('Usuário não autenticado')
+    const { error } = await sb.from('questoes_salvas').insert({
       user_id:      user.id,
       materia,
       dificuldade,
@@ -1040,6 +1147,7 @@ function GerarComIA() {
       gabarito:     q.resposta,
       explicacao:   q.explicacao || null,
     })
+    if (error) { console.error('Erro ao salvar questão gerada por IA:', error); throw error }
   }
 
   if (questoes.length > 0) {
@@ -1056,7 +1164,7 @@ function GerarComIA() {
   }
 
   return (
-    <div className="max-w-2xl">
+    <div className="max-w-2xl mx-auto">
       <h2 className="text-text font-semibold text-lg mb-1">Gerar questões com IA</h2>
       <p className="text-text-muted text-sm mb-8">A IA cria questões no estilo do vestibular escolhido, com gabarito e explicação.</p>
 
@@ -1184,7 +1292,7 @@ function GerarComIA() {
             {loading ? (
               <>
                 <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                Gerando questões com IA...
+                {progresso > 0 ? `Gerando questão ${progresso} de ${quantidade}...` : 'Gerando questões com IA...'}
               </>
             ) : (
               <>
@@ -1417,7 +1525,7 @@ function SessaoDiscursiva({
     const tempoTotal  = tempos.reduce((a, b) => a + b, 0)
     const notaColor   = mediaNotas >= 70 ? 'text-green-500' : mediaNotas >= 40 ? 'text-amber-500' : 'text-red-500'
     return (
-      <div className="max-w-2xl">
+      <div className="max-w-2xl mx-auto">
         <div className="text-center py-8 mb-8">
           <div className={`text-6xl font-bold tabular-nums mb-1 ${notaColor}`}>{mediaNotas}%</div>
           <p className="text-text-muted text-sm">Nota média na sessão</p>
@@ -1466,7 +1574,7 @@ function SessaoDiscursiva({
     : ''
 
   return (
-    <div className="max-w-2xl">
+    <div className="max-w-2xl mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <button onClick={onVoltar} className="flex items-center gap-1.5 text-text-muted hover:text-text text-sm transition-colors">
@@ -1664,7 +1772,7 @@ function QuestoesSalvas() {
   )
 
   return (
-    <div className="max-w-2xl">
+    <div className="max-w-2xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-text font-semibold">{questoes.length} questão{questoes.length !== 1 ? 'ões' : ''} salva{questoes.length !== 1 ? 's' : ''}</h2>
       </div>
@@ -1705,7 +1813,7 @@ function QuestoesSalvas() {
 
             {expandida === q.id && (
               <div className="border-t border-border px-5 pb-5 pt-4">
-                <p className="text-text text-sm leading-relaxed mb-4">{q.enunciado}</p>
+                <EnunciadoTexto texto={q.enunciado} className="text-text text-sm leading-relaxed mb-4" />
                 {q.alternativas && q.alternativas.length > 0 && (
                   <div className="flex flex-col gap-2 mb-4">
                     {q.alternativas.map(alt => (
