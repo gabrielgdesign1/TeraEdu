@@ -74,18 +74,22 @@ export type RateLimitResult = {
   reset: number
 }
 
-const redisConfigured = !!(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN)
+// A integração da Vercel com Upstash pode criar os nomes padrão do SDK ou os
+// nomes legados do Vercel KV, dependendo do prefixo escolhido na instalação.
+const redisUrl = process.env.UPSTASH_REDIS_REST_URL ?? process.env.UPSTASH_REDIS_REST_KV_REST_API_URL
+const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN ?? process.env.UPSTASH_REDIS_REST_KV_REST_API_TOKEN
+const redisConfigured = !!(redisUrl && redisToken)
 
 const redis = redisConfigured
   ? new Redis({
-      url: process.env.UPSTASH_REDIS_REST_URL!,
-      token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+      url: redisUrl!,
+      token: redisToken!,
     })
   : null
 
 if (!redisConfigured) {
   logger.warn(
-    'UPSTASH_REDIS_REST_URL/TOKEN não configurados — rate limiting rodando com backend em memória (não funciona entre múltiplas instâncias, use apenas em dev)'
+    'Variáveis do Upstash não configuradas — rate limiting rodando com backend em memória (não funciona entre múltiplas instâncias, use apenas em dev)'
   )
 }
 
