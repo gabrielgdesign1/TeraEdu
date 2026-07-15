@@ -79,8 +79,9 @@ body {
 }
 *::-webkit-scrollbar-thumb:hover { background: var(--text-faint); }
 
-/* Anel de foco consistente para navegação por teclado */
-:focus-visible {
+/* Anel de foco consistente para navegação por teclado (exceto onde .no-focus-ring é usado,
+   quando o próprio container já tem seu destaque de foco, ex: caixa de texto da IA Tutora) */
+:focus-visible:not(.no-focus-ring) {
   outline: 2px solid var(--brand);
   outline-offset: 2px;
   border-radius: 4px;

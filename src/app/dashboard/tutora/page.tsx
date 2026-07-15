@@ -181,7 +181,7 @@ export default function IATutora() {
         onChange={e => { setInput(e.target.value); autoResize() }}
         onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); enviar() } }}
         placeholder="Pergunte qualquer coisa sobre as matérias..."
-        className="w-full bg-transparent text-text text-sm placeholder:text-text-faint resize-none focus:outline-none"
+        className="no-focus-ring w-full bg-transparent text-text text-sm placeholder:text-text-faint resize-none focus:outline-none"
       />
       <div className="flex items-center justify-end mt-2.5">
         <button
