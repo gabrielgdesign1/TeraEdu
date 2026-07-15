@@ -54,20 +54,28 @@ function dividirCitacoes(texto: string): { texto: string; citacao: boolean }[] {
   let cursor = 0
   let match: RegExpExecArray | null
 
+  // Janela de segurança: nunca busca limite de frase além disso, evitando "vazar"
+  // para trás/frente por causa de espaços não-padrão (nbsp, quebras de linha etc.)
+  const JANELA_MAX = 200
+
   while ((match = regexDisponivel.exec(texto))) {
     const idxDisp = match.index
     if (idxDisp < cursor) continue
 
     // início: tenta capturar "SOBRENOME, X." (autor) logo antes de "Disponível em";
     // evita parar em iniciais abreviadas ("O.") ao procurar só o último "."
-    const janela = texto.slice(Math.max(0, idxDisp - 60), idxDisp)
-    const autorMatch = janela.match(/[A-ZÀ-Ú]{2,}(?:\s+[A-ZÀ-Ú]{2,})*,\s*[A-Z]\.\s*$/)
+    const janelaAutor = texto.slice(Math.max(0, idxDisp - 60), idxDisp)
+    const autorMatch = janelaAutor.match(/[A-ZÀ-Ú]{2,}(?:\s+[A-ZÀ-Ú]{2,})*,\s*[A-Z]\.\s*$/)
     let inicio: number
     if (autorMatch) {
-      inicio = Math.max(0, idxDisp - 60) + janela.lastIndexOf(autorMatch[0])
+      inicio = Math.max(0, idxDisp - 60) + janelaAutor.lastIndexOf(autorMatch[0])
     } else {
-      const p = texto.lastIndexOf('. ', idxDisp)
-      inicio = p === -1 ? 0 : p + 2
+      // \s cobre espaço comum, nbsp, quebra de linha etc. (diferente de um "." literal seguido de " ")
+      const limiteBusca = Math.max(0, idxDisp - JANELA_MAX)
+      const trecho = texto.slice(limiteBusca, idxDisp)
+      const fronteiras = [...trecho.matchAll(/\.\s+/g)]
+      const ultima = fronteiras[fronteiras.length - 1]
+      inicio = ultima ? limiteBusca + ultima.index! + ultima[0].length : idxDisp
     }
     if (inicio < cursor) inicio = cursor
 
@@ -75,16 +83,18 @@ function dividirCitacoes(texto: string): { texto: string; citacao: boolean }[] {
     const idxAcesso = texto.indexOf('Acesso em:', idxDisp)
     let fim: number
     if (idxAcesso === -1) {
-      const idxFimAlt = texto.indexOf('. ', idxDisp)
-      fim = idxFimAlt === -1 ? texto.length : idxFimAlt + 1
+      const trecho = texto.slice(idxDisp, idxDisp + JANELA_MAX)
+      const fronteira = trecho.match(/\.\s+/)
+      fim = fronteira ? idxDisp + fronteira.index! + fronteira[0].length : texto.length
     } else {
-      const restante = texto.slice(idxAcesso)
+      const restante = texto.slice(idxAcesso, idxAcesso + 100)
       const dataMatch = restante.match(/Acesso em:\s*\d{1,2}\s*[a-zà-ú]+\.?\s*(?:de\s*)?\d{4}\.?/i)
       if (dataMatch) {
         fim = idxAcesso + dataMatch[0].length
       } else {
-        const p = texto.indexOf('. ', idxAcesso)
-        fim = p === -1 ? texto.length : p + 1
+        const trecho = texto.slice(idxAcesso, idxAcesso + JANELA_MAX)
+        const fronteira = trecho.match(/\.\s+/)
+        fim = fronteira ? idxAcesso + fronteira.index! + fronteira[0].length : texto.length
       }
     }
 
