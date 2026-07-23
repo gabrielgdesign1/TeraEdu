@@ -7,7 +7,7 @@ import { usePathname } from 'next/navigation'
 import { useTheme } from 'next-themes'
 import { motion } from 'framer-motion'
 import {
-  LayoutDashboard, FileQuestion, Layers, FileText, MessageCircle,
+  Home, FileQuestion, Layers, FileText, MessageCircle,
   BarChart3, Calendar, GraduationCap, Settings, Sun, Moon, Sparkles, LucideIcon,
   Menu, X,
 } from 'lucide-react'
@@ -15,7 +15,7 @@ import { useProfile } from '@/hooks/useProfile'
 
 /* Itens de acesso rápido na barra inferior mobile (os mais usados no dia a dia) */
 const MOBILE_QUICK_ITEMS = [
-  { href: '/dashboard',            icon: LayoutDashboard, label: 'Início'     },
+  { href: '/dashboard',            icon: Home,             label: 'Início'     },
   { href: '/dashboard/questoes',   icon: FileQuestion,    label: 'Questões'   },
   { href: '/dashboard/flashcards', icon: Layers,          label: 'Flashcards' },
   { href: '/dashboard/plano',      icon: Calendar,        label: 'Plano'      },
@@ -27,7 +27,7 @@ const EXPANDED  = 224          // largura expandida
 const ICON_SLOT = COLLAPSED - 16 // = 52px — largura do slot do ícone (nav tem px-2 → 8+8)
 
 const NAV_ITEMS = [
-  { href: '/dashboard',              icon: LayoutDashboard, label: 'Início'       },
+  { href: '/dashboard',              icon: Home,             label: 'Início'       },
   { href: '/dashboard/questoes',     icon: FileQuestion,    label: 'Questões'     },
   { href: '/dashboard/flashcards',   icon: Layers,          label: 'Flashcards'   },
   { href: '/dashboard/resumos',      icon: FileText,        label: 'Resumos'      },
