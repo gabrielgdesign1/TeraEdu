@@ -32,13 +32,26 @@ Cubra os pontos mais importantes do tema para o ENEM.
 Responda APENAS o JSON no formato pedido.`
   } else if (modo === 'texto') {
     const texto = formData.get('texto') as string
-    content = `Crie ${quantidade} flashcards baseados no seguinte conteúdo:
+    /* Material e instrução em blocos separados, com o breakpoint no material:
+       assim gerar um segundo lote com outra "quantidade" ainda aproveita o
+       cache. Num bloco único, o "Crie N" no começo mudaria o prefixo e
+       invalidaria tudo — que é justamente o caso de uso do cache aqui. */
+    content = [
+      {
+        type: 'text',
+        text: `Conteúdo de referência:
 
-${texto}
-
+${texto}`,
+        cache_control: { type: 'ephemeral' }
+      },
+      {
+        type: 'text',
+        text: `Crie ${quantidade} flashcards baseados no conteúdo acima.
 As perguntas devem ser curtas e diretas. As respostas claras e objetivas, máximo 2-3 frases.
 Cubra os pontos mais importantes do conteúdo.
 Responda APENAS o JSON no formato pedido.`
+      }
+    ]
   } else {
     const arquivo = formData.get('arquivo') as File
     const buffer = await arquivo.arrayBuffer()
@@ -51,7 +64,10 @@ Responda APENAS o JSON no formato pedido.`
           type: 'base64',
           media_type: 'application/pdf',
           data: base64
-        }
+        },
+        // mesmo PDF pode voltar num segundo lote — o breakpoint fica no
+        // documento, e a instrução variável vem depois, sem breakpoint
+        cache_control: { type: 'ephemeral' }
       },
       {
         type: 'text',

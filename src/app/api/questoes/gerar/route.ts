@@ -1,7 +1,10 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { withLogging } from '@/lib/apiHandler'
+import { STREAM_ERRO } from '@/lib/streamErro'
 
-export const maxDuration = 120
+/* Um lote de 20 questões usa ~17k tokens de saída — a ~70 tok/s isso passa
+   fácil de 120s. O teto de 300s é o padrão atual das Vercel Functions. */
+export const maxDuration = 300
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
@@ -41,8 +44,13 @@ As questões devem testar domínio real do conteúdo "${conteudo}", com enunciad
 Para "explicacao", seja claro e direto (3 a 5 frases): por que a alternativa correta está certa e por que as demais estão erradas, sem enrolação.
 Responda APENAS o JSON no formato pedido.`
 
-  // teto proporcional à quantidade pedida, evita reservar mais do que o necessário
-  const maxTokens = Math.min(8000, 300 + Number(quantidade || 1) * 850)
+  /* ~850 tokens de orçamento por questão + folga fixa pro envelope do JSON.
+     O teto antigo de 8000 saturava a partir de 10 questões, deixando só ~385
+     tokens/questão num lote de 20 — o que truncava o JSON no meio.
+     O clamp em 20 acompanha o maior lote da UI e evita um "quantidade"
+     absurdo vindo do cliente virar um max_tokens inválido. */
+  const qtd = Math.min(Math.max(Number(quantidade) || 1, 1), 20)
+  const maxTokens = 300 + qtd * 850
 
   const stream = anthropic.messages.stream({
     model: 'claude-sonnet-4-6',
@@ -52,23 +60,51 @@ Responda APENAS o JSON no formato pedido.`
   })
 
   const encoder = new TextEncoder()
-  let totalChars = 0
   const body = new ReadableStream({
     async start(controller) {
+      let acumulado = ''
+      let falhou = false
       try {
         for await (const event of stream) {
           if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
-            totalChars += event.delta.text.length
+            acumulado += event.delta.text
             controller.enqueue(encoder.encode(event.delta.text))
           }
         }
-        log.info({ vestibular, materia, conteudo, dificuldade, outputChars: totalChars }, 'questões geradas (stream)')
+
+        /* O stream terminou — confere se o que saiu é JSON parseável de verdade.
+           Usa a mesma extração do cliente pra os dois concordarem.
+           Causa mais provável de falha aqui: truncamento por max_tokens. */
+        try {
+          const bloco = acumulado.match(/\{[\s\S]*\}/)
+          if (!bloco) throw new Error('nenhum objeto JSON no output')
+          JSON.parse(bloco[0])
+          log.info(
+            { vestibular, materia, conteudo, dificuldade, outputChars: acumulado.length },
+            'questões geradas (stream)'
+          )
+        } catch (parseError) {
+          falhou = true
+          log.error(
+            {
+              vestibular, materia, conteudo, dificuldade,
+              quantidade: qtd, maxTokens, outputChars: acumulado.length,
+              err: parseError instanceof Error ? parseError.message : String(parseError),
+            },
+            'JSON final inválido (provável truncamento)'
+          )
+        }
       } catch (error) {
+        falhou = true
         log.error(
           { vestibular, materia, err: error instanceof Error ? { name: error.name, message: error.message } : String(error) },
           'falha ao gerar questões (stream)'
         )
       } finally {
+        /* Sentinela no fim do stream: o cliente já recebeu o texto parcial,
+           então precisa de um marcador explícito pra saber que não deve
+           tentar usá-lo. Sem chaves, pra não entrar no regex do cliente. */
+        if (falhou) controller.enqueue(encoder.encode(`\n${STREAM_ERRO}`))
         controller.close()
       }
     },

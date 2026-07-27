@@ -10,6 +10,7 @@ import {
 } from 'lucide-react'
 import { DashboardSidebar } from '@/components/DashboardSidebar'
 import { createClient } from '@/lib/supabase'
+import { STREAM_ERRO } from '@/lib/streamErro'
 
 // ─── Tipos ───────────────────────────────────────────────────────────────────
 
@@ -1127,6 +1128,13 @@ function GerarComIA() {
         acumulado += decoder.decode(value, { stream: true })
         const concluidas = (acumulado.match(/"resposta"\s*:/g) || []).length
         setProgresso(Math.min(concluidas, quantidade))
+      }
+
+      // O servidor sinaliza truncamento/erro no fim do stream — sem isso o
+      // JSON.parse abaixo estouraria e cairia no catch de "erro de conexão"
+      if (acumulado.includes(STREAM_ERRO)) {
+        setErro('A geração foi interrompida antes de terminar. Tente novamente, ou peça menos questões.')
+        return
       }
 
       const jsonMatch = acumulado.match(/\{[\s\S]*\}/)
