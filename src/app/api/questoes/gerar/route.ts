@@ -1,6 +1,10 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { withLogging } from '@/lib/apiHandler'
 import { STREAM_ERRO } from '@/lib/streamErro'
+import {
+  CUSTO_CREDITOS, MODELO, clienteCreditos, saldoAtual,
+  registrarUsoSeguro, respostaSemCreditos,
+} from '@/lib/creditos'
 
 /* Um lote de 20 questões usa ~17k tokens de saída — a ~70 tok/s isso passa
    fácil de 120s. O teto de 300s é o padrão atual das Vercel Functions. */
@@ -8,7 +12,11 @@ export const maxDuration = 300
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
-export const POST = withLogging('questoes/gerar', async (request, { log }) => {
+export const POST = withLogging('questoes/gerar', async (request, { log, authUserId }) => {
+  if (!authUserId) {
+    return Response.json({ error: 'Faça login para gerar questões.' }, { status: 401 })
+  }
+
   const { vestibular, materia, conteudo, dificuldade, quantidade } = await request.json()
 
   const nivelMap = {
@@ -52,8 +60,18 @@ Responda APENAS o JSON no formato pedido.`
   const qtd = Math.min(Math.max(Number(quantidade) || 1, 1), 20)
   const maxTokens = 300 + qtd * 850
 
+  /* Cliente criado AQUI, não dentro do stream: o callback do ReadableStream roda
+     depois da Response ser devolvida, e cookies() só existe no escopo do request. */
+  const custoPedido = qtd * CUSTO_CREDITOS.questao
+  const sb = await clienteCreditos()
+  const saldo = await saldoAtual(sb)
+  if (saldo < custoPedido) {
+    log.warn({ saldo, custoPedido, qtd }, 'sem créditos')
+    return respostaSemCreditos(saldo, custoPedido)
+  }
+
   const stream = anthropic.messages.stream({
-    model: 'claude-sonnet-4-6',
+    model: MODELO.raciocinio,
     max_tokens: maxTokens,
     system,
     messages: [{ role: 'user', content: prompt }],
@@ -64,6 +82,7 @@ Responda APENAS o JSON no formato pedido.`
     async start(controller) {
       let acumulado = ''
       let falhou = false
+      let geradas = 0
       try {
         for await (const event of stream) {
           if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
@@ -78,9 +97,12 @@ Responda APENAS o JSON no formato pedido.`
         try {
           const bloco = acumulado.match(/\{[\s\S]*\}/)
           if (!bloco) throw new Error('nenhum objeto JSON no output')
-          JSON.parse(bloco[0])
+          const dados = JSON.parse(bloco[0])
+          // débito pela quantidade REALIZADA, nunca acima do que foi checado
+          geradas = Math.min(dados?.questoes?.length ?? 0, qtd)
+          if (geradas === 0) throw new Error('JSON sem questões')
           log.info(
-            { vestibular, materia, conteudo, dificuldade, outputChars: acumulado.length },
+            { vestibular, materia, conteudo, dificuldade, outputChars: acumulado.length, geradas },
             'questões geradas (stream)'
           )
         } catch (parseError) {
@@ -106,6 +128,15 @@ Responda APENAS o JSON no formato pedido.`
            tentar usá-lo. Sem chaves, pra não entrar no regex do cliente. */
         if (falhou) controller.enqueue(encoder.encode(`\n${STREAM_ERRO}`))
         controller.close()
+
+        /* Débito depois do stream fechar. O usage vem do finalMessage()
+           acumulado pelo SDK — nunca estimado por caractere. */
+        const finalMsg = await stream.finalMessage().catch(() => null)
+        await registrarUsoSeguro(sb, log, {
+          acao: 'questao', model: MODELO.raciocinio, usage: finalMsg?.usage ?? null,
+          creditos: falhou ? 0 : geradas * CUSTO_CREDITOS.questao,
+          sucesso: !falhou,
+        })
       }
     },
   })

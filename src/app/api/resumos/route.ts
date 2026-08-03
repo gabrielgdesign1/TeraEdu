@@ -1,12 +1,20 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { withLogging } from '@/lib/apiHandler'
 import { rateLimitResponse } from '@/lib/rateLimit'
+import {
+  CUSTO_CREDITOS, MODELO, clienteCreditos, saldoAtual,
+  registrarUsoSeguro, respostaSemCreditos,
+} from '@/lib/creditos'
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY
 })
 
-export const POST = withLogging('resumos', async (request, { log, identifier }) => {
+export const POST = withLogging('resumos', async (request, { log, identifier, authUserId }) => {
+  if (!authUserId) {
+    return Response.json({ error: 'Faça login para gerar resumos.' }, { status: 401 })
+  }
+
   const formData = await request.formData()
   const modo = formData.get('modo') as string
   const tamanho = formData.get('tamanho') as string
@@ -77,14 +85,39 @@ Estruture bem em Markdown com títulos, subtítulos e listas. Destaque os pontos
     ]
   }
 
+  const custo = CUSTO_CREDITOS.resumo
+  const sb = await clienteCreditos()
+  const saldo = await saldoAtual(sb)
+  if (saldo < custo) {
+    log.warn({ saldo, custo }, 'sem créditos')
+    return respostaSemCreditos(saldo, custo)
+  }
+
   const resposta = await anthropic.messages.create({
-    model: 'claude-sonnet-4-6',
+    model: MODELO.economico,
     max_tokens: 4096,
     system: systemPrompt,
     messages: [{ role: 'user', content }]
   })
 
   const texto = resposta.content[0].type === 'text' ? resposta.content[0].text : ''
-  log.info({ modo, tamanho, outputChars: texto.length }, 'resumo gerado')
+
+  const sucesso = texto.length > 0
+  await registrarUsoSeguro(sb, log, {
+    acao: 'resumo', model: MODELO.economico, usage: resposta.usage,
+    creditos: custo, sucesso,
+  })
+  if (!sucesso) {
+    log.warn('resposta vazia da Anthropic — sem débito')
+    return Response.json({ error: 'A IA não retornou resposta. Tente novamente.' }, { status: 502 })
+  }
+
+  log.info(
+    {
+      modo, tamanho, outputChars: texto.length, creditos: custo,
+      inputTokens: resposta.usage.input_tokens, outputTokens: resposta.usage.output_tokens,
+    },
+    'resumo gerado'
+  )
   return Response.json({ resumo: texto })
 }, { rateLimit: 'geracaoConteudo' })

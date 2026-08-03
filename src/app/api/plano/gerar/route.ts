@@ -1,7 +1,14 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { withLogging } from '@/lib/apiHandler'
+import {
+  CUSTO_CREDITOS, MODELO, LIMITE_BLOCOS_HAIKU, clienteCreditos, saldoAtual,
+  registrarUsoSeguro, respostaSemCreditos,
+} from '@/lib/creditos'
 
-export const maxDuration = 120
+/* Um plano de 16 semanas × 6 dias × 2 matérias mede ~12k tokens de saída e
+   levou 130s no Sonnet — acima do teto antigo de 120s. 300s é o padrão atual
+   das Vercel Functions. */
+export const maxDuration = 300
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
@@ -26,7 +33,19 @@ function addDateToDay(startMonday: Date, semanaNum: number, diaSemana: string): 
   return d.toISOString().slice(0, 10)
 }
 
-export const POST = withLogging('plano/gerar', async (request, { log }) => {
+export const POST = withLogging('plano/gerar', async (request, { log, authUserId }) => {
+  if (!authUserId) {
+    return Response.json({ error: 'Faça login para gerar um plano de estudos.' }, { status: 401 })
+  }
+
+  const custo = CUSTO_CREDITOS.plano
+  const sb = await clienteCreditos()
+  const saldo = await saldoAtual(sb)
+  if (saldo < custo) {
+    log.warn({ saldo, custo }, 'sem créditos')
+    return respostaSemCreditos(saldo, custo)
+  }
+
   try {
     const { vestibular, dataProva, curso, horasPorDia, materiasPorDia = 1, diasSemana, materiasBoas, materiasDificeis } = await request.json()
     const duasMaterias = Number(materiasPorDia) >= 2
@@ -71,7 +90,7 @@ Distribuição das fases:
 Regras:
 - Use APENAS os dias: ${diasSemana.join(', ')} em cada semana
 - ${duasMaterias
-    ? `DUAS matérias DIFERENTES por dia (dois blocos): cada bloco com ${horasBloco}h e ${questoesBloco} questões`
+    ? `DUAS matérias por dia, em DOIS blocos, cada bloco com ${horasBloco}h e ${questoesBloco} questões. Os dois blocos são obrigatórios em TODOS os dias, e as matérias dos dois blocos devem ser DIFERENTES entre si`
     : `${horasPorDia}h e ${questoesPorDia} questões por sessão`}
 - Na Fase Base: priorize matérias difíceis (aparecerão mais vezes), matérias fáceis menos
 - Na Fase Aprofundamento: aprofunde os tópicos, mais questões complexas
@@ -92,10 +111,23 @@ Retorne SOMENTE este JSON (${semanasTotal} semanas, cada semana com ${diasSemana
       ]
     }
   ]
-}${duasMaterias ? '\n\nIMPORTANTE: materia e materia2 devem ser DIFERENTES em cada dia.' : ''}`
+}${duasMaterias ? `
+
+IMPORTANTE — verifique antes de responder. O cronograma tem exatamente ${semanasTotal * diasSemana.length} dias (${semanasTotal} semanas × ${diasSemana.length} dias). Em CADA UM desses dias, sem nenhuma exceção:
+- Os 8 campos devem estar preenchidos: "materia", "topico", "horas", "questoes", "materia2", "topico2", "horas2", "questoes2".
+- Nenhum dia pode ter apenas uma matéria. Um dia sem "materia2" e "topico2" torna o plano inválido.
+- "materia" e "materia2" do mesmo dia devem ser DIFERENTES entre si.
+Não abrevie, não use reticências e não omita dias ou campos para encurtar a resposta.` : ''}`
+
+    /* Roteamento por tamanho. Acima de ~100 blocos o Haiku começa a omitir a
+       segunda matéria em alguns dias — falha silenciosa, porque o JSON continua
+       válido. Medido em scripts/eval-plano.mjs. Abaixo disso ele é impecável e
+       custa ~3x menos, além de ser ~2x mais rápido. */
+    const blocos = semanasTotal * diasSemana.length * (duasMaterias ? 2 : 1)
+    const model = blocos <= LIMITE_BLOCOS_HAIKU ? MODELO.economico : MODELO.raciocinio
 
     const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-6',
+      model,
       max_tokens: 16000,
       system,
       messages: [{ role: 'user', content: prompt }],
@@ -104,7 +136,10 @@ Retorne SOMENTE este JSON (${semanasTotal} semanas, cada semana com ${diasSemana
     const texto = response.content[0].type === 'text' ? response.content[0].text : '{}'
     const jsonMatch = texto.match(/\{[\s\S]*\}/)
     if (!jsonMatch) {
-      log.warn({ vestibular, outputChars: texto.length }, 'plano da IA sem JSON válido')
+      await registrarUsoSeguro(sb, log, {
+        acao: 'plano', model, usage: response.usage, creditos: 0, sucesso: false,
+      })
+      log.warn({ vestibular, blocos, model, outputChars: texto.length }, 'plano da IA sem JSON válido')
       return Response.json({ error: 'A IA retornou um formato inesperado. Tente novamente.' }, { status: 502 })
     }
     const plano = JSON.parse(jsonMatch[0])
@@ -117,7 +152,18 @@ Retorne SOMENTE este JSON (${semanasTotal} semanas, cada semana com ${diasSemana
       }
     }
 
-    log.info({ vestibular, semanas: plano.semanas?.length ?? 0, duasMaterias }, 'plano gerado')
+    await registrarUsoSeguro(sb, log, {
+      acao: 'plano', model, usage: response.usage, creditos: custo, sucesso: true,
+    })
+
+    log.info(
+      {
+        vestibular, semanas: plano.semanas?.length ?? 0, duasMaterias, blocos, model,
+        creditos: custo,
+        inputTokens: response.usage.input_tokens, outputTokens: response.usage.output_tokens,
+      },
+      'plano gerado'
+    )
     return Response.json(plano)
   } catch (error) {
     log.error(

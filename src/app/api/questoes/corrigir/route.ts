@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
 import { withLogging } from '@/lib/apiHandler'
+import { CUSTO_CREDITOS, MODELO, clienteCreditos, registrarUsoSeguro } from '@/lib/creditos'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -10,7 +11,11 @@ const supabase = createClient(
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 
-export const POST = withLogging('questoes/corrigir', async (req, { log }) => {
+export const POST = withLogging('questoes/corrigir', async (req, { log, authUserId }) => {
+  if (!authUserId) {
+    return NextResponse.json({ error: 'Faça login para corrigir a questão.' }, { status: 401 })
+  }
+
   const { question_id, resposta_usuario } = await req.json()
 
   if (!question_id) {
@@ -65,8 +70,12 @@ Responda APENAS com JSON válido, sem markdown, neste formato exato:
   "explicacao": "<parágrafo curto explicando a avaliação e como melhorar>"
 }`
 
+  // Sem checagem de saldo: esta ação é gratuita (CUSTO_CREDITOS.questao_corrigir
+  // = 0). O cliente é criado só para registrar o custo real em uso_ia.
+  const sb = await clienteCreditos()
+
   const msg = await anthropic.messages.create({
-    model: 'claude-haiku-4-5-20251001',
+    model: MODELO.economico,
     max_tokens: 600,
     messages: [{ role: 'user', content: prompt }],
   })
@@ -79,11 +88,26 @@ Responda APENAS com JSON válido, sem markdown, neste formato exato:
   try {
     resultado = JSON.parse(jsonStr)
   } catch {
+    await registrarUsoSeguro(sb, log, {
+      acao: 'questao_corrigir', model: MODELO.economico, usage: msg.usage,
+      creditos: 0, sucesso: false,
+    })
     log.warn({ question_id, outputChars: raw.length }, 'correção da IA não é JSON válido')
     return NextResponse.json({ error: 'A IA retornou um formato inesperado. Tente novamente.' }, { status: 502 })
   }
 
-  log.info({ question_id, subject: data.subject, nota: Number(resultado.nota) || 0 }, 'correção concluída')
+  await registrarUsoSeguro(sb, log, {
+    acao: 'questao_corrigir', model: MODELO.economico, usage: msg.usage,
+    creditos: CUSTO_CREDITOS.questao_corrigir, sucesso: true,
+  })
+
+  log.info(
+    {
+      question_id, subject: data.subject, nota: Number(resultado.nota) || 0,
+      inputTokens: msg.usage.input_tokens, outputTokens: msg.usage.output_tokens,
+    },
+    'correção concluída'
+  )
   return NextResponse.json({
     nota:            Math.max(0, Math.min(100, Number(resultado.nota) || 0)),
     acertos:         Array.isArray(resultado.acertos)  ? resultado.acertos  : [],

@@ -23,9 +23,9 @@ const MATERIAS = [
 ]
 
 const PLANOS = [
-  { id: 'gratuito' as const, nome: 'Gratuito', preco: 'R$ 0',          limite: 150,      desc: '5 questões de IA por dia' },
-  { id: 'plus'     as const, nome: 'Plus',     preco: 'R$ 19,90/mês',  limite: 1000,     desc: 'Uso amplo de IA por mês' },
-  { id: 'premium'  as const, nome: 'Premium',  preco: 'R$ 34,90/mês',  limite: Infinity, desc: 'Gerações de IA ilimitadas' },
+  { id: 'gratuito' as const, nome: 'Gratuito', preco: 'R$ 0',         desc: '900 créditos de IA por mês' },
+  { id: 'plus'     as const, nome: 'Plus',     preco: 'R$ 23,99/mês', desc: '8.000 créditos de IA por mês' },
+  { id: 'premium'  as const, nome: 'Premium',  preco: 'R$ 39,99/mês', desc: '13.500 créditos de IA por mês' },
 ]
 
 export default function Configuracoes() {
@@ -497,28 +497,30 @@ function Assinatura({ profile, salvarProfile, reload }: {
   salvarProfile: ReturnType<typeof useProfile>['salvarProfile']
   reload: () => void
 }) {
-  const [usoMes,      setUsoMes     ] = useState<number | null>(null)
+  const [creditos,    setCreditos   ] = useState<{ saldo: number; totais: number } | null>(null)
   const [showCancelar,setShowCancelar] = useState(false)
 
   const carregarUso = useCallback(async () => {
     if (!profile) return
     const sb = createClient()
-    const inicioMes = new Date()
-    inicioMes.setDate(1); inicioMes.setHours(0, 0, 0, 0)
-    const { count } = await sb
-      .from('user_activities')
-      .select('id', { count: 'exact', head: true })
+    // dispara a renovação se estiver vencida, depois lê a linha (RLS permite
+    // ler a própria); a escrita fica toda nas funções SECURITY DEFINER
+    await sb.rpc('saldo_creditos')
+    const { data } = await sb
+      .from('creditos_usuario')
+      .select('saldo, creditos_totais')
       .eq('user_id', profile.id)
-      .gte('criado_em', inicioMes.toISOString())
-    setUsoMes(count ?? 0)
+      .single()
+    setCreditos(data ? { saldo: data.saldo, totais: data.creditos_totais } : null)
   }, [profile])
 
   useEffect(() => { carregarUso() }, [carregarUso])
 
   const planoAtual = PLANOS.find(p => p.id === profile?.plano) ?? PLANOS[0]
-  const pct = usoMes === null || planoAtual.limite === Infinity
+  const usados = creditos ? creditos.totais - creditos.saldo : null
+  const pct = creditos === null || creditos.totais === 0
     ? 0
-    : Math.min(100, Math.round((usoMes / planoAtual.limite) * 100))
+    : Math.min(100, Math.round(((creditos.totais - creditos.saldo) / creditos.totais) * 100))
 
   async function cancelarAssinatura() {
     await salvarProfile({ plano: 'gratuito' })
@@ -571,19 +573,19 @@ function Assinatura({ profile, salvarProfile, reload }: {
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-text font-semibold">Uso de IA este mês</h2>
           <span className="text-text-muted text-sm tabular-nums">
-            {usoMes === null ? '—' : usoMes} / {planoAtual.limite === Infinity ? '∞' : planoAtual.limite}
+            {usados === null ? '—' : usados.toLocaleString('pt-BR')} / {creditos ? creditos.totais.toLocaleString('pt-BR') : '—'} créditos
           </span>
         </div>
         <div className="h-2.5 bg-bg-hover rounded-full overflow-hidden">
           <div
             className={`h-full rounded-full transition-all duration-700 ${pct >= 90 ? 'bg-red-500' : pct >= 70 ? 'bg-amber-500' : 'bg-brand'}`}
-            style={{ width: `${planoAtual.limite === Infinity ? 8 : pct}%` }}
+            style={{ width: `${pct}%` }}
           />
         </div>
         <p className="text-text-faint text-xs mt-2.5">
-          {planoAtual.limite === Infinity
-            ? 'Seu plano tem gerações ilimitadas.'
-            : `Contabiliza resumos, flashcards, questões e conversas com a IA Tutora geradas neste mês.`}
+          {creditos
+            ? `Restam ${creditos.saldo.toLocaleString('pt-BR')} créditos. Cada resumo, flashcard, questão ou mensagem da IA Tutora consome créditos; o saldo renova todo mês.`
+            : 'Cada resumo, flashcard, questão ou mensagem da IA Tutora consome créditos; o saldo renova todo mês.'}
         </p>
       </section>
 

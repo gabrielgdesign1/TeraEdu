@@ -60,7 +60,7 @@ export default function PlanosPage() {
               >
                 Anual
                 <span className="text-[10px] bg-green-500/15 text-green-600 dark:text-green-400 px-2 py-0.5 rounded-full font-semibold">
-                  Economize até 28%
+                  Economize até 17%
                 </span>
               </button>
             </div>
@@ -100,7 +100,7 @@ export default function PlanosPage() {
                   </div>
                   {anual && p.economiaAnual && (
                     <p className="text-green-600 dark:text-green-400 text-xs font-semibold mb-5">
-                      Economize {p.economiaAnual}% no plano anual
+                      Equivale a {fmtPreco(p.precoMensalNoAnual)}/mês · economize {p.economiaAnual}%
                     </p>
                   )}
                   {(!anual || !p.economiaAnual) && <div className="mb-5" />}
