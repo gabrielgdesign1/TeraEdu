@@ -57,8 +57,8 @@ src/
 │   ├── supabaseServer.ts     # client server-side, getServerUser(), getUserPlano()
 │   └── planos.ts             # preços e copy da página de planos
 ├── hooks/useProfile.ts, useStats.ts
-├── components/DashboardSidebar.tsx, HistoryPanel.tsx
-└── middleware.ts             # protege /dashboard/* e /login — NÃO cobre /api/*
+└── components/DashboardSidebar.tsx, HistoryPanel.tsx
+middleware.ts                 # (na raiz) protege /dashboard/* e /login — NÃO cobre /api/*
 scripts/eval-plano.mjs        # ⭐ eval do /api/plano/gerar (ver seção própria)
 supabase/migrations/          # ⭐ migrations versionadas (novo)
 ```
@@ -291,6 +291,31 @@ Confirmado em 2026-08-03: a chave atual funciona tanto pra dados (PostgREST) qua
 
 ---
 
+## 🚨 Site lento ou dashboard não abre? Comece por aqui
+
+Incidente de 2026-10-30. Os dois serviços externos estavam fora ao mesmo tempo:
+
+1. **Supabase pausado** (`status: INACTIVE`). Com o projeto pausado o domínio
+   `*.supabase.co` deixa de existir (`ENOTFOUND`), então login e banco param. Reative pelo
+   dashboard do Supabase ou pelo `restore_project` do MCP; leva alguns minutos para subir.
+2. **Upstash fora do ar** (`fetch failed` em `erro ao checar rate limit`). O rate limit
+   libera a requisição (falha aberta), ou seja: **enquanto isso durar, não há rate limit
+   nenhum em produção**. Confira o banco no console da Upstash.
+
+O diagnóstico vem dos logs: `get_runtime_logs` da Vercel com `since: "30m"` (o plano Hobby
+só guarda 1 hora) e o `get_project` do Supabase.
+
+Desde então, uma queda desses serviços não trava mais o site: `getUserComLimite`
+(`src/lib/authComLimite.ts`) limita a checagem de sessão a 5s e o Redis tem retentativa
+curta + timeout de 1s.
+
+**`middleware.ts` fica na raiz, não em `src/`.** O `next build` e a Vercel o reconhecem, mas
+o `next dev` não: **em dev o `/dashboard` abre sem redirecionar para o login.** Para testar
+o middleware localmente, use uma cópia temporária em `src/middleware.ts`. O nome
+`middleware` também está deprecado no Next 16 (virou `proxy`).
+
+---
+
 ## ⚠️ Problemas conhecidos / não resolvidos
 
 1. **[CRÍTICO — agora mais grave] Qualquer usuário pode se dar Premium de graça.**
@@ -351,6 +376,18 @@ Confirmado em 2026-08-03: a chave atual funciona tanto pra dados (PostgREST) qua
   não hardcode cor.
 - `.motion-safe-ui` marca elementos que devem animar mesmo com `prefers-reduced-motion`.
   `.no-focus-ring` é a exceção da regra global de `:focus-visible` (só no textarea da tutora).
+- **Animações — regras de performance** (a landing travava por violar estas regras; medido em
+  2026-11-14, ver commit da otimização):
+  - **Loop infinito = CSS, nunca framer-motion.** Use `.flutuar` + `flutuar({ y, dur, ... })`
+    (`src/lib/flutuar.ts`), `.piscar`, `.virar-card`. Um `repeat: Infinity` do framer recalcula o
+    estilo da página a cada quadro, mesmo com ela parada.
+  - **Entradas animam `transform` como string** (`initial={{ transform: 'translateY(24px)' }}`),
+    não `y`/`x`/`scale`. Com string o framer usa WAAPI, que roda na GPU; com `y`, roda em JS.
+  - **Brilho difuso = `.brilho [--brilho:0.08]`**, nunca `bg-brand/x blur-[100px]` — blur grande é
+    refeito a cada quadro quando algo se move perto.
+  - **`backdrop-blur` só onde o fundo é realmente translúcido.** Em elemento fixo (navbar,
+    sidebar) ele é refeito a cada quadro de scroll; com fundo >90% opaco, não aparece e só custa.
+  - Não anime `width`/`height`/`top`/`left` em loop ou em algo grande — use `scaleX`/`translate`.
 - `maxDuration`: `questoes/gerar` e `plano/gerar` estão em **300s**. Foram 120s e isso
   causava timeout real (Sonnet levou 130,8s num plano de 16 semanas). As demais usam o padrão.
 

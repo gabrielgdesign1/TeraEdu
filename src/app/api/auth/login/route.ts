@@ -1,7 +1,10 @@
 import { NextResponse } from 'next/server'
+import { isAuthRetryableFetchError } from '@supabase/supabase-js'
 import { withLogging } from '@/lib/apiHandler'
 import { rateLimitResponse, getClientIp } from '@/lib/rateLimit'
 import { createServerSupabaseClient } from '@/lib/supabaseServer'
+
+const MENSAGEM_LOGIN_INDISPONIVEL = 'Estamos com instabilidade para entrar na sua conta. Tente novamente em alguns minutos.'
 
 export const POST = withLogging('auth/login', async (req, { log }) => {
   const { email, password } = await req.json().catch(() => ({}))
@@ -18,6 +21,12 @@ export const POST = withLogging('auth/login', async (req, { log }) => {
 
   const supabase = await createServerSupabaseClient()
   const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+
+  // Supabase fora do ar não é senha errada — não mandar o aluno redefinir a senha à toa
+  if (isAuthRetryableFetchError(error)) {
+    log.error('supabase auth indisponível no login')
+    return NextResponse.json({ error: MENSAGEM_LOGIN_INDISPONIVEL }, { status: 503 })
+  }
 
   if (error || !data.user) {
     log.warn({ email }, 'login falhou')

@@ -135,6 +135,53 @@ body {
   -webkit-text-fill-color: transparent;
 }
 
+/* ═══════════════ Animações decorativas em loop ═══════════════
+   Sempre em CSS, nunca em loop do framer-motion: um @keyframes de transform roda na
+   thread do compositor, sem JavaScript nem recálculo de estilo a cada quadro. Com o
+   framer, cada loop infinito recalculava o estilo da página 60x por segundo, e a
+   landing ficava com a thread principal ~90% ocupada mesmo parada.
+   Parâmetros por elemento via variáveis — ver flutuar() em src/lib/flutuar.ts. */
+@keyframes flutuar {
+  0%, 100% { transform: translate3d(0, 0, 0) rotate(var(--fr0, 0deg)); }
+  50%      { transform: translate3d(var(--fx, 0px), var(--fy, 0px), 0) rotate(var(--fr1, 0deg)); }
+}
+.flutuar {
+  animation: flutuar var(--fdur, 6s) ease-in-out var(--fdelay, 0s) infinite;
+  will-change: transform;
+}
+
+@keyframes piscar {
+  0%, 100% { opacity: 0.3; }
+  50%      { opacity: 1; }
+}
+.piscar { animation: piscar 1s ease-in-out infinite; }
+
+/* Flashcard girando: parado na frente, vira, parado no verso, volta */
+@keyframes virar-card {
+  0%, 40%  { transform: rotateY(0deg); }
+  50%, 90% { transform: rotateY(180deg); }
+  100%     { transform: rotateY(360deg); }
+}
+.virar-card { animation: virar-card 7s ease-in-out infinite; }
+
+/* Brilho difuso da marca. Substitui `bg-brand/x blur-[100px]`: um blur grande é
+   refeito pela GPU a cada quadro quando o elemento (ou algo atrás dele) se move; o
+   gradiente é desenhado uma vez só. Intensidade no centro: [--brilho:0.08]
+   As paradas reproduzem o perfil de um círculo borrado (calculado numericamente); o
+   elemento deve ter o tamanho até onde o blur antigo chegava (~raio + 2× o blur). */
+.brilho {
+  --b: var(--brilho, 0.1);
+  background: radial-gradient(closest-side,
+    rgb(249 115 22 / var(--b)) 0%,
+    rgb(249 115 22 / calc(var(--b) * 0.94)) 15%,
+    rgb(249 115 22 / calc(var(--b) * 0.77)) 30%,
+    rgb(249 115 22 / calc(var(--b) * 0.52)) 45%,
+    rgb(249 115 22 / calc(var(--b) * 0.30)) 60%,
+    rgb(249 115 22 / calc(var(--b) * 0.13)) 75%,
+    rgb(249 115 22 / calc(var(--b) * 0.045)) 90%,
+    transparent 100%);
+}
+
 /* Respeita usuários com movimento reduzido — exceto transições curtas e
    estruturais de UI (sidebar, flip de flashcard) marcadas com .motion-safe-ui,
    que não são o tipo de movimento (parallax, loop, zoom) que causa desconforto. */

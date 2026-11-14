@@ -1,6 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import type { User } from '@supabase/supabase-js'
+import { getUserComLimite } from './authComLimite'
 
 /**
  * Cliente Supabase para uso server-side (Route Handlers) — lê/escreve a sessão
@@ -33,7 +34,7 @@ export async function createServerSupabaseClient() {
 /** Usuário autenticado (validado contra o Supabase Auth) ou null. */
 export async function getServerUser(): Promise<User | null> {
   const supabase = await createServerSupabaseClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { user } = await getUserComLimite(supabase)
   return user
 }
 

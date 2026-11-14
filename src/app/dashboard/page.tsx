@@ -197,7 +197,7 @@ export default function Dashboard() {
         <div className="px-4 md:px-10 pt-8 md:pt-11 pb-9 border-b border-border/60 relative overflow-hidden">
           {/* aurora sutil */}
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-brand/[0.05] via-transparent to-transparent" />
-          <div className="pointer-events-none absolute -top-24 right-[15%] w-80 h-56 bg-brand/[0.07] blur-[80px] rounded-full" />
+          <div className="brilho [--brilho:0.044] pointer-events-none absolute -top-[256px] right-[15%] -mr-[160px] w-[640px] h-[544px]" />
           <p className="text-text-muted text-sm mb-1">{saudacao}</p>
           <h1 className="text-[2.2rem] font-black tracking-tight mb-8 leading-tight">
             <span className="text-gradient-brand">{primeiroNome ?? '...'}</span> 👋
@@ -240,7 +240,7 @@ export default function Dashboard() {
                 className="card-premium group relative overflow-hidden rounded-2xl p-5 hover:-translate-y-0.5"
               >
                 {/* brilho no hover */}
-                <div className="pointer-events-none absolute -top-12 -right-12 w-28 h-28 bg-brand/10 blur-2xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="brilho [--brilho:0.062] pointer-events-none absolute -top-[128px] -right-[128px] w-[272px] h-[272px] opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 <div className="relative z-10">
                   <div className="flex items-start justify-between mb-4">
                     <p className="text-text-muted text-xs font-medium leading-tight">{c.label}</p>

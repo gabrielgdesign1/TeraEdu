@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useTheme } from 'next-themes'
 import { motion } from 'framer-motion'
+import { flutuar } from '@/lib/flutuar'
 import {
   Sun, Moon, Mail, Lock, User, Eye, EyeOff, ArrowRight,
   Sparkles, MessageCircle, Flame, Trophy,
@@ -15,14 +16,21 @@ const EASE = [0.22, 1, 0.36, 1] as const
 export default function Login() {
   const { theme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
-  useEffect(() => setMounted(true), [])
-
   const [isLogin, setIsLogin] = useState(true)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [nome, setNome] = useState('')
   const [loading, setLoading] = useState(false)
   const [erro, setErro] = useState('')
+
+  useEffect(() => {
+    setMounted(true)
+    // o middleware manda pra cá com ?erro=indisponivel quando o Supabase não responde
+    if (new URLSearchParams(window.location.search).get('erro') === 'indisponivel') {
+      setErro('Estamos com instabilidade para acessar sua conta. Tente novamente em alguns minutos.')
+    }
+  }, [])
+
   const [mensagem, setMensagem] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const router = useRouter()
@@ -40,7 +48,7 @@ export default function Login() {
       })
       const dados = await res.json().catch(() => ({}))
       if (!res.ok) {
-        setErro(res.status === 429 ? dados.error : 'E-mail ou senha incorretos.')
+        setErro(res.status === 429 || res.status === 503 ? dados.error : 'E-mail ou senha incorretos.')
       } else {
         router.push('/dashboard')
         router.refresh()
@@ -99,15 +107,15 @@ export default function Login() {
 
         <motion.div
           className="w-full max-w-[400px]"
-          initial={{ opacity: 0, y: 24 }}
-          animate={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0, transform: 'translateY(24px)' }}
+          animate={{ opacity: 1, transform: 'translateY(0px)' }}
           transition={{ duration: 0.7, ease: EASE }}
         >
           {/* logo */}
           <div className="flex items-center gap-2.5 mb-10">
             <div className="relative">
               <div className="absolute inset-0 bg-brand/40 blur-lg rounded-full" />
-              <Image src="/TeraEdu-logo-orange.png" alt="TeraEdu" width={34} height={34} className="relative" />
+              <Image src="/TeraEdu-logo-orange.webp" alt="TeraEdu" width={34} height={34} className="relative" />
             </div>
             <span className="text-text font-bold text-xl tracking-tight">TeraEdu</span>
           </div>
@@ -224,13 +232,13 @@ export default function Login() {
       <div className="hidden lg:block flex-1 p-4">
         <motion.div
           className="relative h-full min-h-[calc(100dvh-2rem)] rounded-[2rem] overflow-hidden"
-          initial={{ opacity: 0, scale: 0.985 }}
-          animate={{ opacity: 1, scale: 1 }}
+          initial={{ opacity: 0, transform: 'scale(0.985)' }}
+          animate={{ opacity: 1, transform: 'scale(1)' }}
           transition={{ duration: 0.9, delay: 0.15, ease: EASE }}
         >
           {/* arte gerada */}
           <Image
-            src="/login-art.jpg"
+            src="/login-art.webp"
             alt=""
             fill
             priority
@@ -242,46 +250,43 @@ export default function Login() {
 
           {/* logo marca d'água */}
           <div className="absolute top-7 left-7 flex items-center gap-2">
-            <Image src="/TeraEdu-logo-orange.png" alt="" width={22} height={22} />
+            <Image src="/TeraEdu-logo-orange.webp" alt="" width={22} height={22} />
             <span className="text-white/90 font-semibold text-sm tracking-tight">TeraEdu</span>
           </div>
 
-          {/* chips de vidro flutuantes */}
-          <motion.div
-            className="absolute top-[18%] right-[10%] rounded-2xl border border-white/15 bg-white/10 backdrop-blur-xl px-4 py-3 flex items-center gap-2.5 shadow-2xl"
-            animate={{ y: [0, -10, 0] }}
-            transition={{ duration: 5.5, repeat: Infinity, ease: 'easeInOut' }}
+          {/* chips de vidro flutuantes (loop em CSS — ver .flutuar em globals.css) */}
+          <div
+            className="flutuar absolute top-[18%] right-[10%] rounded-2xl border border-white/15 bg-white/10 backdrop-blur-xl px-4 py-3 flex items-center gap-2.5 shadow-2xl"
+            style={flutuar({ y: -10, dur: 5.5 })}
           >
             <div className="w-8 h-8 bg-brand rounded-xl flex items-center justify-center"><MessageCircle size={14} className="text-white" /></div>
             <div>
               <p className="text-white text-xs font-semibold leading-tight">IA Tutora</p>
               <p className="text-white/60 text-[10px]">Dúvidas em segundos</p>
             </div>
-          </motion.div>
+          </div>
 
-          <motion.div
-            className="absolute top-[38%] left-[8%] rounded-2xl border border-white/15 bg-white/10 backdrop-blur-xl px-4 py-3 flex items-center gap-2.5 shadow-2xl"
-            animate={{ y: [0, 9, 0] }}
-            transition={{ duration: 6.5, repeat: Infinity, ease: 'easeInOut', delay: 0.8 }}
+          <div
+            className="flutuar absolute top-[38%] left-[8%] rounded-2xl border border-white/15 bg-white/10 backdrop-blur-xl px-4 py-3 flex items-center gap-2.5 shadow-2xl"
+            style={flutuar({ y: 9, dur: 6.5, delay: 0.8 })}
           >
             <div className="w-8 h-8 bg-white/15 rounded-xl flex items-center justify-center"><Flame size={14} className="text-brand" /></div>
             <div>
               <p className="text-white text-xs font-semibold leading-tight">7 dias seguidos</p>
               <p className="text-white/60 text-[10px]">Sequência de estudos</p>
             </div>
-          </motion.div>
+          </div>
 
-          <motion.div
-            className="absolute bottom-[30%] right-[14%] rounded-2xl border border-white/15 bg-white/10 backdrop-blur-xl px-4 py-3 flex items-center gap-2.5 shadow-2xl"
-            animate={{ y: [0, -8, 0] }}
-            transition={{ duration: 4.8, repeat: Infinity, ease: 'easeInOut', delay: 1.6 }}
+          <div
+            className="flutuar absolute bottom-[30%] right-[14%] rounded-2xl border border-white/15 bg-white/10 backdrop-blur-xl px-4 py-3 flex items-center gap-2.5 shadow-2xl"
+            style={flutuar({ y: -8, dur: 4.8, delay: 1.6 })}
           >
             <div className="w-8 h-8 bg-white/15 rounded-xl flex items-center justify-center"><Trophy size={14} className="text-brand" /></div>
             <div>
               <p className="text-white text-xs font-semibold leading-tight">+80 pts no ENEM</p>
               <p className="text-white/60 text-[10px]">Média dos alunos</p>
             </div>
-          </motion.div>
+          </div>
 
           {/* citação inferior */}
           <div className="absolute bottom-0 left-0 right-0 p-9">

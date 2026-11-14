@@ -84,6 +84,9 @@ const redis = redisConfigured
   ? new Redis({
       url: redisUrl!,
       token: redisToken!,
+      // O padrão são 5 retentativas com backoff: ~4,3s de espera em TODA requisição
+      // quando o Redis está fora do ar, antes de liberar por falha aberta.
+      retry: { retries: 1, backoff: () => 100 },
     })
   : null
 
@@ -105,6 +108,7 @@ function getRedisLimiter(category: RateLimitCategory, janela: JanelaLimite, idx:
       limiter: Ratelimit.slidingWindow(janela.limit, `${janela.windowSec} s`),
       prefix: `ratelimit:${category}:${idx}`,
       analytics: false,
+      timeout: 1000, // Redis lento não pode segurar a rota: após 1s, libera a requisição
     })
     redisLimiters.set(key, rl)
   }
@@ -163,7 +167,12 @@ export async function checkRateLimit(category: RateLimitCategory, identifier: st
   } catch (err) {
     // Falha aberta: erro de infra no rate limiter não deve derrubar a rota
     logger.error(
-      { category, err: err instanceof Error ? { name: err.name, message: err.message } : String(err) },
+      {
+        category,
+        err: err instanceof Error
+          ? { name: err.name, message: err.message, cause: (err.cause as { code?: string } | undefined)?.code }
+          : String(err),
+      },
       'erro ao checar rate limit — liberando requisição (fail open)'
     )
     return { success: true, limit: 0, remaining: 0, reset: Date.now() }

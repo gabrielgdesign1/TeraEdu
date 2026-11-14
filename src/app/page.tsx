@@ -14,14 +14,17 @@ import {
   Target, Brain, Trophy, Zap, BookOpen, LayoutDashboard,
   GraduationCap, Flame, ChevronDown,
 } from "lucide-react"
+import { flutuar } from "@/lib/flutuar"
 
 /* ═══════════════════════════ helpers ═══════════════════════════ */
 
 const EASE = [0.22, 1, 0.36, 1] as const
 
+/* Entradas animam `transform` (string) em vez de `y`/`x`/`scale`: assim o framer-motion
+   usa WAAPI e a animação roda no compositor. Com `y`, ela roda em JS a cada quadro. */
 const inView = (delay = 0) => ({
-  initial: { opacity: 0, y: 28 },
-  whileInView: { opacity: 1, y: 0 },
+  initial: { opacity: 0, transform: 'translateY(28px)' },
+  whileInView: { opacity: 1, transform: 'translateY(0px)' },
   viewport: { once: true, margin: '-60px' },
   transition: { duration: 0.65, delay, ease: EASE },
 })
@@ -38,8 +41,8 @@ function LineReveal({ lines, delay = 0, className = '' }: {
         <span key={i} className="block overflow-hidden pb-[0.08em] -mb-[0.08em]">
           <motion.span
             className={`block ${l.className ?? ''}`}
-            initial={{ y: '110%', rotate: 2 }}
-            whileInView={{ y: 0, rotate: 0 }}
+            initial={{ transform: 'translateY(110%) rotate(2deg)' }}
+            whileInView={{ transform: 'translateY(0%) rotate(0deg)' }}
             viewport={{ once: true, margin: '-40px' }}
             transition={{ duration: 0.85, delay: delay + i * 0.09, ease: EASE }}
           >
@@ -89,7 +92,7 @@ function TiltCard({ children, className = '', tilt = 7, glow = true }: {
     <div style={{ perspective: 900 }} className={className}>
       <motion.div
         ref={ref}
-        className="relative h-full w-full will-change-transform"
+        className="relative h-full w-full"
         style={{ rotateX: rx, rotateY: ry, transformStyle: 'preserve-3d' }}
         onMouseMove={(e) => {
           const r = ref.current!.getBoundingClientRect()
@@ -152,7 +155,8 @@ function GlassPanel({ children, className = '', style }: {
 }) {
   return (
     <div
-      className={`rounded-2xl border border-border/60 bg-bg-card/80 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.12)] ${className}`}
+      // sem backdrop-blur: dentro da cena 3D que inclina ele era refeito a cada quadro
+      className={`rounded-2xl border border-border/60 bg-bg-card/95 shadow-[0_8px_32px_rgba(0,0,0,0.12)] ${className}`}
       style={style}
     >
       {children}
@@ -177,134 +181,128 @@ function HeroScene() {
   }, [rx, ry])
 
   return (
-    <div ref={ref} className="relative" style={{ perspective: 1600 }}>
+    <div ref={ref} className="relative">
+      {/* entrada (transform via WAAPI) separada da inclinação pelo mouse (rotateX/Y por spring) */}
       <motion.div
-        className="relative will-change-transform"
-        style={{ rotateX: rx, rotateY: ry, transformStyle: 'preserve-3d' }}
-        initial={{ opacity: 0, y: 60, scale: 0.9 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
+        style={{ perspective: 1600 }}
+        initial={{ opacity: 0, transform: 'translateY(60px) scale(0.9)' }}
+        animate={{ opacity: 1, transform: 'translateY(0px) scale(1)' }}
         transition={{ duration: 1.1, delay: 0.45, ease: EASE }}
       >
-        {/* glow de fundo */}
-        <div className="absolute -inset-16 bg-brand/15 blur-[110px] rounded-full pointer-events-none" style={{ transform: 'translateZ(-80px)' }} />
+        <motion.div
+          className="relative will-change-transform"
+          style={{ rotateX: rx, rotateY: ry, transformStyle: 'preserve-3d' }}
+        >
+          {/* glow de fundo */}
+          <div className="brilho [--brilho:0.13] absolute -inset-[284px] pointer-events-none" style={{ transform: 'translateZ(-80px)' }} />
 
-        {/* painel principal — mini dashboard */}
-        <GlassPanel className="relative w-[420px] max-w-full p-0 overflow-hidden !rounded-3xl" style={{ transform: 'translateZ(0px)' }}>
-          <div className="flex">
-            {/* mini sidebar glass — eco da sidebar do app */}
-            <div className="w-14 border-r border-border/50 py-4 flex flex-col items-center gap-1 bg-bg/40">
-              <Image src="/TeraEdu-logo-orange.png" alt="" width={20} height={20} className="mb-3" />
-              {[LayoutDashboard, FileQuestion, Layers, FileText, MessageCircle, GraduationCap].map((Icon, i) => (
-                <div key={i} className={`w-9 h-9 rounded-xl flex items-center justify-center ${i === 0 ? 'bg-brand/15 text-brand' : 'text-text-faint'}`}>
-                  <Icon size={14} />
+          {/* painel principal — mini dashboard */}
+          <GlassPanel className="relative w-[420px] max-w-full p-0 overflow-hidden !rounded-3xl" style={{ transform: 'translateZ(0px)' }}>
+            <div className="flex">
+              {/* mini sidebar glass — eco da sidebar do app */}
+              <div className="w-14 border-r border-border/50 py-4 flex flex-col items-center gap-1 bg-bg/40">
+                <Image src="/TeraEdu-logo-orange.webp" alt="" width={20} height={20} className="mb-3" />
+                {[LayoutDashboard, FileQuestion, Layers, FileText, MessageCircle, GraduationCap].map((Icon, i) => (
+                  <div key={i} className={`w-9 h-9 rounded-xl flex items-center justify-center ${i === 0 ? 'bg-brand/15 text-brand' : 'text-text-faint'}`}>
+                    <Icon size={14} />
+                  </div>
+                ))}
+                <div className="mt-auto w-7 h-7 rounded-full bg-brand flex items-center justify-center text-white text-[10px] font-bold">A</div>
+              </div>
+
+              {/* conteúdo */}
+              <div className="flex-1 p-5">
+                <p className="text-text-faint text-[10px] mb-0.5">Boa noite</p>
+                <p className="text-text font-bold text-lg leading-tight mb-4">Ana 👋</p>
+
+                <div className="flex gap-1.5 mb-4">
+                  {['Questões', 'Flashcards', 'Resumos'].map((t, i) => (
+                    <span key={t} className={`text-[9px] font-medium px-2.5 py-1 rounded-full ${i === 0 ? 'bg-brand text-white' : 'bg-bg-hover text-text-muted'}`}>{t}</span>
+                  ))}
                 </div>
-              ))}
-              <div className="mt-auto w-7 h-7 rounded-full bg-brand flex items-center justify-center text-white text-[10px] font-bold">A</div>
-            </div>
 
-            {/* conteúdo */}
-            <div className="flex-1 p-5">
-              <p className="text-text-faint text-[10px] mb-0.5">Boa noite</p>
-              <p className="text-text font-bold text-lg leading-tight mb-4">Ana 👋</p>
+                <div className="grid grid-cols-2 gap-2 mb-4">
+                  <div className="rounded-xl border border-border/60 p-3">
+                    <p className="text-text-faint text-[9px] mb-1">Questões resolvidas</p>
+                    <p className="text-text font-bold text-xl leading-none">128</p>
+                    <p className="text-brand text-[9px] mt-1 font-medium">+12 essa semana</p>
+                  </div>
+                  <div className="rounded-xl border border-border/60 p-3">
+                    <p className="text-text-faint text-[9px] mb-1">Sequência atual</p>
+                    <p className="text-text font-bold text-xl leading-none flex items-center gap-1">7 <Flame size={13} className="text-brand" /></p>
+                    <p className="text-brand text-[9px] mt-1 font-medium">Continue assim!</p>
+                  </div>
+                </div>
 
-              <div className="flex gap-1.5 mb-4">
-                {['Questões', 'Flashcards', 'Resumos'].map((t, i) => (
-                  <span key={t} className={`text-[9px] font-medium px-2.5 py-1 rounded-full ${i === 0 ? 'bg-brand text-white' : 'bg-bg-hover text-text-muted'}`}>{t}</span>
+                {[
+                  { m: 'Matemática', p: 72 },
+                  { m: 'Química',    p: 45 },
+                  { m: 'História',   p: 88 },
+                ].map((b, i) => (
+                  <div key={b.m} className="mb-2.5 last:mb-0">
+                    <div className="flex justify-between mb-1">
+                      <span className="text-text text-[10px] font-medium">{b.m}</span>
+                      <span className="text-text-faint text-[10px]">{b.p}%</span>
+                    </div>
+                    <div className="h-1 bg-bg-hover rounded-full overflow-hidden">
+                      {/* scaleX em vez de width: width refaz o layout a cada quadro */}
+                      <motion.div
+                        className="h-full bg-brand rounded-full origin-left"
+                        initial={{ transform: 'scaleX(0)' }}
+                        animate={{ transform: `scaleX(${b.p / 100})` }}
+                        transition={{ duration: 1.2, delay: 1 + i * 0.15, ease: EASE }}
+                      />
+                    </div>
+                  </div>
                 ))}
               </div>
+            </div>
+          </GlassPanel>
 
-              <div className="grid grid-cols-2 gap-2 mb-4">
-                <div className="rounded-xl border border-border/60 p-3">
-                  <p className="text-text-faint text-[9px] mb-1">Questões resolvidas</p>
-                  <p className="text-text font-bold text-xl leading-none">128</p>
-                  <p className="text-brand text-[9px] mt-1 font-medium">+12 essa semana</p>
+          {/* chip flutuante — IA Tutora (translateZ fora, flutuação dentro: um transform não pode sobrescrever o outro) */}
+          <div className="absolute -right-16 -top-10 w-56" style={{ transform: 'translateZ(90px)' }}>
+            <div className="flutuar" style={flutuar({ y: -10, dur: 5 })}>
+              <GlassPanel className="p-3.5">
+                <div className="flex items-center gap-2 mb-2.5">
+                  <div className="w-6 h-6 bg-brand rounded-lg flex items-center justify-center"><MessageCircle size={11} className="text-white" /></div>
+                  <span className="text-text text-[11px] font-semibold">IA Tutora</span>
+                  <span className="ml-auto w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
                 </div>
-                <div className="rounded-xl border border-border/60 p-3">
-                  <p className="text-text-faint text-[9px] mb-1">Sequência atual</p>
-                  <p className="text-text font-bold text-xl leading-none flex items-center gap-1">7 <Flame size={13} className="text-brand" /></p>
-                  <p className="text-brand text-[9px] mt-1 font-medium">Continue assim!</p>
+                <div className="bg-bg-hover rounded-xl rounded-tr-sm px-3 py-2 text-[10px] text-text mb-2 ml-6">Como resolvo função do 2° grau?</div>
+                <div className="border border-border/60 rounded-xl rounded-tl-sm px-3 py-2 text-[10px] text-text-muted mr-6">
+                  Vamos por partes! Primeiro identifique os coeficientes a, b e c…
                 </div>
-              </div>
-
-              {[
-                { m: 'Matemática', p: 72 },
-                { m: 'Química',    p: 45 },
-                { m: 'História',   p: 88 },
-              ].map((b, i) => (
-                <div key={b.m} className="mb-2.5 last:mb-0">
-                  <div className="flex justify-between mb-1">
-                    <span className="text-text text-[10px] font-medium">{b.m}</span>
-                    <span className="text-text-faint text-[10px]">{b.p}%</span>
-                  </div>
-                  <div className="h-1 bg-bg-hover rounded-full overflow-hidden">
-                    <motion.div
-                      className="h-full bg-brand rounded-full"
-                      initial={{ width: 0 }}
-                      animate={{ width: `${b.p}%` }}
-                      transition={{ duration: 1.2, delay: 1 + i * 0.15, ease: EASE }}
-                    />
-                  </div>
-                </div>
-              ))}
+              </GlassPanel>
             </div>
           </div>
-        </GlassPanel>
 
-        {/* chip flutuante — IA Tutora */}
-        <motion.div
-          className="absolute -right-16 -top-10 w-56"
-          style={{ transform: 'translateZ(90px)' }}
-          animate={{ y: [0, -10, 0] }}
-          transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
-        >
-          <GlassPanel className="p-3.5">
-            <div className="flex items-center gap-2 mb-2.5">
-              <div className="w-6 h-6 bg-brand rounded-lg flex items-center justify-center"><MessageCircle size={11} className="text-white" /></div>
-              <span className="text-text text-[11px] font-semibold">IA Tutora</span>
-              <span className="ml-auto w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
+          {/* chip flutuante — flashcard */}
+          <div className="absolute -left-20 bottom-8 w-48" style={{ transform: 'translateZ(70px)' }}>
+            <div className="flutuar" style={flutuar({ y: 9, r0: -2, r1: 1, dur: 6 })}>
+              <GlassPanel className="p-4 text-center">
+                <p className="text-text-faint text-[8px] uppercase tracking-widest mb-1.5">Flashcard · Biologia</p>
+                <p className="text-text text-[11px] font-semibold leading-snug">O que é fotossíntese?</p>
+                <p className="text-brand text-[9px] mt-2">Toque para revelar →</p>
+              </GlassPanel>
             </div>
-            <div className="bg-bg-hover rounded-xl rounded-tr-sm px-3 py-2 text-[10px] text-text mb-2 ml-6">Como resolvo função do 2° grau?</div>
-            <div className="border border-border/60 rounded-xl rounded-tl-sm px-3 py-2 text-[10px] text-text-muted mr-6">
-              Vamos por partes! Primeiro identifique os coeficientes a, b e c…
+          </div>
+
+          {/* chip flutuante — conquista */}
+          <div className="absolute -right-8 bottom-0" style={{ transform: 'translateZ(110px)' }}>
+            <div className="flutuar" style={flutuar({ y: -7, dur: 4.2, delay: 1 })}>
+              <GlassPanel className="px-3.5 py-2.5 flex items-center gap-2">
+                <Trophy size={13} className="text-brand" />
+                <span className="text-text text-[10px] font-semibold whitespace-nowrap">+80 pts no ENEM</span>
+              </GlassPanel>
             </div>
-          </GlassPanel>
-        </motion.div>
+          </div>
 
-        {/* chip flutuante — flashcard */}
-        <motion.div
-          className="absolute -left-20 bottom-8 w-48"
-          style={{ transform: 'translateZ(70px)' }}
-          animate={{ y: [0, 9, 0], rotate: [-2, 1, -2] }}
-          transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
-        >
-          <GlassPanel className="p-4 text-center">
-            <p className="text-text-faint text-[8px] uppercase tracking-widest mb-1.5">Flashcard · Biologia</p>
-            <p className="text-text text-[11px] font-semibold leading-snug">O que é fotossíntese?</p>
-            <p className="text-brand text-[9px] mt-2">Toque para revelar →</p>
-          </GlassPanel>
-        </motion.div>
-
-        {/* chip flutuante — conquista */}
-        <motion.div
-          className="absolute -right-8 bottom-0"
-          style={{ transform: 'translateZ(110px)' }}
-          animate={{ y: [0, -7, 0] }}
-          transition={{ duration: 4.2, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
-        >
-          <GlassPanel className="px-3.5 py-2.5 flex items-center gap-2">
-            <Trophy size={13} className="text-brand" />
-            <span className="text-text text-[10px] font-semibold whitespace-nowrap">+80 pts no ENEM</span>
-          </GlassPanel>
-        </motion.div>
-
-        {/* capelo 3D flutuando acima */}
-        <motion.div
-          className="absolute -top-32 -left-24 w-44 pointer-events-none"
-          style={{ transform: 'translateZ(140px)' }}
-          animate={{ y: [0, -14, 0], rotate: [-6, 2, -6] }}
-          transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut' }}
-        >
-          <Image src="/cap pngc render.png" alt="" width={280} height={280} className="w-full drop-shadow-2xl" priority />
+          {/* capelo 3D flutuando acima */}
+          <div className="absolute -top-32 -left-24 w-44 pointer-events-none" style={{ transform: 'translateZ(140px)' }}>
+            <div className="flutuar" style={flutuar({ y: -14, r0: -6, r1: 2, dur: 7 })}>
+              <Image src="/render-capelo.webp" alt="" width={280} height={280} className="w-full drop-shadow-2xl" priority />
+            </div>
+          </div>
         </motion.div>
       </motion.div>
     </div>
@@ -322,9 +320,7 @@ function MockChat() {
       </div>
       <div className="flex gap-1 pl-3 pt-0.5">
         {[0, 1, 2].map(i => (
-          <motion.span key={i} className="w-1 h-1 bg-brand rounded-full"
-            animate={{ opacity: [0.3, 1, 0.3] }}
-            transition={{ duration: 1, repeat: Infinity, delay: i * 0.2 }} />
+          <span key={i} className="piscar w-1 h-1 bg-brand rounded-full" style={{ animationDelay: `${i * 0.2}s` }} />
         ))}
       </div>
     </div>
@@ -349,19 +345,14 @@ function MockQuestao() {
 function MockFlashcard() {
   return (
     <div className="mt-auto" style={{ perspective: 500 }}>
-      <motion.div
-        className="relative h-20 w-full"
-        style={{ transformStyle: 'preserve-3d' }}
-        animate={{ rotateY: [0, 0, 180, 180, 360] }}
-        transition={{ duration: 7, repeat: Infinity, times: [0, 0.4, 0.5, 0.9, 1], ease: 'easeInOut' }}
-      >
+      <div className="virar-card relative h-20 w-full" style={{ transformStyle: 'preserve-3d' }}>
         <div className="absolute inset-0 rounded-xl border border-border/60 bg-bg-hover/50 flex items-center justify-center text-[11px] font-semibold text-text px-3 text-center" style={{ backfaceVisibility: 'hidden' }}>
           Capital da Revolução Francesa?
         </div>
         <div className="absolute inset-0 rounded-xl border border-brand/40 bg-brand/10 flex items-center justify-center text-[11px] font-semibold text-brand" style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}>
           Paris 🇫🇷
         </div>
-      </motion.div>
+      </div>
     </div>
   )
 }
@@ -419,14 +410,13 @@ export default function Home() {
 
   useEffect(() => setMounted(true), [])
 
-  /* progresso global de scroll */
+  /* progresso global de scroll — direto, sem useSpring: o spring roda JS a cada quadro
+     enquanto acomoda, e a barra já acompanha o scroll naturalmente */
   const { scrollYProgress } = useScroll()
-  const progressScale = useSpring(scrollYProgress, { stiffness: 120, damping: 24 })
 
   /* como funciona — trilho de progresso */
   const stepsRef = useRef<HTMLDivElement>(null)
   const { scrollYProgress: stepsProgress } = useScroll({ target: stepsRef, offset: ['start 0.75', 'end 0.45'] })
-  const railScale = useSpring(stepsProgress, { stiffness: 90, damping: 22 })
   const pencilRotate = useTransform(stepsProgress, [0, 1], [-10, 12])
   const pencilY = useTransform(stepsProgress, [0, 1], [30, -30])
 
@@ -451,19 +441,20 @@ export default function Home() {
       {/* barra de progresso de leitura */}
       <motion.div
         className="fixed top-0 left-0 right-0 h-[2.5px] bg-brand z-[60] origin-left"
-        style={{ scaleX: progressScale }}
+        style={{ scaleX: scrollYProgress }}
       />
 
       {/* ── NAVBAR — pill de vidro flutuante (eco da sidebar do app) ── */}
       <motion.nav
         className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[min(1080px,calc(100vw-24px))]"
-        initial={{ y: -70, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
+        initial={{ transform: 'translateY(-70px)', opacity: 0 }}
+        animate={{ transform: 'translateY(0px)', opacity: 1 }}
         transition={{ duration: 0.7, delay: 0.15, ease: EASE }}
       >
-        <div className="flex items-center justify-between gap-3 rounded-2xl border border-border/60 bg-bg-card/75 backdrop-blur-2xl px-4 py-2.5 shadow-[0_8px_32px_rgba(0,0,0,0.12)]">
+        {/* blur menor e fundo mais opaco: a navbar é fixa, então o blur é refeito a cada quadro de scroll */}
+        <div className="flex items-center justify-between gap-3 rounded-2xl border border-border/60 bg-bg-card/85 backdrop-blur-md px-4 py-2.5 shadow-[0_8px_32px_rgba(0,0,0,0.12)]">
           <Link href="/" className="flex items-center gap-2.5 flex-shrink-0 pl-1">
-            <Image src="/TeraEdu-logo-orange.png" alt="TeraEdu" width={24} height={24} />
+            <Image src="/TeraEdu-logo-orange.webp" alt="TeraEdu" width={24} height={24} />
             <span className="font-bold tracking-tight text-sm">TeraEdu</span>
           </Link>
 
@@ -522,15 +513,14 @@ export default function Home() {
 
         {/* grid de fundo + orbes */}
         <div className="hero-grid absolute inset-0 opacity-60 pointer-events-none" />
-        <motion.div
-          className="absolute top-[8%] left-[12%] w-72 h-72 bg-brand/10 rounded-full blur-[100px] pointer-events-none"
-          animate={{ x: [0, 40, 0], y: [0, -30, 0] }}
-          transition={{ duration: 14, repeat: Infinity, ease: 'easeInOut' }}
+        {/* orbes: mesmo centro e alcance de antes (w-72 blur-100 / w-96 blur-120), agora gradiente */}
+        <div
+          className="flutuar brilho [--brilho:0.065] absolute top-[8%] left-[12%] -mt-[196px] -ml-[196px] w-[680px] h-[680px] pointer-events-none"
+          style={flutuar({ x: 40, y: -30, dur: 14 })}
         />
-        <motion.div
-          className="absolute bottom-[20%] right-[8%] w-96 h-96 bg-brand/8 rounded-full blur-[120px] pointer-events-none"
-          animate={{ x: [0, -50, 0], y: [0, 40, 0] }}
-          transition={{ duration: 18, repeat: Infinity, ease: 'easeInOut' }}
+        <div
+          className="flutuar brilho [--brilho:0.058] absolute bottom-[20%] right-[8%] -mb-[238px] -mr-[238px] w-[860px] h-[860px] pointer-events-none"
+          style={flutuar({ x: -50, y: 40, dur: 18 })}
         />
 
         <div className="relative max-w-7xl mx-auto px-6 lg:px-10 w-full flex-1 grid lg:grid-cols-[46%_54%] items-center gap-12">
@@ -539,8 +529,8 @@ export default function Home() {
           <div className="relative z-20 py-14 lg:py-0">
             <motion.div
               className="inline-flex items-center gap-2 border border-border rounded-full px-4 py-1.5 mb-9 bg-bg-card/60 backdrop-blur-sm"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
+              initial={{ opacity: 0, transform: 'translateY(20px)' }}
+              animate={{ opacity: 1, transform: 'translateY(0px)' }}
               transition={{ duration: 0.6, delay: 0.35, ease: EASE }}
             >
               <span className="relative flex h-1.5 w-1.5">
@@ -564,8 +554,8 @@ export default function Home() {
 
             <motion.p
               className="text-text-muted text-lg leading-relaxed max-w-[400px] mb-10"
-              initial={{ opacity: 0, y: 24 }}
-              animate={{ opacity: 1, y: 0 }}
+              initial={{ opacity: 0, transform: 'translateY(24px)' }}
+              animate={{ opacity: 1, transform: 'translateY(0px)' }}
               transition={{ duration: 0.7, delay: 0.85, ease: EASE }}
             >
               O TeraEdu usa inteligência artificial para criar resumos, flashcards, explicar conteúdos e gerar questões personalizadas para o seu ritmo de estudo.
@@ -573,8 +563,8 @@ export default function Home() {
 
             <motion.div
               className="flex items-center gap-5 flex-wrap mb-6"
-              initial={{ opacity: 0, y: 24 }}
-              animate={{ opacity: 1, y: 0 }}
+              initial={{ opacity: 0, transform: 'translateY(24px)' }}
+              animate={{ opacity: 1, transform: 'translateY(0px)' }}
               transition={{ duration: 0.7, delay: 0.95, ease: EASE }}
             >
               <Magnetic>
@@ -614,13 +604,14 @@ export default function Home() {
           animate={{ opacity: 1 }}
           transition={{ delay: 1.6, duration: 0.8 }}
         >
-          <motion.div animate={{ y: [0, 6, 0] }} transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}>
+          <div className="flutuar" style={flutuar({ y: 6, dur: 1.8 })}>
             <ChevronDown size={18} className="text-text-faint" />
-          </motion.div>
+          </div>
         </motion.div>
 
         {/* ── carrossel de features ── */}
-        <div className="relative z-20 border-t border-border bg-bg/60 backdrop-blur-md overflow-hidden">
+        {/* sem backdrop-blur: com os orbes se movendo atrás, ele era refeito a cada quadro */}
+        <div className="relative z-20 border-t border-border bg-bg/85 overflow-hidden">
           <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-32 z-10 bg-gradient-to-r from-bg to-transparent" />
           <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-32 z-10 bg-gradient-to-l from-bg to-transparent" />
           <div className="animate-marquee flex">
@@ -654,15 +645,15 @@ export default function Home() {
 
             <motion.div
               className="absolute right-0 top-[-30px] z-[15] pointer-events-none w-[150px] md:w-[210px] lg:w-[250px]"
-              initial={{ opacity: 0, scale: 0.7, rotate: -20 }}
-              whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
+              initial={{ opacity: 0, transform: 'scale(0.7) rotate(-20deg)' }}
+              whileInView={{ opacity: 1, transform: 'scale(1) rotate(0deg)' }}
               viewport={{ once: true }}
               transition={{ duration: 0.9, ease: EASE }}
             >
-              <div className="absolute inset-0 bg-brand/10 blur-[60px] rounded-full" />
-              <motion.div animate={{ y: [0, -12, 0], rotate: [0, 4, 0] }} transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}>
-                <Image src="/atom png render.png" alt="" width={260} height={260} className="relative z-10 w-full drop-shadow-2xl" />
-              </motion.div>
+              <div className="brilho [--brilho:0.09] absolute -inset-[120px]" />
+              <div className="flutuar" style={flutuar({ y: -12, r1: 4, dur: 8 })}>
+                <Image src="/render-atomo.webp" alt="" width={260} height={260} className="relative z-10 w-full drop-shadow-2xl" />
+              </div>
             </motion.div>
 
             <motion.p className="text-text-muted max-w-sm mt-6 text-sm leading-relaxed relative z-[5]" {...inView(0.24)}>
@@ -689,8 +680,8 @@ export default function Home() {
               <motion.div
                 key={f.titulo}
                 className={`group ${f.span}`}
-                initial={{ opacity: 0, y: 40 }}
-                whileInView={{ opacity: 1, y: 0 }}
+                initial={{ opacity: 0, transform: 'translateY(40px)' }}
+                whileInView={{ opacity: 1, transform: 'translateY(0px)' }}
                 viewport={{ once: true, margin: '-40px' }}
                 transition={{ duration: 0.6, delay: (i % 3) * 0.08, ease: EASE }}
               >
@@ -730,7 +721,7 @@ export default function Home() {
             <div ref={stepsRef} className="relative pl-8 lg:pl-12">
               {/* trilho */}
               <div className="absolute left-0 top-6 bottom-6 w-px bg-border">
-                <motion.div className="absolute inset-x-0 top-0 bg-brand origin-top w-full h-full" style={{ scaleY: railScale }} />
+                <motion.div className="absolute inset-x-0 top-0 bg-brand origin-top w-full h-full" style={{ scaleY: stepsProgress }} />
               </div>
 
               {[
@@ -742,8 +733,8 @@ export default function Home() {
                 <motion.div
                   key={i}
                   className="relative flex items-start gap-6 lg:gap-10 py-9 border-b border-border last:border-0 group"
-                  initial={{ opacity: 0, x: -32 }}
-                  whileInView={{ opacity: 1, x: 0 }}
+                  initial={{ opacity: 0, transform: 'translateX(-32px)' }}
+                  whileInView={{ opacity: 1, transform: 'translateX(0px)' }}
                   viewport={{ once: true, margin: '-60px' }}
                   transition={{ duration: 0.6, delay: i * 0.08, ease: EASE }}
                 >
@@ -764,8 +755,8 @@ export default function Home() {
             {/* lápis 3D dirigido pelo scroll */}
             <div className="hidden lg:flex items-center justify-center sticky top-40">
               <motion.div className="relative" style={{ rotate: pencilRotate, y: pencilY }}>
-                <div className="absolute inset-0 bg-brand/10 blur-[80px] rounded-full" />
-                <Image src="/pencil png render.png" alt="" width={320} height={320} className="relative z-10 drop-shadow-2xl w-full" />
+                <div className="brilho [--brilho:0.1] absolute -inset-[155px]" />
+                <Image src="/render-lapis.webp" alt="" width={320} height={320} className="relative z-10 drop-shadow-2xl w-full" />
               </motion.div>
             </div>
           </div>
@@ -837,8 +828,8 @@ export default function Home() {
               <motion.div
                 key={d.nome}
                 className="bg-bg-card border border-border rounded-3xl p-6 flex flex-col gap-5"
-                initial={{ opacity: 0, y: 24 }}
-                whileInView={{ opacity: 1, y: 0 }}
+                initial={{ opacity: 0, transform: 'translateY(24px)' }}
+                whileInView={{ opacity: 1, transform: 'translateY(0px)' }}
                 viewport={{ once: true, margin: '-40px' }}
                 transition={{ duration: 0.5, delay: i * 0.08 }}
               >
@@ -863,8 +854,8 @@ export default function Home() {
         <div className="max-w-7xl mx-auto">
           <motion.div
             className="relative rounded-[2rem] overflow-hidden"
-            initial={{ opacity: 0, y: 40 }}
-            whileInView={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0, transform: 'translateY(40px)' }}
+            whileInView={{ opacity: 1, transform: 'translateY(0px)' }}
             viewport={{ once: true }}
             transition={{ duration: 0.7, ease: EASE }}
           >
@@ -881,24 +872,22 @@ export default function Home() {
 
             <div className="relative m-[1.5px] rounded-[calc(2rem-1.5px)] bg-bg-card overflow-hidden p-12 lg:p-24 text-center">
               <div className="absolute inset-0 bg-gradient-to-br from-brand/10 via-transparent to-transparent pointer-events-none" />
-              <div className="absolute -top-32 -right-32 w-96 h-96 bg-brand/10 rounded-full blur-[100px] pointer-events-none" />
+              <div className="brilho [--brilho:0.084] absolute -top-[328px] -right-[328px] w-[784px] h-[784px] pointer-events-none" />
 
               {/* capelo flutuando */}
-              <motion.div
-                className="absolute -left-8 bottom-[-40px] w-52 opacity-90 pointer-events-none hidden lg:block"
-                animate={{ y: [0, -16, 0], rotate: [-8, 0, -8] }}
-                transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut' }}
+              <div
+                className="flutuar absolute -left-8 bottom-[-40px] w-52 opacity-90 pointer-events-none hidden lg:block"
+                style={flutuar({ y: -16, r0: -8, r1: 0, dur: 7 })}
               >
-                <Image src="/cap pngc render.png" alt="" width={280} height={280} className="w-full drop-shadow-2xl" />
-              </motion.div>
+                <Image src="/render-capelo.webp" alt="" width={280} height={280} className="w-full drop-shadow-2xl" />
+              </div>
               {/* átomo flutuando */}
-              <motion.div
-                className="absolute -right-6 top-[-30px] w-44 opacity-90 pointer-events-none hidden lg:block"
-                animate={{ y: [0, 14, 0], rotate: [6, -4, 6] }}
-                transition={{ duration: 9, repeat: Infinity, ease: 'easeInOut' }}
+              <div
+                className="flutuar absolute -right-6 top-[-30px] w-44 opacity-90 pointer-events-none hidden lg:block"
+                style={flutuar({ y: 14, r0: 6, r1: -4, dur: 9 })}
               >
-                <Image src="/atom png render.png" alt="" width={240} height={240} className="w-full drop-shadow-2xl" />
-              </motion.div>
+                <Image src="/render-atomo.webp" alt="" width={240} height={240} className="w-full drop-shadow-2xl" />
+              </div>
 
               <div className="relative z-10">
                 <motion.p className="text-brand text-xs tracking-widest uppercase mb-6" {...inView()}>Comece hoje</motion.p>
@@ -940,7 +929,7 @@ export default function Home() {
       <footer className="py-10 px-6 lg:px-10 border-t border-border">
         <div className="max-w-7xl mx-auto flex items-center justify-between flex-wrap gap-4">
           <div className="flex items-center gap-2.5">
-            <Image src="/TeraEdu-logo-orange.png" alt="TeraEdu" width={22} height={22} />
+            <Image src="/TeraEdu-logo-orange.webp" alt="TeraEdu" width={22} height={22} />
             <span className="font-semibold tracking-tight">TeraEdu</span>
           </div>
           <p className="text-text-faint text-xs">© 2026 TeraEdu · Todos os direitos reservados</p>

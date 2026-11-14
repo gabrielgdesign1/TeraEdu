@@ -49,7 +49,7 @@ export default function RedefinirSenha() {
     <main className="min-h-dvh bg-bg flex items-center justify-center px-5 app-atmosphere">
       <div className="w-full max-w-[400px]">
         <div className="flex items-center gap-2.5 mb-10 justify-center">
-          <Image src="/TeraEdu-logo-orange.png" alt="TeraEdu" width={30} height={30} />
+          <Image src="/TeraEdu-logo-orange.webp" alt="TeraEdu" width={30} height={30} />
           <span className="text-text font-bold text-xl tracking-tight">TeraEdu</span>
         </div>
 

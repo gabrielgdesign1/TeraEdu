@@ -132,18 +132,17 @@ export function DashboardSidebar() {
       onMouseEnter={() => setExpanded(true)}
       onMouseLeave={() => setExpanded(false)}
     >
-      {/* ── Glass background ── */}
+      {/* ── Fundo ──
+          Sem backdrop-filter de propósito (aqui e nas barras do mobile): com o fundo já
+          ~90% opaco o blur quase não aparece, mas por ser fixo ele era refeito pela GPU a
+          cada quadro de scroll do conteúdo — e a cada quadro da animação de largura. */}
       <div
         className="absolute inset-0 rounded-2xl border border-border/50"
         style={isDark ? {
-          background: 'rgba(26,29,39,0.88)',
-          backdropFilter: 'blur(20px) saturate(1.4)',
-          WebkitBackdropFilter: 'blur(20px) saturate(1.4)',
+          background: 'rgba(26,29,39,0.96)',
           boxShadow: '0 8px 32px rgba(0,0,0,0.28), 0 1px 0 rgba(255,255,255,0.04) inset',
         } : {
-          background: 'rgba(255,255,255,0.92)',
-          backdropFilter: 'blur(20px) saturate(1.8)',
-          WebkitBackdropFilter: 'blur(20px) saturate(1.8)',
+          background: 'rgba(255,255,255,0.97)',
           boxShadow: '0 4px 24px rgba(0,0,0,0.10), 0 1px 0 rgba(255,255,255,0.8) inset',
         }}
       />
@@ -154,7 +153,7 @@ export function DashboardSidebar() {
         {/* Logo — logo no mesmo eixo central dos ícones (34px) */}
         <div className="flex items-center h-[68px] flex-shrink-0 overflow-hidden border-b border-border/30">
           <IconSlot width={ICON_SLOT + 8}>
-            <Image src="/TeraEdu-logo-orange.png" alt="TeraEdu" width={26} height={26} className="flex-shrink-0" />
+            <Image src="/TeraEdu-logo-orange.webp" alt="TeraEdu" width={26} height={26} className="flex-shrink-0" />
           </IconSlot>
           <SideLabel expanded={expanded} className="text-text font-bold tracking-tight text-base">
             TeraEdu
@@ -248,15 +247,7 @@ export function DashboardSidebar() {
       className="md:hidden fixed left-0 right-0 bottom-0 z-50 flex items-stretch justify-around border-t border-border/50"
       style={{
         paddingBottom: 'env(safe-area-inset-bottom)',
-        ...(isDark ? {
-          background: 'rgba(26,29,39,0.94)',
-          backdropFilter: 'blur(20px) saturate(1.4)',
-          WebkitBackdropFilter: 'blur(20px) saturate(1.4)',
-        } : {
-          background: 'rgba(255,255,255,0.94)',
-          backdropFilter: 'blur(20px) saturate(1.8)',
-          WebkitBackdropFilter: 'blur(20px) saturate(1.8)',
-        }),
+        background: isDark ? 'rgba(26,29,39,0.97)' : 'rgba(255,255,255,0.97)',
       }}
     >
       {MOBILE_QUICK_ITEMS.map(item => {
@@ -300,15 +291,7 @@ export function DashboardSidebar() {
       <div className="relative flex flex-col" style={{ maxHeight: '85vh' }}>
         <div
           className="absolute inset-0"
-          style={isDark ? {
-            background: 'rgba(26,29,39,0.97)',
-            backdropFilter: 'blur(20px) saturate(1.4)',
-            WebkitBackdropFilter: 'blur(20px) saturate(1.4)',
-          } : {
-            background: 'rgba(255,255,255,0.97)',
-            backdropFilter: 'blur(20px) saturate(1.8)',
-            WebkitBackdropFilter: 'blur(20px) saturate(1.8)',
-          }}
+          style={{ background: isDark ? 'rgba(26,29,39,0.98)' : 'rgba(255,255,255,0.98)' }}
         />
         <div className="relative z-10 flex flex-col overflow-y-auto" style={{ maxHeight: '85vh', paddingBottom: 'env(safe-area-inset-bottom)' }}>
           <div className="flex items-center justify-between px-5 py-4 border-b border-border/30 flex-shrink-0">

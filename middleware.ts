@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { getUserComLimite } from './src/lib/authComLimite'
 
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
@@ -25,11 +26,13 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  const { data: { user } } = await supabase.auth.getUser()
+  const { user, indisponivel } = await getUserComLimite(supabase)
 
   // Se não está logado e tenta acessar o dashboard, redireciona pro login
   if (!user && request.nextUrl.pathname.startsWith('/dashboard')) {
-    return NextResponse.redirect(new URL('/login', request.url))
+    const destino = new URL('/login', request.url)
+    if (indisponivel) destino.searchParams.set('erro', 'indisponivel')
+    return NextResponse.redirect(destino)
   }
 
   // Se está logado e tenta acessar o login, redireciona pro dashboard
