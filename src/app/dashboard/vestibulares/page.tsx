@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import {
-  ChevronDown, ExternalLink, Clock, DollarSign, CalendarDays, Info
+  ChevronDown, ExternalLink, Clock, DollarSign, CalendarDays, Info, ArrowRight
 } from 'lucide-react'
 import { DashboardSidebar } from '@/components/DashboardSidebar'
 
@@ -13,22 +13,27 @@ type Status =
   | 'em-breve'
   | 'abrindo-em-breve'
   | 'provas-em-breve'
+  | 'em-andamento'
   | 'encerrado'
   | 'aguardando-edital'
 
 type Link_ = { label: string; url: string }
+
+/** Etapa datada do processo seletivo. `prova` marca dias de aplicação de prova. */
+type Etapa = { data: string; label: string; prova?: boolean }
 
 type Vestibular = {
   id: string
   nome: string
   edicao: string
   instituicao: string
-  /** Fallback quando não há datas suficientes para calcular dinamicamente */
+  /** Usado quando não há datas de inscrição (ex: edital ainda não publicado) */
   statusFallback: Status
   /** Datas no formato YYYY-MM-DD para cálculo dinâmico */
   inscricaoInicioDate: string | null
   inscricaoFimDate: string | null
-  primeiraProvaDate: string | null
+  /** Todas as etapas datadas, passadas e futuras — a próxima é calculada no cliente */
+  cronograma: Etapa[]
   taxa: string | null
   inscricoes: { periodo: string } | null
   provas: string[]
@@ -42,29 +47,85 @@ type Vestibular = {
 
 const VESTIBULARES: Vestibular[] = [
   {
-    id: 'enem',
+    id: 'enem-2026',
     nome: 'ENEM',
     edicao: '2026',
     instituicao: 'Inep / Ministério da Educação',
-    statusFallback: 'provas-em-breve',
+    statusFallback: 'em-andamento',
     inscricaoInicioDate: '2026-05-25',
     inscricaoFimDate:    '2026-06-12',
-    primeiraProvaDate:   '2026-11-08',
+    cronograma: [
+      { data: '2026-11-08', label: '1º dia de prova', prova: true },
+      { data: '2026-11-15', label: '2º dia de prova', prova: true },
+      { data: '2026-11-18', label: 'Gabarito oficial' },
+      { data: '2027-01-18', label: 'Resultado individual (notas)' },
+    ],
     taxa: 'R$ 85,00',
     inscricoes: { periodo: '25/05/2026 – 12/06/2026' },
-    provas: ['08/11/2026 (1º dia)', '15/11/2026 (2º dia)'],
+    provas: ['08/11/2026 (1º dia — realizado)', '15/11/2026 (2º dia — realizado)'],
     fases: ['Dois domingos — sem 2ª fase'],
     destaques: [
-      'Linguagens, Códigos e suas Tecnologias',
-      'Ciências Humanas e suas Tecnologias',
-      'Ciências da Natureza e suas Tecnologias',
-      'Matemática e suas Tecnologias',
+      'Gabarito oficial: 18/11/2026 (antecipado pelo Inep)',
+      'Resultado individual: 18/01/2027, na Página do Participante',
+      'A nota do Enem 2026 é usada no Sisu, Prouni e Fies de 2027',
+      'Treineiros: data do resultado ainda não divulgada',
     ],
     links: [
       { label: 'Página oficial', url: 'https://www.gov.br/inep/pt-br/areas-de-atuacao/avaliacao-e-exames-educacionais/enem' },
       { label: 'Página do Participante', url: 'https://enem.inep.gov.br/participante/' },
     ],
-    obs: 'Inscrições encerradas em 12/06/2026.',
+    obs: 'A contagem de acertos no gabarito não é a nota: o Enem usa TRI, e a nota só sai no resultado oficial.',
+  },
+  {
+    id: 'enem-2027',
+    nome: 'ENEM',
+    edicao: '2027',
+    instituicao: 'Inep / Ministério da Educação',
+    statusFallback: 'aguardando-edital',
+    inscricaoInicioDate: null,
+    inscricaoFimDate:    null,
+    cronograma: [],
+    taxa: null,
+    inscricoes: null,
+    provas: ['Previsão: dois domingos de novembro de 2027'],
+    fases: ['Dois domingos — sem 2ª fase'],
+    destaques: [
+      'Edital ainda não publicado pelo Inep',
+      'Previsão (padrão dos últimos anos): pedido de isenção em abril',
+      'Previsão: edital em maio e inscrições do fim de maio a junho',
+      'Previsão: provas em dois domingos de novembro de 2027',
+    ],
+    links: [
+      { label: 'Página oficial', url: 'https://www.gov.br/inep/pt-br/areas-de-atuacao/avaliacao-e-exames-educacionais/enem' },
+      { label: 'Página do Participante', url: 'https://enem.inep.gov.br/participante/' },
+    ],
+    obs: 'Todas as datas acima são previsões baseadas nas edições anteriores, não datas oficiais. Em 2026 a taxa foi R$ 85,00. Não existe "inscrição antecipada" do Enem — inscreva-se só pelos canais oficiais, dentro do prazo do edital.',
+  },
+  {
+    id: 'sisu-2027',
+    nome: 'SISU',
+    edicao: '2027',
+    instituicao: 'Ministério da Educação',
+    statusFallback: 'aguardando-edital',
+    inscricaoInicioDate: null,
+    inscricaoFimDate:    null,
+    cronograma: [
+      { data: '2027-01-18', label: 'Resultado do Enem 2026 (nota usada no Sisu)' },
+    ],
+    taxa: 'Gratuito',
+    inscricoes: null,
+    provas: ['Sem prova própria — usa a nota do Enem 2026'],
+    fases: ['Inscrição online com a nota do Enem', 'Chamada regular', 'Lista de espera'],
+    destaques: [
+      'Edital ainda não publicado pelo MEC',
+      'Previsão: inscrições em janeiro de 2027, após o resultado do Enem',
+      'Em 2026: inscrições de 19 a 23/01 e resultado em 29/01',
+      'Vagas em universidades e institutos federais de todo o país',
+    ],
+    links: [
+      { label: 'Portal Acesso Único (MEC)', url: 'https://acessounico.mec.gov.br/sisu' },
+    ],
+    obs: 'Datas de inscrição são previsão baseada na edição de 2026. O calendário oficial sai no edital do MEC, publicado no Diário Oficial da União.',
   },
   {
     id: 'fuvest',
@@ -74,15 +135,22 @@ const VESTIBULARES: Vestibular[] = [
     statusFallback: 'em-breve',
     inscricaoInicioDate: '2026-08-17',
     inscricaoFimDate:    '2026-10-09',
-    primeiraProvaDate:   '2026-11-01',
+    cronograma: [
+      { data: '2026-11-01', label: '1ª fase', prova: true },
+      { data: '2026-11-23', label: 'Convocados para a 2ª fase e locais de prova' },
+      { data: '2026-12-06', label: '2ª fase — Português e Redação', prova: true },
+      { data: '2026-12-07', label: '2ª fase — disciplinas específicas', prova: true },
+      { data: '2026-12-08', label: 'Provas de competências específicas', prova: true },
+      { data: '2027-01-26', label: '1ª chamada' },
+    ],
     taxa: 'R$ 228,00',
     inscricoes: { periodo: '17/08/2026 – 09/10/2026' },
-    provas: ['01/11/2026 (1ª fase)', '06–07/12/2026 (2ª fase)'],
-    fases: ['1ª fase — 80 questões objetivas', '2ª fase — discursiva', 'Habilidades específicas (Música, Artes, Teatro)'],
+    provas: ['01/11/2026 (1ª fase — realizada)', '06–07/12/2026 (2ª fase)'],
+    fases: ['1ª fase — 80 questões objetivas', '2ª fase — discursiva', 'Habilidades específicas (Música, Artes Cênicas, Artes Visuais)'],
     destaques: [
-      '1ª fase: 01/11/2026',
-      'Divulgação convocados 2ª fase: 23/11/2026',
-      '2ª fase: 06 e 07/12/2026',
+      'Convocados para a 2ª fase e locais: 23/11/2026, a partir das 12h',
+      '2ª fase: 06/12 (Português e Redação) e 07/12/2026 (específicas)',
+      'Competências específicas: 08 a 11/12/2026',
       '1ª chamada: 26/01/2027',
     ],
     links: [
@@ -92,7 +160,6 @@ const VESTIBULARES: Vestibular[] = [
       { label: 'Programa do vestibular', url: 'https://www.fuvest.br/wp-content/uploads/fuvest2027-programa-vestibular.pdf' },
       { label: 'Provas anteriores', url: 'https://www.fuvest.br/acervo-vestibular/' },
     ],
-    obs: 'Isenção: 11/05/2026 – 10/07/2026.',
   },
   {
     id: 'unicamp',
@@ -101,23 +168,28 @@ const VESTIBULARES: Vestibular[] = [
     instituicao: 'Comvest / Unicamp',
     statusFallback: 'em-breve',
     inscricaoInicioDate: '2026-08-03',
-    inscricaoFimDate:    '2026-08-31',
-    primeiraProvaDate:   '2026-10-18',
-    taxa: 'A confirmar no edital',
-    inscricoes: { periodo: '03/08/2026 – 31/08/2026' },
-    provas: ['18/10/2026 (1ª fase)', '29–30/11/2026 (2ª fase)'],
+    inscricaoFimDate:    '2026-09-08',
+    cronograma: [
+      { data: '2026-10-18', label: '1ª fase', prova: true },
+      { data: '2026-11-29', label: '2ª fase — 1º dia', prova: true },
+      { data: '2026-11-30', label: '2ª fase — 2º dia', prova: true },
+      { data: '2026-12-02', label: 'Provas de habilidades específicas', prova: true },
+      { data: '2027-01-25', label: '1ª lista de convocados' },
+    ],
+    taxa: 'R$ 230,00',
+    inscricoes: { periodo: '03/08/2026 – 08/09/2026 (prorrogado)' },
+    provas: ['18/10/2026 (1ª fase — realizada)', '29–30/11/2026 (2ª fase, às 9h)'],
     fases: ['1ª fase', '2ª fase', 'Habilidades específicas (Música, Artes Cênicas, Artes Visuais, Dança)'],
     destaques: [
-      '1ª fase: 18/10/2026',
-      '2ª fase: 29 e 30/11/2026',
-      'Habilidades específicas: 02–04/12/2026',
-      '1ª chamada: 25/01/2027',
+      '2ª fase: 29 e 30/11/2026, com início às 9h',
+      'Habilidades específicas: 02 a 04/12/2026',
+      '1ª lista de convocados: 25/01/2027',
     ],
     links: [
       { label: 'Página oficial', url: 'https://www.comvest.unicamp.br/' },
       { label: 'Vestibular Unicamp 2027', url: 'https://www.comvest.unicamp.br/ingresso-2027/vestibular-2027/' },
     ],
-    obs: 'Taxa da edição 2027 ainda a confirmar no edital oficial.',
+    obs: 'As inscrições, previstas até 31/08, foram prorrogadas até 08/09/2026.',
   },
   {
     id: 'unesp',
@@ -126,24 +198,30 @@ const VESTIBULARES: Vestibular[] = [
     instituicao: 'Fundação Vunesp / Unesp',
     statusFallback: 'em-breve',
     inscricaoInicioDate: '2026-09-04',
-    inscricaoFimDate:    '2026-10-20',
-    primeiraProvaDate:   '2026-11-22',
-    taxa: 'A confirmar no manual',
-    inscricoes: { periodo: '04/09/2026 – 20/10/2026' },
-    provas: ['22/11/2026 (1ª fase)', '13–14/12/2026 (2ª fase)'],
-    fases: ['1ª fase', '2ª fase'],
+    inscricaoFimDate:    '2026-10-26',
+    cronograma: [
+      { data: '2026-11-22', label: '1ª fase', prova: true },
+      { data: '2026-12-13', label: '2ª fase — 1º dia', prova: true },
+      { data: '2026-12-14', label: '2ª fase — 2º dia', prova: true },
+      { data: '2027-01-27', label: 'Resultado final e 1ª convocação' },
+      { data: '2027-01-28', label: 'Matrícula virtual (até 01/02)' },
+    ],
+    taxa: 'R$ 225,00 (R$ 56,25 para concluintes do EM público paulista)',
+    inscricoes: { periodo: '04/09/2026 – 26/10/2026 (prorrogado)' },
+    provas: ['22/11/2026 (1ª fase — 90 questões)', '13–14/12/2026 (2ª fase)'],
+    fases: ['1ª fase — 90 questões objetivas', '2ª fase — questões dissertativas e redação'],
     destaques: [
-      '1ª fase: 22/11/2026',
-      '2ª fase: 13 e 14/12/2026',
-      'Resultado final / 1ª chamada: 29/01/2027',
-      '24 cidades com cursos da Unesp em SP',
+      '5.850 vagas em 137 cursos, em 24 cidades de SP',
+      '1ª fase aplicada em 35 cidades',
+      'Resultado final e 1ª convocação: 27/01/2027',
+      'Unesp-Enem 2027 (usa a nota do Enem): inscrições de 23/11/2026 a 14/01/2027',
     ],
     links: [
       { label: 'Vunesp — Vestibular Unesp 2027', url: 'https://www.vunesp.com.br/VNSP2514' },
       { label: 'Portal Vestibular Unesp', url: 'https://vestibular.unesp.br/' },
       { label: 'Portal Vunesp', url: 'https://www.vunesp.com.br/' },
     ],
-    obs: 'Taxa e manual completo a confirmar quando publicados pela Vunesp.',
+    obs: 'Taxa com redução de 50%: R$ 112,50. Matrícula virtual de 28/01 a 01/02/2027.',
   },
   {
     id: 'uerj',
@@ -151,148 +229,195 @@ const VESTIBULARES: Vestibular[] = [
     edicao: '2027',
     instituicao: 'Departamento de Seleção Acadêmica da UERJ',
     statusFallback: 'provas-em-breve',
-    // 1º EQ já ocorreu; 2º EQ previsto para 2º sem 2026 — sem data exata publicada
-    inscricaoInicioDate: null,
-    inscricaoFimDate:    '2026-05-07',
-    primeiraProvaDate:   '2026-06-07',
-    taxa: 'R$ 100,00 (1º EQ)',
-    inscricoes: { periodo: 'Até 07/05/2026 (1º EQ — encerrado)' },
-    provas: ['07/06/2026 (1º EQ — realizado)', '2º EQ — 2º sem. 2026', 'Exame Discursivo — a confirmar'],
+    // período de inscrição do Exame Discursivo (os dois Exames de Qualificação já passaram)
+    inscricaoInicioDate: '2026-09-12',
+    inscricaoFimDate:    '2026-10-08',
+    cronograma: [
+      { data: '2026-06-07', label: '1º Exame de Qualificação', prova: true },
+      { data: '2026-09-06', label: '2º Exame de Qualificação', prova: true },
+      { data: '2026-11-29', label: 'Exame Discursivo', prova: true },
+      { data: '2026-12-18', label: 'Listagem de notas do Exame Discursivo' },
+      { data: '2027-01-14', label: 'Resultado final' },
+    ],
+    taxa: 'R$ 120,00 (Exame Discursivo)',
+    inscricoes: { periodo: '12/09/2026 – 08/10/2026 (Exame Discursivo)' },
+    provas: ['07/06 e 06/09/2026 (Exames de Qualificação — realizados)', '29/11/2026 (Exame Discursivo)'],
     fases: ['1º Exame de Qualificação', '2º Exame de Qualificação', 'Exame Discursivo (80 pts)'],
     destaques: [
-      '1º EQ realizado em 07/06/2026 — Livro: "Ainda estou aqui"',
-      '2º EQ: 2º semestre de 2026 — Livro: "O Cortiço"',
-      'Exame Discursivo: obra "O bem-amado"',
-      'Redação usa "Luanda, Lisboa, Paraíso"',
+      'Exame Discursivo: 29/11/2026 — redação + duas provas específicas do curso',
+      'Listagem de notas: 18/12/2026',
+      'Resultado final: 14/01/2027',
+      'Obras: "O Cortiço" (2º EQ), "O bem-amado" (Discursivo); redação com "Luanda, Lisboa, Paraíso"',
     ],
     links: [
       { label: 'Site oficial Vestibular UERJ', url: 'https://www.vestibular.uerj.br/' },
       { label: 'Sistemas candidato', url: 'https://sistemas.vestibular.uerj.br/' },
       { label: 'Questões comentadas', url: 'https://www.revista.vestibular.uerj.br/questao/' },
     ],
-    obs: '2º EQ e Exame Discursivo com datas a confirmar no site oficial.',
+    obs: 'Só faz o Exame Discursivo quem foi aprovado (acima de 40%) em pelo menos um dos Exames de Qualificação. Resultado do 2º EQ saiu em 12/09/2026.',
   },
   {
     id: 'unb',
     nome: 'UnB',
-    edicao: '2026',
+    edicao: '2027',
     instituicao: 'Cebraspe / Universidade de Brasília',
-    statusFallback: 'aguardando-edital',
-    inscricaoInicioDate: '2025-08-15',
-    inscricaoFimDate:    '2025-09-05',
-    primeiraProvaDate:   '2025-11-22',
-    taxa: 'R$ 173,00 (edição 2026)',
-    inscricoes: { periodo: '15/08/2025 – 05/09/2025 (edição 2026)' },
-    provas: ['22–23/11/2025 (edição 2026)'],
+    statusFallback: 'em-breve',
+    inscricaoInicioDate: '2026-08-28',
+    inscricaoFimDate:    '2026-09-21',
+    cronograma: [
+      { data: '2026-11-21', label: '1º dia de prova', prova: true },
+      { data: '2026-11-22', label: '2º dia de prova', prova: true },
+      { data: '2026-12-16', label: 'Gabaritos oficiais definitivos' },
+      { data: '2027-02-12', label: 'Resultado final e 1ª chamada' },
+    ],
+    taxa: 'R$ 173,00',
+    inscricoes: { periodo: '28/08/2026 – 21/09/2026 (prorrogado)' },
+    provas: ['21–22/11/2026'],
     fases: ['Provas em dois dias — modelo Cebraspe', 'Redação em Língua Portuguesa'],
     destaques: [
-      'Edição 2027 ainda sem edital publicado',
-      '2.102 vagas na edição 2026',
-      'Modelo Cebraspe — não é A/B/C/D/E tradicional',
-      'Aplicação no DF e cidades próximas',
+      '1.074 vagas para ingresso no 2º semestre de 2027',
+      'Campi Darcy Ribeiro, Ceilândia, Gama e Planaltina',
+      'Gabaritos definitivos: 16/12/2026',
+      'Resultado final e 1ª chamada: 12/02/2027',
     ],
     links: [
-      { label: 'Cebraspe — Vestibular UnB 2026', url: 'https://www.cebraspe.org.br/vestibulares/VESTUNB_26' },
+      { label: 'Cebraspe — Vestibular UnB 2027', url: 'https://www.cebraspe.org.br/vestibulares/VESTUNB_27' },
       { label: 'Vestibulares Cebraspe', url: 'https://www.cebraspe.org.br/vestibulares/' },
     ],
-    obs: 'Dados da edição 2026 como referência. Edital 2027 ainda não publicado.',
+    obs: 'Modelo Cebraspe: itens de certo/errado, em que a resposta errada desconta pontos. Pagamento da taxa foi prorrogado até 15/10/2026.',
   },
   {
     id: 'ufg',
     nome: 'UFG',
     edicao: '2027',
     instituicao: 'Instituto Verbena / UFG',
-    statusFallback: 'inscricoes-abertas',
+    statusFallback: 'em-breve',
     inscricaoInicioDate: '2026-06-26',
     inscricaoFimDate:    '2026-08-07',
-    primeiraProvaDate:   '2026-09-27',
+    cronograma: [
+      { data: '2026-09-27', label: 'Prova objetiva e redação', prova: true },
+      { data: '2026-12-07', label: 'Resultado preliminar do processo seletivo' },
+      { data: '2026-12-11', label: 'Resultado final' },
+      { data: '2026-12-15', label: '1ª chamada' },
+      { data: '2026-12-17', label: 'Envio de documentos da 1ª chamada (até 15/01)' },
+    ],
     taxa: 'R$ 130,00',
     inscricoes: { periodo: '26/06/2026 – 07/08/2026' },
-    provas: ['27/09/2026 (objetiva + redação)'],
+    provas: ['27/09/2026 (objetiva + redação — realizada)'],
     fases: ['Fase única — 96 questões objetivas + redação'],
     destaques: [
-      'Gabarito preliminar: 28/09/2026',
+      'Resultado preliminar: 07/12/2026',
       'Resultado final: 11/12/2026',
       '1ª chamada: 15/12/2026',
-      '2.357 vagas — Goiânia e cidades GO',
+      'Envio de documentos: 17/12/2026 a 15/01/2027',
     ],
     links: [
       { label: 'Vestibular UFG 2027', url: 'https://sistemas.institutoverbena.ufg.br/2026/vestibular-ufg/' },
       { label: 'Portal do Candidato', url: 'https://sistemas.institutoverbena.ufg.br/portal/login' },
       { label: 'Edital de abertura', url: 'https://sistemas.institutoverbena.ufg.br/2026/vestibular-ufg/sistema/arquivos/editais/VESTIBULAR_UFG_2027_EDITAL_.pdf' },
     ],
+    obs: '2.357 vagas em Goiânia e cidades de GO.',
   },
   {
     id: 'ufpr',
     nome: 'UFPR',
     edicao: '2027',
     instituicao: 'Núcleo de Concursos da UFPR',
-    statusFallback: 'inscricoes-abertas',
+    statusFallback: 'em-breve',
     inscricaoInicioDate: '2026-05-18',
     inscricaoFimDate:    '2026-07-20',
-    primeiraProvaDate:   '2026-11-01',
+    cronograma: [
+      { data: '2026-11-01', label: 'Prova objetiva e discursiva', prova: true },
+      { data: '2026-11-23', label: 'Gabarito definitivo (18h)' },
+      { data: '2026-11-25', label: 'Lista de candidatos com a discursiva corrigida' },
+      { data: '2026-12-14', label: 'Notas da prova discursiva' },
+      { data: '2027-01-15', label: 'Resultado final (14h)' },
+    ],
     taxa: 'R$ 180,00',
     inscricoes: { periodo: '18/05/2026 – 20/07/2026' },
-    provas: ['01/11/2026 (objetiva + discursiva)', '02/11/2026 (Música)'],
+    provas: ['01/11/2026 (objetiva + discursiva — realizada)', '02/11/2026 (Música — realizada)'],
     fases: ['Fase única — 80 questões objetivas + 2 discursivas'],
     destaques: [
-      'Aplicação em 12 cidades: Curitiba, Londrina, Maringá, Joinville/SC…',
-      'Resultado preliminar das inscrições: 14/08/2026',
-      'Isenção: até 15/06/2026',
-      'Atendimento especializado: até 21/07/2026',
+      'Gabarito definitivo: 23/11/2026, a partir das 18h',
+      'Lista de discursivas corrigidas: 25/11/2026',
+      'Notas da discursiva: 14/12/2026',
+      'Resultado final: 15/01/2027, a partir das 14h',
     ],
     links: [
       { label: 'Vestibular UFPR 2027', url: 'https://servicos.nc.ufpr.br/PortalNC/Concurso?concurso=PS2027' },
       { label: 'Portal do Candidato', url: 'https://servicos.nc.ufpr.br/PortalNC/Login' },
       { label: 'Núcleo de Concursos', url: 'https://www.nc.ufpr.br/' },
     ],
+    obs: 'Primeira edição em fase única. Aplicada em 12 cidades: Curitiba, Londrina, Maringá, Joinville/SC e outras.',
   },
   {
     id: 'ita',
     nome: 'ITA',
     edicao: '2027',
     instituicao: 'Instituto Tecnológico de Aeronáutica',
-    statusFallback: 'inscricoes-abertas',
+    statusFallback: 'em-breve',
     inscricaoInicioDate: '2026-06-02',
     inscricaoFimDate:    '2026-07-12',
-    primeiraProvaDate:   '2026-09-27',
+    cronograma: [
+      { data: '2026-09-27', label: '1ª fase', prova: true },
+      { data: '2026-10-20', label: '2ª fase — Matemática', prova: true },
+      { data: '2026-10-21', label: '2ª fase — Química', prova: true },
+      { data: '2026-10-22', label: '2ª fase — Física', prova: true },
+      { data: '2026-10-23', label: '2ª fase — Português', prova: true },
+      { data: '2026-11-18', label: 'Médias preliminares da 2ª fase' },
+      { data: '2026-12-08', label: 'Classificação final e convocação para a 3ª fase' },
+      { data: '2027-01-10', label: 'Apresentação para a inspeção de saúde' },
+      { data: '2027-01-11', label: 'Inspeção de saúde (até 15/01)' },
+      { data: '2027-01-18', label: 'Resultado da inspeção de saúde' },
+    ],
     taxa: 'R$ 195,00',
     inscricoes: { periodo: '02/06/2026 – 12/07/2026' },
-    provas: ['27/09/2026 (1ª fase)', '20–23/10/2026 (2ª fase)'],
-    fases: ['1ª fase — exame objetivo (13h–18h)', '2ª fase — provas dissertativas por disciplina', '3ª fase — inspeção de saúde'],
+    provas: ['27/09/2026 (1ª fase — realizada)', '20–23/10/2026 (2ª fase — realizada)'],
+    fases: ['1ª fase — exame objetivo', '2ª fase — provas dissertativas por disciplina (80% da média)', '3ª fase — inspeção de saúde'],
     destaques: [
-      '2ª fase: 20/10 Matemática, 21/10 Química, 22/10 Física, 23/10 Português',
-      'Cartão/local divulgado: 21/09/2026',
-      'Pagamento via PagTesouro (PIX ou cartão)',
+      'Médias preliminares da 2ª fase: 18/11/2026 (recursos até 19/11)',
+      'Classificação final e convocação para a 3ª fase: 08/12/2026',
+      'Envio de documentos: 08/12/2026 a 07/01/2027',
+      'Inspeção de saúde: 11 a 15/01/2027 (apresentação em 10/01)',
     ],
     links: [
       { label: 'Página oficial ITA', url: 'https://www.vestibular.ita.br/' },
       { label: 'Edital ITA 2027', url: 'https://vestibular.ita.br/instrucoes/edital_2027.pdf' },
       { label: 'Provas anteriores', url: 'https://vestibular.ita.br/provas.htm' },
     ],
+    obs: 'A média final pesa 20% a 1ª fase e 80% a 2ª fase.',
   },
   {
     id: 'ime',
     nome: 'IME',
     edicao: '2026/2027',
     instituicao: 'Instituto Militar de Engenharia / Exército Brasileiro',
-    statusFallback: 'inscricoes-abertas',
+    statusFallback: 'em-breve',
     inscricaoInicioDate: '2026-05-27',
     inscricaoFimDate:    '2026-07-08',
-    primeiraProvaDate:   '2026-09-20',
+    cronograma: [
+      { data: '2026-09-20', label: '1ª fase', prova: true },
+      { data: '2026-10-26', label: '2ª fase — Matemática', prova: true },
+      { data: '2026-10-27', label: '2ª fase — Física', prova: true },
+      { data: '2026-10-28', label: '2ª fase — Química', prova: true },
+      { data: '2026-10-29', label: '2ª fase — Português e Inglês', prova: true },
+      { data: '2026-12-07', label: 'Lista de aprovados (previsão)' },
+      { data: '2027-02-12', label: 'Matrícula (previsão)' },
+    ],
     taxa: 'R$ 140,00',
     inscricoes: { periodo: '27/05/2026 – 08/07/2026' },
-    provas: ['20/09/2026 (1ª fase)', '26–29/10/2026 (2ª fase discursiva)'],
+    provas: ['20/09/2026 (1ª fase — realizada)', '26–29/10/2026 (2ª fase discursiva — realizada)'],
     fases: ['Exame intelectual', 'Inspeção de saúde', 'Exame de aptidão física', 'Avaliação psicológica'],
     destaques: [
+      'Lista de aprovados: prevista até 07/12/2026 (lista final até 22/12)',
+      'Matrícula: prevista para 12/02/2027',
       '100 vagas: 70 Ativa + 30 Reserva',
-      'Isenção: 01/06 – 05/06/2026',
-      'Pagamento: até 09/07/2026',
     ],
     links: [
       { label: 'Portal de inscrição IME', url: 'https://inscricoes.ime.eb.br/cfg/' },
       { label: 'Portal concursos IME', url: 'https://www.ime.eb.mil.br/component/banners/click/6' },
     ],
+    obs: 'Datas de resultado e matrícula vêm de cronogramas de cursinhos — confirme no edital do IME.',
   },
 ]
 
@@ -306,12 +431,50 @@ type StatusInfo = {
   dot: string
 }
 
+type Proxima = { etapa: Etapa; dias: number }
+
+function inicioDoDia(d: Date) {
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate())
+}
+
+function diffDias(a: Date, b: Date) {
+  return Math.round((inicioDoDia(b).getTime() - inicioDoDia(a).getTime()) / 86400000)
+}
+
+/** 'YYYY-MM-DD' → Date local (sem o deslocamento de fuso de `new Date('YYYY-MM-DD')`) */
+function paraData(iso: string) {
+  const [a, m, d] = iso.split('-').map(Number)
+  return new Date(a, m - 1, d)
+}
+
+function formatarData(iso: string) {
+  const [a, m, d] = iso.split('-')
+  return `${d}/${m}/${a}`
+}
+
+/** "hoje", "amanhã" ou "em X dias" */
+function quando(dias: number) {
+  if (dias === 0) return 'hoje'
+  if (dias === 1) return 'amanhã'
+  return `em ${dias} dias`
+}
+
+/** Próxima etapa ainda por acontecer (inclui a de hoje), ou null se o cronograma acabou. */
+function proximaEtapa(v: Vestibular, hoje: Date): Proxima | null {
+  const futuras = v.cronograma
+    .map(etapa => ({ etapa, dias: diffDias(hoje, paraData(etapa.data)) }))
+    .filter(p => p.dias >= 0)
+    .sort((a, b) => a.dias - b.dias)
+  return futuras[0] ?? null
+}
+
 function calcularStatus(v: Vestibular, hoje: Date): StatusInfo {
   const cfg: Record<Status, { label: string; color: string; dot: string }> = {
     'inscricoes-abertas': { label: 'Inscrições abertas',  color: 'bg-green-500/10 text-green-600 border-green-500/30',     dot: 'bg-green-500'   },
     'em-breve':           { label: 'Em breve',             color: 'bg-blue-500/10 text-blue-600 border-blue-500/30',       dot: 'bg-blue-500'    },
     'abrindo-em-breve':   { label: 'Abrindo em breve',    color: 'bg-amber-500/10 text-amber-600 border-amber-500/30',     dot: 'bg-amber-500'   },
     'provas-em-breve':    { label: 'Provas em breve',      color: 'bg-brand/10 text-brand border-brand/30',                dot: 'bg-brand'       },
+    'em-andamento':       { label: 'Em andamento',         color: 'bg-sky-500/10 text-sky-600 border-sky-500/30',          dot: 'bg-sky-500'     },
     'encerrado':          { label: 'Encerrado',            color: 'bg-zinc-500/10 text-text-muted border-zinc-500/20',     dot: 'bg-zinc-400'    },
     'aguardando-edital':  { label: 'Aguardando edital',   color: 'bg-purple-500/10 text-purple-600 border-purple-500/30', dot: 'bg-purple-500'  },
   }
@@ -320,44 +483,36 @@ function calcularStatus(v: Vestibular, hoje: Date): StatusInfo {
     return { status: s, diasLabel, ...cfg[s] }
   }
 
-  function diffDias(a: Date, b: Date) {
-    return Math.ceil((b.getTime() - a.getTime()) / 86400000)
-  }
+  const { inscricaoInicioDate, inscricaoFimDate } = v
 
-  const { inscricaoInicioDate, inscricaoFimDate, primeiraProvaDate } = v
-
-  // Sem datas suficientes: usa fallback
+  // Sem datas de inscrição (edital não publicado): usa fallback
   if (!inscricaoFimDate) return make(v.statusFallback)
 
-  const fim   = new Date(inscricaoFimDate + 'T23:59:59')
-  const prova = primeiraProvaDate ? new Date(primeiraProvaDate + 'T08:00:00') : null
+  const fim = paraData(inscricaoFimDate)
 
-  // Inscrições já fecharam
-  if (hoje > fim) {
-    // Se tem prova futura: "provas em breve"
-    if (prova && hoje < prova) {
-      const d = diffDias(hoje, prova)
-      return make('provas-em-breve', `Prova em ${d} dia${d !== 1 ? 's' : ''}`)
+  // Inscrições já fecharam: o status vem da próxima etapa do cronograma
+  if (diffDias(hoje, fim) < 0) {
+    const prox = proximaEtapa(v, hoje)
+    if (!prox) return make('encerrado')
+    if (prox.etapa.prova) {
+      return make('provas-em-breve', prox.dias === 0 ? 'Prova hoje!' : `Prova ${quando(prox.dias)}`)
     }
-    // UERJ/UnB com fallback especial
-    if (v.statusFallback === 'aguardando-edital') return make('aguardando-edital')
-    if (v.statusFallback === 'provas-em-breve')   return make('provas-em-breve', '2º EQ a confirmar')
-    return make('encerrado')
+    return make('em-andamento', `Próxima etapa ${quando(prox.dias)}`)
   }
 
-  const inicio = inscricaoInicioDate ? new Date(inscricaoInicioDate + 'T00:00:00') : null
+  const inicio = inscricaoInicioDate ? paraData(inscricaoInicioDate) : null
 
   // Inscrições ainda não abriram
-  if (inicio && hoje < inicio) {
+  if (inicio && diffDias(hoje, inicio) > 0) {
     const d = diffDias(hoje, inicio)
-    if (d <= 7) return make('abrindo-em-breve', `Abre em ${d} dia${d !== 1 ? 's' : ''}`)
+    if (d <= 7) return make('abrindo-em-breve', `Abre ${quando(d)}`)
     return make('em-breve', `Abre em ${d} dias`)
   }
 
   // Estamos dentro do período de inscrição
   const d = diffDias(hoje, fim)
   if (d === 0) return make('inscricoes-abertas', 'Fecha hoje!')
-  return make('inscricoes-abertas', `Fecha em ${d} dia${d !== 1 ? 's' : ''}`)
+  return make('inscricoes-abertas', `Fecha ${quando(d)}`)
 }
 
 // ─── Filtros ──────────────────────────────────────────────────────────────────
@@ -368,6 +523,7 @@ const FILTROS: { id: Status | 'todos'; label: string }[] = [
   { id: 'abrindo-em-breve',  label: 'Abrindo em breve'    },
   { id: 'em-breve',          label: 'Em breve'             },
   { id: 'provas-em-breve',   label: 'Provas em breve'      },
+  { id: 'em-andamento',      label: 'Em andamento'         },
   { id: 'encerrado',         label: 'Encerradas'           },
   { id: 'aguardando-edital', label: 'Aguardando edital'    },
 ]
@@ -385,11 +541,13 @@ export default function Vestibulares() {
   const [filtro,    setFiltro   ] = useState<Status | 'todos'>('todos')
   const [expandido, setExpandido] = useState<string | null>(null)
 
-  // Calcula status de cada vestibular (só no cliente)
+  // Calcula status e próxima etapa de cada vestibular (só no cliente)
   const statusMap: Record<string, StatusInfo> = {}
+  const proximaMap: Record<string, Proxima | null> = {}
   if (hoje) {
     for (const v of VESTIBULARES) {
       statusMap[v.id] = calcularStatus(v, hoje)
+      proximaMap[v.id] = proximaEtapa(v, hoje)
     }
   }
 
@@ -408,7 +566,7 @@ export default function Vestibulares() {
       <main className="flex-1 min-w-0 ml-0 md:ml-20 px-4 md:px-10 py-6 md:py-10 pb-24 md:pb-10">
         <div className="mb-6">
           <h1 className="text-text text-2xl font-bold tracking-tight mb-1">Vestibulares</h1>
-          <p className="text-text-muted text-sm">Datas, inscrições e links oficiais — atualizado em 30/06/2026</p>
+          <p className="text-text-muted text-sm">Datas, inscrições e links oficiais — atualizado em 17/11/2026</p>
         </div>
 
         {/* Aviso */}
@@ -440,6 +598,7 @@ export default function Vestibulares() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-5xl">
           {lista.map(v => {
             const st = hoje ? statusMap[v.id] : null
+            const prox = hoje ? proximaMap[v.id] : null
             const aberto = expandido === v.id
 
             return (
@@ -473,6 +632,20 @@ export default function Vestibulares() {
                       )}
                     </div>
                   </div>
+
+                  {/* Próxima etapa (calculada a partir do cronograma) */}
+                  {prox && (
+                    <div className="flex items-start gap-2 bg-brand/5 border border-brand/15 rounded-xl px-3 py-2.5 mb-4">
+                      <ArrowRight size={13} className="text-brand flex-shrink-0 mt-0.5" />
+                      <div className="min-w-0">
+                        <p className="text-text-faint text-[10px] uppercase tracking-widest font-semibold">Próxima etapa</p>
+                        <p className="text-text text-sm font-medium leading-snug">{prox.etapa.label}</p>
+                        <p className="text-text-muted text-xs">
+                          {formatarData(prox.etapa.data)} · {quando(prox.dias)}
+                        </p>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Info rápida */}
                   <div className="flex flex-col gap-2">
@@ -567,7 +740,7 @@ export default function Vestibulares() {
         </div>
 
         <p className="text-text-faint text-xs mt-10 max-w-3xl">
-          Fontes: sites oficiais de cada instituição (Inep, Fuvest, Comvest, Vunesp, UERJ, Cebraspe/UnB, Instituto Verbena/UFG, NC-UFPR, ITA, IME). Atualizado em 30/06/2026.
+          Fontes: sites oficiais de cada instituição (Inep, MEC, Fuvest, Comvest, Vunesp, UERJ, Cebraspe/UnB, Instituto Verbena/UFG, NC-UFPR, ITA, IME) e imprensa especializada. Atualizado em 17/11/2026.
         </p>
       </main>
     </div>
