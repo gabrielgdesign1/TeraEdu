@@ -120,4 +120,4 @@ Estruture bem em Markdown com títulos, subtítulos e listas. Destaque os pontos
     'resumo gerado'
   )
   return Response.json({ resumo: texto })
-}, { rateLimit: 'geracaoConteudo' })
+}, { rateLimit: 'geracaoConteudo', maxBytes: 300_000 })

@@ -136,4 +136,4 @@ Responda APENAS o JSON no formato: {"flashcards": [{"pergunta": "...", "resposta
     'flashcards gerados'
   )
   return Response.json(dados)
-}, { rateLimit: 'geracaoConteudo' })
+}, { rateLimit: 'geracaoConteudo', maxBytes: 300_000 })

@@ -172,4 +172,4 @@ Não abrevie, não use reticências e não omita dias ou campos para encurtar a 
     )
     return Response.json({ error: 'Erro ao gerar plano. Tente novamente.' }, { status: 500 })
   }
-}, { rateLimit: 'geracaoConteudo' })
+}, { rateLimit: 'geracaoConteudo', maxBytes: 16_000 })

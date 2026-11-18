@@ -116,7 +116,8 @@ export default function IATutora() {
       const res = await fetch('/api/tutora', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mensagens: lista }),
+        // o servidor só usa as últimas 16 (JANELA_MENSAGENS); mandar tudo estouraria o teto de bytes
+        body: JSON.stringify({ mensagens: lista.slice(-16) }),
       })
       const dados = await res.json()
       respostaTexto = dados.resposta ?? 'Erro ao processar.'

@@ -161,7 +161,7 @@ export default function Resumos() {
       const res = await fetch('/api/resumos/pergunta', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ resumo, pergunta: q, historico: perguntas }),
+        body: JSON.stringify({ resumo, pergunta: q, historico: perguntas.slice(-8) }),
       })
       const dados = await res.json()
       const novasPerguntas = [...perguntas, { pergunta: q, resposta: dados.resposta }]

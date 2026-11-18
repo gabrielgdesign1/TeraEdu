@@ -95,4 +95,4 @@ Responda sempre em português brasileiro.`,
     'resposta gerada'
   )
   return Response.json({ resposta: texto })
-}, { rateLimit: iaCategoryByPlano })
+}, { rateLimit: iaCategoryByPlano, maxBytes: 64_000 })

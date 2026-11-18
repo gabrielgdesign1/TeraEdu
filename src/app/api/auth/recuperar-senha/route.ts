@@ -14,8 +14,9 @@ export const POST = withLogging('auth/recuperar-senha', async (req, { log }) => 
   const blocked = await rateLimitResponse('passwordRecovery', identifier)
   if (blocked) return blocked
 
-  // origem derivada da própria requisição (não confia em URL vinda do corpo)
-  const origin = req.headers.get('origin') ?? new URL(req.url).origin
+  // origem do próprio servidor, nunca o header Origin: ele é controlado por quem chama,
+  // e um atacante faria o link de redefinição apontar para o site dele (roubo do token)
+  const origin = new URL(req.url).origin
   const supabase = await createServerSupabaseClient()
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
     redirectTo: `${origin}/redefinir-senha`,

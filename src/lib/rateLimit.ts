@@ -13,9 +13,8 @@ import { logger } from './logger'
  *   (mesmo algoritmo de sliding window). Só vale para UMA instância — serve para
  *   rodar localmente sem depender do Upstash, nunca para produção multi-instância.
  *
- * Falha aberta: qualquer erro de infraestrutura (Redis fora do ar, etc.) libera
- * a requisição em vez de derrubar a rota — rate limit nunca deve ser a causa de
- * uma indisponibilidade maior do que aquilo que ele protege.
+ * Redis fora do ar: cai para o limitador em memória (mais fraco, por instância),
+ * nunca derruba a rota e nunca libera sem limite nenhum.
  */
 
 export type RateLimitCategory =
@@ -156,6 +155,8 @@ export async function checkRateLimit(category: RateLimitCategory, identifier: st
         if (redis) {
           const rl = getRedisLimiter(category, janela, idx)
           const r = await rl.limit(identifier)
+          // no timeout a lib devolve success: true — tratar como falha, senão Redis lento = sem limite
+          if (r.reason === 'timeout') throw new Error('timeout do Redis')
           return { success: r.success, limit: r.limit, remaining: r.remaining, reset: r.reset }
         }
         return checkMemory(category, idx, identifier, janela)
@@ -165,7 +166,8 @@ export async function checkRateLimit(category: RateLimitCategory, identifier: st
     const falhou = resultados.find(r => !r.success)
     return falhou ?? resultados[resultados.length - 1]
   } catch (err) {
-    // Falha aberta: erro de infra no rate limiter não deve derrubar a rota
+    // Redis fora: cai para o limitador em memória (por instância) em vez de liberar tudo —
+    // sem isso, uma queda do Upstash deixava as rotas de IA sem limite nenhum
     logger.error(
       {
         category,
@@ -173,9 +175,10 @@ export async function checkRateLimit(category: RateLimitCategory, identifier: st
           ? { name: err.name, message: err.message, cause: (err.cause as { code?: string } | undefined)?.code }
           : String(err),
       },
-      'erro ao checar rate limit — liberando requisição (fail open)'
+      'erro ao checar rate limit no Redis — usando limitador em memória'
     )
-    return { success: true, limit: 0, remaining: 0, reset: Date.now() }
+    const resultados = janelas.map((janela, idx) => checkMemory(category, idx, identifier, janela))
+    return resultados.find(r => !r.success) ?? resultados[resultados.length - 1]
   }
 }
 

@@ -23,6 +23,9 @@ type RateLimitResolver =
 export type RouteOptions = {
   /** categoria fixa, ou função que resolve a categoria (ex: por plano do usuário) */
   rateLimit?: RateLimitResolver
+  /** teto do corpo da requisição em bytes (413 acima disso). Obrigatório nas rotas de
+   *  IA: sem ele, uma conta gratuita manda ~200k tokens por chamada na nossa chave. */
+  maxBytes?: number
 }
 
 /**
@@ -70,6 +73,17 @@ export function withLogging(action: string, handler: Handler, options?: RouteOpt
           log.warn({ category }, 'rate limit exceeded')
           return blocked
         }
+      }
+
+      if (options?.maxBytes) {
+        // lê o corpo de verdade: content-length pode faltar (chunked) ou mentir
+        const corpo = await req.arrayBuffer()
+        if (corpo.byteLength > options.maxBytes) {
+          log.warn({ bytes: corpo.byteLength, max: options.maxBytes }, 'corpo grande demais')
+          return Response.json({ error: 'Conteúdo grande demais. Envie um texto menor.' }, { status: 413 })
+        }
+        // a partir da URL: new Request(req, ...) quebra com o NextRequest ("#state")
+        req = new Request(req.url, { method: req.method, headers: req.headers, body: corpo })
       }
 
       const res = await handler(req, { log, requestId, userId, authUserId, identifier })

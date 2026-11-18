@@ -316,23 +316,31 @@ o middleware localmente, use uma cópia temporária em `src/middleware.ts`. O no
 
 ---
 
+## 🔒 Segurança (auditoria de 2026-11-17) — regras para não reabrir buracos
+
+- **Toda rota de IA nova declara `maxBytes` no `withLogging`.** Sem teto, uma conta grátis
+  manda ~200k tokens por chamada na nossa chave Anthropic. Tetos atuais: tutora e
+  resumos/pergunta 64 KB, resumos e flashcards 300 KB (o PDF é cortado em 140 mil
+  caracteres no navegador), plano/questões 16 KB.
+- **Rate limit com Redis fora cai para memória**, nunca libera tudo (inclusive no timeout
+  da lib, que devolve `success: true`).
+- **CSP em `next.config.ts`.** Domínio externo novo no navegador (imagem, fetch) precisa
+  entrar lá, senão é bloqueado. Hoje: `*.supabase.co` e `enem.dev`.
+- **Link de redefinição de senha usa `new URL(req.url).origin`**, nunca o header Origin
+  (que o atacante controla).
+- **Avatares:** bucket só aceita imagem até 3 MB.
+- Funções `SECURITY DEFINER` executáveis por `authenticated` (`registrar_uso_ia`,
+  `saldo_creditos`) são intencionais: só mexem no próprio `auth.uid()` e não aceitam
+  débito negativo.
+
 ## ⚠️ Problemas conhecidos / não resolvidos
 
-1. **[CRÍTICO — agora mais grave] Qualquer usuário pode se dar Premium de graça.**
-   `dashboard/planos/page.tsx` (`escolherPlano`) e `configuracoes/page.tsx`
-   (`cancelarAssinatura`) fazem `salvarProfile({ plano: id })` — `UPDATE` direto em
-   `user_profiles` via client, **sem verificação de pagamento**. A RLS permite
-   (`auth.uid() = id`).
-
-   **Isso agora contamina o sistema de créditos:** `creditos_do_plano()` lê
-   `user_profiles.plano`, então dois cliques viram 13.500 créditos/mês. Enquanto não houver
-   checkout, **o sistema de créditos é contabilidade de custo, não barreira de receita.**
-
-   Quando implementarem checkout, a gravação de `plano` deve sair do client e acontecer só
-   via webhook do provedor (server-side, validado por assinatura).
-
-   Mitigação já embutida: **troca de plano NÃO recarrega o saldo** (só a renovação mensal),
-   justamente pra alternar plus↔premium não virar refill infinito.
+1. **[RESOLVIDO em 2026-11-17] Premium de graça.** O trigger `proteger_plano`
+   (migration `20261117230000_seguranca_plano_avatares.sql`) recusa com 42501 qualquer
+   troca de `plano` feita como usuário (anon/authenticated), exceto voltar para
+   'gratuito'; INSERT pelo usuário sempre vira 'gratuito'. A tela de planos mostra
+   "pagamento em breve" nos planos pagos. **Quando houver checkout, o upgrade é gravado
+   pelo webhook do provedor com service_role** (o trigger deixa passar).
 
 2. **Não existe checkout/pagamento.** A categoria `checkout` no rate limit está pronta
    esperando a rota.

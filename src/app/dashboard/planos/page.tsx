@@ -14,9 +14,15 @@ export default function PlanosPage() {
   const { profile, salvarProfile } = useProfile()
   const [anual, setAnual] = useState(false)
   const [assinando, setAssinando] = useState<PlanoId | null>(null)
+  const [aviso, setAviso] = useState('')
 
   async function escolherPlano(id: PlanoId) {
     if (id === profile?.plano) return
+    // plano pago só via pagamento confirmado (o banco recusa a troca feita pelo próprio usuário)
+    if (id !== 'gratuito') {
+      setAviso('O pagamento online ainda não está disponível. Em breve você poderá assinar por aqui.')
+      return
+    }
     setAssinando(id)
     await salvarProfile({ plano: id })
     setAssinando(null)
@@ -65,6 +71,12 @@ export default function PlanosPage() {
               </button>
             </div>
           </div>
+
+          {aviso && (
+            <p role="status" className="max-w-md mx-auto -mt-6 mb-8 text-center text-sm text-text-muted bg-bg-card border border-border rounded-2xl px-4 py-3">
+              {aviso}
+            </p>
+          )}
 
           {/* Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5 items-start">

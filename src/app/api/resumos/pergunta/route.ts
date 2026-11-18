@@ -21,7 +21,8 @@ export const POST = withLogging('resumos/pergunta', async (request, { log, authU
     log.warn('resumo ou pergunta ausentes')
     return Response.json({ error: 'Resumo e pergunta são obrigatórios.' }, { status: 400 })
   }
-  const historicoSeguro = Array.isArray(historico) ? historico : []
+  // só as últimas 8 trocas: o histórico inteiro cresceria o custo sem limite
+  const historicoSeguro = Array.isArray(historico) ? historico.slice(-8) : []
 
   const mensagens: Anthropic.MessageParam[] = [
     {
@@ -84,4 +85,4 @@ Seja conciso mas completo.`,
     'pergunta respondida'
   )
   return Response.json({ resposta: texto })
-}, { rateLimit: iaCategoryByPlano })
+}, { rateLimit: iaCategoryByPlano, maxBytes: 64_000 })

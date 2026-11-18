@@ -115,4 +115,4 @@ Responda APENAS com JSON válido, sem markdown, neste formato exato:
     explicacao:      resultado.explicacao ?? '',
     resposta_oficial: data.answer,
   })
-}, { rateLimit: 'respostasQuestoes' })
+}, { rateLimit: 'respostasQuestoes', maxBytes: 16_000 })

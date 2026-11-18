@@ -142,4 +142,4 @@ Responda APENAS o JSON no formato pedido.`
   })
 
   return new Response(body, { headers: { 'Content-Type': 'text/plain; charset=utf-8' } })
-}, { rateLimit: 'geracaoConteudo' })
+}, { rateLimit: 'geracaoConteudo', maxBytes: 16_000 })

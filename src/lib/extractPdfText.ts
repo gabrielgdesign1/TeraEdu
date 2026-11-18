@@ -1,3 +1,6 @@
+// cabe no maxBytes (300_000) de /api/resumos e /api/flashcards, com folga para acentos (2 bytes)
+const LIMITE_TEXTO = 140_000
+
 export async function extractPdfText(file: File): Promise<string> {
   const pdfjsLib = await import('pdfjs-dist')
   pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
@@ -9,12 +12,12 @@ export async function extractPdfText(file: File): Promise<string> {
   const pdf = await pdfjsLib.getDocument({ data: buffer }).promise
 
   let texto = ''
-  for (let i = 1; i <= pdf.numPages; i++) {
+  for (let i = 1; i <= pdf.numPages && texto.length < LIMITE_TEXTO; i++) {
     const page = await pdf.getPage(i)
     const content = await page.getTextContent()
     const linha = content.items.map((item) => ('str' in item ? item.str : '')).join(' ')
     texto += linha + '\n\n'
   }
 
-  return texto.trim()
+  return texto.slice(0, LIMITE_TEXTO).trim()
 }
