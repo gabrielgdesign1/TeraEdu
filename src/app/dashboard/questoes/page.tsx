@@ -11,6 +11,7 @@ import {
 import { DashboardSidebar } from '@/components/DashboardSidebar'
 import { createClient } from '@/lib/supabase'
 import { STREAM_ERRO } from '@/lib/streamErro'
+import { QuestaoTexto, AlternativaConteudo, textoResumo, ehFonte, CLASSE_FONTE } from '@/components/QuestaoTexto'
 
 // ─── Tipos ───────────────────────────────────────────────────────────────────
 
@@ -19,11 +20,16 @@ type Aba = 'ia' | 'banco' | 'salvas'
 type Questao = {
   id: number
   enunciado: string
-  alternativas: { letra: string; texto: string }[]
+  alternativas: Alternativa[]
   resposta: string
   explicacao: string
   ano?: number | null
+  /** true quando o texto é markdown (ENEM via api.enem.dev: imagens ![](url), negrito **) */
+  markdown?: boolean
 }
+
+/** No ENEM algumas alternativas são só imagem: `texto` vazio e `imagem` com a URL. */
+type Alternativa = { letra: string; texto: string; imagem?: string | null }
 
 type QuestaoDiscursiva = {
   id: number
@@ -44,81 +50,6 @@ type ResultadoCorrecao = {
   faltas: string[]
   explicacao: string
   resposta_oficial: string
-}
-
-// ─── Enunciado com citação/fonte destacada em fonte menor e discreta ─────────
-
-/** Divide o texto em trechos normais e trechos de citação (ex: "BILAC, O. Disponível em: ... Acesso em: 29 out. 2021."). */
-function dividirCitacoes(texto: string): { texto: string; citacao: boolean }[] {
-  const regexDisponivel = /Dispon[íi]vel em:/gi
-  const partes: { texto: string; citacao: boolean }[] = []
-  let cursor = 0
-  let match: RegExpExecArray | null
-
-  // Janela de segurança: nunca busca limite de frase além disso, evitando "vazar"
-  // para trás/frente por causa de espaços não-padrão (nbsp, quebras de linha etc.)
-  const JANELA_MAX = 200
-
-  while ((match = regexDisponivel.exec(texto))) {
-    const idxDisp = match.index
-    if (idxDisp < cursor) continue
-
-    // início: tenta capturar "SOBRENOME, X." (autor) logo antes de "Disponível em";
-    // evita parar em iniciais abreviadas ("O.") ao procurar só o último "."
-    const janelaAutor = texto.slice(Math.max(0, idxDisp - 60), idxDisp)
-    const autorMatch = janelaAutor.match(/[A-ZÀ-Ú]{2,}(?:\s+[A-ZÀ-Ú]{2,})*,\s*[A-Z]\.\s*$/)
-    let inicio: number
-    if (autorMatch) {
-      inicio = Math.max(0, idxDisp - 60) + janelaAutor.lastIndexOf(autorMatch[0])
-    } else {
-      // \s cobre espaço comum, nbsp, quebra de linha etc. (diferente de um "." literal seguido de " ")
-      const limiteBusca = Math.max(0, idxDisp - JANELA_MAX)
-      const trecho = texto.slice(limiteBusca, idxDisp)
-      const fronteiras = [...trecho.matchAll(/\.\s+/g)]
-      const ultima = fronteiras[fronteiras.length - 1]
-      inicio = ultima ? limiteBusca + ultima.index! + ultima[0].length : idxDisp
-    }
-    if (inicio < cursor) inicio = cursor
-
-    // fim: procura "Acesso em: <data completa>", sem parar no "." de mês abreviado ("out.")
-    const idxAcesso = texto.indexOf('Acesso em:', idxDisp)
-    let fim: number
-    if (idxAcesso === -1) {
-      const trecho = texto.slice(idxDisp, idxDisp + JANELA_MAX)
-      const fronteira = trecho.match(/\.\s+/)
-      fim = fronteira ? idxDisp + fronteira.index! + fronteira[0].length : texto.length
-    } else {
-      const restante = texto.slice(idxAcesso, idxAcesso + 100)
-      const dataMatch = restante.match(/Acesso em:\s*\d{1,2}\s*[a-zà-ú]+\.?\s*(?:de\s*)?\d{4}\.?/i)
-      if (dataMatch) {
-        fim = idxAcesso + dataMatch[0].length
-      } else {
-        const trecho = texto.slice(idxAcesso, idxAcesso + JANELA_MAX)
-        const fronteira = trecho.match(/\.\s+/)
-        fim = fronteira ? idxAcesso + fronteira.index! + fronteira[0].length : texto.length
-      }
-    }
-
-    if (inicio > cursor) partes.push({ texto: texto.slice(cursor, inicio), citacao: false })
-    partes.push({ texto: texto.slice(inicio, fim), citacao: true })
-    cursor = fim
-    regexDisponivel.lastIndex = fim
-  }
-  if (cursor < texto.length) partes.push({ texto: texto.slice(cursor), citacao: false })
-  return partes.length ? partes : [{ texto, citacao: false }]
-}
-
-function EnunciadoTexto({ texto, className = '' }: { texto: string; className?: string }) {
-  const partes = dividirCitacoes(texto)
-  return (
-    <p className={className}>
-      {partes.map((p, i) =>
-        p.citacao
-          ? <span key={i} className="text-text-faint/70 text-xs">{p.texto}</span>
-          : <span key={i}>{p.texto}</span>
-      )}
-    </p>
-  )
 }
 
 // ─── Dados reais dos vestibulares ────────────────────────────────────────────
@@ -339,7 +270,7 @@ type ApiQuestao = {
   year: number
   context?: string
   alternativesIntroduction?: string
-  alternatives: { letter: string; text: string }[]
+  alternatives: { letter: string; text: string | null; file?: string | null }[]
   correctAlternative: string
 }
 
@@ -505,10 +436,11 @@ function BancoQuestoes() {
       const mapped: Questao[] = todas.map((q, i) => ({
         id: i + 1,
         enunciado: [q.context, q.alternativesIntroduction].filter(Boolean).join('\n\n'),
-        alternativas: q.alternatives.map(a => ({ letra: a.letter, texto: a.text })),
+        alternativas: q.alternatives.map(a => ({ letra: a.letter, texto: a.text ?? '', imagem: a.file ?? null })),
         resposta: q.correctAlternative,
         explicacao: '',
         ano: q.year ?? null,
+        markdown: true,
       }))
       setQuestoes(mapped); setIniciado(true)
     } catch { setErro('Erro de conexão. Verifique sua internet e tente novamente.') }
@@ -1016,7 +948,7 @@ function SessaoQuestoes({
             {vestibular} {questao.ano}
           </span>
         )}
-        <EnunciadoTexto texto={questao.enunciado} className="text-text text-sm leading-relaxed" />
+        <QuestaoTexto texto={questao.enunciado} markdown={questao.markdown} className="text-text text-sm leading-relaxed" />
       </div>
 
       {/* Alternativas */}
@@ -1041,7 +973,9 @@ function SessaoQuestoes({
               <span className="w-7 h-7 rounded-lg bg-bg border border-border flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">
                 {alt.letra}
               </span>
-              <span className="text-sm leading-relaxed pt-0.5">{alt.texto}</span>
+              <span className="text-sm leading-relaxed pt-0.5 min-w-0">
+                <AlternativaConteudo texto={alt.texto} imagem={alt.imagem} markdown={questao.markdown} />
+              </span>
               {revelada && isCorreta && <CheckCircle2 size={16} className="text-green-500 flex-shrink-0 mt-1 ml-auto" />}
               {isErrada              && <XCircle      size={16} className="text-red-500 flex-shrink-0 mt-1 ml-auto" />}
             </button>
@@ -1350,6 +1284,7 @@ function latexArrayToHtml(latex: string): string {
   const htmlRows = rows.map((row, i) => {
     const cells = row.split('&').map(c =>
       c.trim()
+        .replace(/</g, '&lt;').replace(/>/g, '&gt;') // vai para innerHTML: nada de tag vinda do texto
         .replace(/\\text\{([^}]*)\}/g, '$1')
         .replace(/\\textbf\{([^}]*)\}/g, '<strong>$1</strong>')
         .replace(/\\textit\{([^}]*)\}/g, '<em>$1</em>')
@@ -1445,10 +1380,10 @@ function renderQuestaoContent(text: string, imageDescriptions: string[]) {
                 </p>
               )
             }
-            // Source citations: starts with ( ends with ) or ).
-            if (/^\(/.test(t) && /\)\.?$/.test(t)) {
+            // Fonte/citação (mesma regra das objetivas — ver ehFonte)
+            if (ehFonte(t)) {
               return (
-                <p key={`${j}-${k}`} className="text-text-faint text-[11px] italic leading-relaxed">
+                <p key={`${j}-${k}`} className={CLASSE_FONTE}>
                   {t}
                 </p>
               )
@@ -1742,7 +1677,7 @@ type QuestaoSalva = {
   materia: string | null
   dificuldade: string | null
   enunciado: string
-  alternativas: { letra: string; texto: string }[] | null
+  alternativas: Alternativa[] | null
   gabarito: string | null
   explicacao: string | null
   criado_em: string
@@ -1819,7 +1754,7 @@ function QuestoesSalvas() {
                   <Trash2 size={14} />
                 </button>
               </div>
-              <p className="text-text text-sm leading-relaxed line-clamp-3">{q.enunciado}</p>
+              <p className="text-text text-sm leading-relaxed line-clamp-3">{textoResumo(q.enunciado)}</p>
               <button
                 onClick={() => setExpandida(expandida === q.id ? null : q.id)}
                 className="text-brand text-xs mt-3 flex items-center gap-1 hover:opacity-75 transition-opacity"
@@ -1831,7 +1766,7 @@ function QuestoesSalvas() {
 
             {expandida === q.id && (
               <div className="border-t border-border px-5 pb-5 pt-4">
-                <EnunciadoTexto texto={q.enunciado} className="text-text text-sm leading-relaxed mb-4" />
+                <QuestaoTexto texto={q.enunciado} markdown={q.dificuldade === 'Banco · ENEM'} className="text-text text-sm leading-relaxed mb-4" />
                 {q.alternativas && q.alternativas.length > 0 && (
                   <div className="flex flex-col gap-2 mb-4">
                     {q.alternativas.map(alt => (
@@ -1846,7 +1781,9 @@ function QuestoesSalvas() {
                         <span className="w-6 h-6 rounded-lg bg-bg border border-border flex items-center justify-center text-xs font-bold flex-shrink-0">
                           {alt.letra}
                         </span>
-                        <span className="leading-relaxed pt-0.5">{alt.texto}</span>
+                        <span className="leading-relaxed pt-0.5 min-w-0">
+                          <AlternativaConteudo texto={alt.texto} imagem={alt.imagem} markdown={q.dificuldade === 'Banco · ENEM'} />
+                        </span>
                         {alt.letra === q.gabarito && <CheckCircle2 size={14} className="text-green-500 flex-shrink-0 mt-1 ml-auto" />}
                       </div>
                     ))}
