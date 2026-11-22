@@ -1,27 +1,78 @@
 # TeraEdu — Handoff
 
-Documento de transição para quem (ou qual sessão) pegar o projeto a partir daqui.
-Atualizado em **2026-08-03**. Leia isto antes de mexer em qualquer coisa — tem várias
+Documento de transição para a próxima sessão do Claude Code (ou quem pegar o projeto).
+Atualizado em **2026-11-21**. Leia isto antes de mexer em qualquer coisa — tem várias
 armadilhas não óbvias documentadas abaixo, várias delas descobertas na marra.
+
+## 👉 Onde estamos agora (comece por aqui)
+
+**Estado:** tudo commitado e publicado em produção (último commit desta sessão: botões com
+bevel no app todo + hero nova da landing + este handoff). Nada pela metade.
+
+**O que foi feito nas últimas sessões (mais recente primeiro):**
+
+1. **Botões laranja do app inteiro** agora usam `.botao-brand` (gradiente, bevel, brilho) —
+   login, redefinir senha, dashboard, questões, flashcards, resumos, tutora, plano, planos,
+   configurações, onboarding. Também os chips/toggles *selecionados* (ENEM, matéria, ano,
+   quantidade…). Ficaram de fora de propósito: mockups da landing, bolha de chat em resumos
+   e o dia de hoje no calendário do plano.
+2. **Landing redesenhada** (`src/app/page.tsx`): hero centralizado com `HeroVitrine`
+   (painel do app inclinado em 3D sobre um "horizonte" laranja, chips flutuando), sem
+   eyebrows nem marquee, todos os cards com `.card-bevel`, features em bento, "Como funciona"
+   em escada (título à esquerda), depoimentos em leque (título centralizado), CTA centralizado.
+3. **Auditoria de segurança completa** (commit `423eb67`) — ver seção 🔒.
+4. **Questões:** fonte/citação em destaque discreto e imagens do ENEM (`QuestaoTexto.tsx`,
+   imagens vêm de `https://enem.dev`).
+5. **Vestibulares:** edições 2027 com próxima etapa e status dinâmico (o que ainda acontece
+   em 2026 continua aparecendo).
+6. **Performance:** animações fluidas (regras na seção Convenções), imagens leves, site
+   resiliente a queda do Supabase/Redis. Next atualizado para **16.4.6** (resolveu o
+   segfault do Turbopack local).
+
+**Próximos passos sugeridos (nenhum foi pedido ainda — pergunte ao dono antes):**
+
+- ⚖️ **Risco legal na landing:** depoimentos são fictícios e o CTA diz "Junte-se a milhares
+  de estudantes" (`page.tsx` ~linha 821). Isso pode ser propaganda enganosa (CDC/CONAR).
+  Trocar por depoimentos reais ou remover a seção/frase.
+- Links do rodapé (`Termos de uso`, `Privacidade`, `Contato`, `page.tsx` ~857) apontam para
+  `#`. Criar as páginas (Termos e Privacidade são exigidos pela LGPD).
+- Checkout/pagamento ainda não existe (ver Problemas conhecidos).
+- Teste ponta a ponta do débito de créditos com uma conta real.
+- Abrir na tela as páginas configurações, plano e onboarding para conferir os botões novos
+  (só foram verificadas por `tsc`/`build`, não visualmente).
+
+## 🙋 Sobre o dono e como trabalhar com ele
+
+- Iniciante em programação, escreve em **português** — responda em português e explique
+  decisões técnicas em vez de só aplicá-las.
+- Usa os plugins **caveman** (respostas curtas), **i-have-adhd** (ação primeiro, passos
+  numerados) e **ponytail full** (código mínimo; terminar a resposta com 1–2 linhas sobre o
+  que foi pulado/riscos).
+- **Só commitar/pushar quando ele pedir.** Push na `main` = deploy automático na Vercel.
+- A pasta `marketing/` (não versionada) é dele — **nunca commitar**. Use `git add` com
+  caminhos específicos, não `git add -A`.
+- Nunca imprimir valores de chaves/segredos; mascarar.
+- Ele manda screenshots com feedback visual. Confira o resultado com screenshot antes de
+  dizer que está pronto.
 
 ## O que é o projeto
 
 Plataforma de estudos com IA para o ENEM e vestibulares brasileiros (FUVEST, UNICAMP,
-UNESP, ITA, IME...). Modelo freemium (Gratuito / Plus / Premium). O dono do projeto é
-iniciante em programação — explique decisões técnicas em vez de só aplicá-las quando
-fizer mudanças arquiteturais.
+UNESP, ITA, IME...). Modelo freemium (Gratuito / Plus / Premium).
 
 - **Produção:** https://useteraedu.com (Vercel, deploy automático no push pra `main`)
 - **Repo:** `gabrielgdesign1/TeraEdu`, branch `main`
 - **Supabase project ref:** `dgquiamljnxqaaapafgy`
+- Vercel CLI **não** está instalada; o deploy é só via push.
 
 ## Stack
 
-- Next.js 16 (App Router) + TypeScript + Tailwind CSS v4 + React 19
+- Next.js **16.4.6** (App Router) + TypeScript + Tailwind CSS v4 + React 19
 - Supabase (Postgres + Auth), `@supabase/supabase-js` + `@supabase/ssr`
 - Anthropic API (`@anthropic-ai/sdk` ^0.106) — **dois modelos**, ver "Roteamento de modelo"
 - `pino` para logging estruturado, `@upstash/ratelimit` + `@upstash/redis` para rate limiting
-- framer-motion, next-themes, react-markdown/remark/rehype-katex (LaTeX), lucide-react
+- framer-motion v12, next-themes, react-markdown/remark/rehype-katex (LaTeX), lucide-react,
+  pdfjs-dist 6 (extração de PDF no navegador)
 
 ⚠️ **`AGENTS.md`/`CLAUDE.md` avisam:** esta versão do Next.js pode ter breaking changes
 vs. o que está no seu treino — consulte `node_modules/next/dist/docs/` antes de usar uma
@@ -32,14 +83,15 @@ API que pareça familiar mas incerta.
 ```
 src/
 ├── app/
-│   ├── page.tsx              # landing (não menciona preço nenhum)
+│   ├── page.tsx              # landing (HeroVitrine, bento, escada, depoimentos, CTA)
+│   ├── globals.css           # tokens + classes visuais (botao-brand, card-bevel, horizonte...)
 │   ├── login/page.tsx        # login + cadastro (mesma página, toggle)
 │   ├── redefinir-senha/
 │   ├── dashboard/
 │   │   ├── page.tsx          # home
 │   │   ├── questoes/         # banco + gerar com IA + salvas
 │   │   ├── flashcards/, resumos/, tutora/, plano/, desempenho/
-│   │   ├── vestibulares/
+│   │   ├── vestibulares/     # calendário de vestibulares (edições 2027)
 │   │   ├── planos/           # tela de upgrade (lê lib/planos.ts)
 │   │   └── configuracoes/    # Minha Conta / Meus Estudos / Assinatura
 │   └── api/
@@ -48,27 +100,50 @@ src/
 │       │   plano/gerar/, questoes/gerar/, questoes/corrigir/   # 7 rotas de IA
 │       └── questoes/{anos,banco,discursiva,vestibular}/        # leitura pura, sem IA
 ├── lib/
-│   ├── apiHandler.ts         # withLogging(...) — TODA rota passa por aqui
+│   ├── apiHandler.ts         # withLogging(...) — TODA rota passa por aqui (opção maxBytes)
+│   ├── authComLimite.ts      # getUserComLimite: checagem de sessão com timeout de 5s
 │   ├── creditos.ts           # ⭐ custos, modelos, cálculo de custo USD, RPCs
-│   ├── rateLimit.ts          # 12 categorias, sliding window
+│   ├── rateLimit.ts          # 12 categorias, sliding window, fallback em memória
+│   ├── extractPdfText.ts     # PDF -> texto no navegador
+│   ├── flutuar.ts            # helper de animação flutuante em CSS
 │   ├── streamErro.ts         # sentinela de erro no stream de questões
 │   ├── logger.ts             # pino + redaction
 │   ├── supabase.ts           # client browser
 │   ├── supabaseServer.ts     # client server-side, getServerUser(), getUserPlano()
 │   └── planos.ts             # preços e copy da página de planos
 ├── hooks/useProfile.ts, useStats.ts
-└── components/DashboardSidebar.tsx, HistoryPanel.tsx
+└── components/DashboardSidebar.tsx, HistoryPanel.tsx, Onboarding.tsx, QuestaoTexto.tsx
 middleware.ts                 # (na raiz) protege /dashboard/* e /login — NÃO cobre /api/*
+next.config.ts                # headers de segurança + CSP
 scripts/eval-plano.mjs        # ⭐ eval do /api/plano/gerar (ver seção própria)
-supabase/migrations/          # ⭐ migrations versionadas (novo)
+supabase/migrations/          # migrations versionadas
 ```
+
+---
+
+## 🎨 Design / identidade visual
+
+- Laranja da marca `#f97316`, fonte **Space Grotesk**. Tokens em `globals.css`: `--bg`,
+  `--bg-card`, `--border`, `--text`, `--text-muted`, `--brand`... Use as classes Tailwind
+  (`bg-bg-card`, `text-text-muted`, `border-border`), **não hardcode cor**.
+- Tema escuro = classe `.dark` no `<html>` (next-themes). Verifique sempre os dois temas.
+- Classes próprias em `globals.css` (CSS **fora de `@layer`**, por isso vencem as
+  utilities do Tailwind v4 como `bg-*`, `shadow-*`, `transition`):
+  - **`.botao-brand`** — botão laranja padrão do app: gradiente, bevel (inset claro em cima,
+    escuro embaixo), brilho laranja, hover mais claro, active afunda 1px. **Todo botão
+    primário/selecionado novo deve usar isto** em vez de `bg-brand hover:bg-brand-hover`.
+    Pode manter `disabled:opacity-*`, tamanho e arredondamento.
+  - **`.card-bevel`** — card com leve gradiente e borda iluminada (versão própria no escuro).
+    Todos os cards da landing usam (via `GlassPanel` também).
+  - **`.horizonte`** — o arco laranja brilhante atrás do painel da hero.
+  - `.flutuar`, `.piscar`, `.virar-card`, `.brilho` — animações/efeitos baratos (ver Convenções).
+- Landing: sem "eyebrows" (aquelas etiquetas pequenas acima do título) — o dono não gosta.
 
 ---
 
 ## ⭐ Sistema de créditos
 
-A peça mais recente e mais importante. **Leia esta seção inteira antes de mexer em
-qualquer rota de IA.**
+**Leia esta seção inteira antes de mexer em qualquer rota de IA.**
 
 ### Tabelas
 
@@ -82,9 +157,9 @@ qualquer rota de IA.**
 **Este projeto não tem `SERVICE_ROLE_KEY`** — só a anon/publishable key. As rotas de API
 atuam **como o usuário** (anon key + JWT dele nos cookies).
 
-Consequência: se a RLS permitisse `UPDATE` ao usuário, ele editaria o próprio saldo pelo
-navegador. Mas se ela bloqueia o usuário, bloqueia a rota também — porque a rota *é* o
-usuário. A saída, sem introduzir service_role, são funções `SECURITY DEFINER`:
+Se a RLS permitisse `UPDATE` ao usuário, ele editaria o próprio saldo pelo navegador. Se
+bloqueia o usuário, bloqueia a rota também (a rota *é* o usuário). A saída, sem
+service_role, são funções `SECURITY DEFINER`:
 
 - RLS: **só `SELECT` da própria linha**. Nenhuma policy de INSERT/UPDATE/DELETE.
 - `garantir_creditos(uuid)` — cria a linha e renova no vencimento. **Revogada de
@@ -92,12 +167,9 @@ usuário. A saída, sem introduzir service_role, são funções `SECURITY DEFINE
 - `saldo_creditos()` — lê o saldo (e dispara renovação). Executável por `authenticated`.
 - `registrar_uso_ia(...)` — grava o uso e debita. Executável por `authenticated`.
 
-**Se for adicionar uma rota de IA nova, siga esse caminho.** Não tente escrever direto nas
-tabelas: vai falhar silenciosamente ou dar 42501.
+**Rota de IA nova segue esse caminho.** Escrever direto nas tabelas falha (42501).
 
-### Custo em créditos por ação
-
-Definido em `src/lib/creditos.ts` (`CUSTO_CREDITOS`):
+### Custo em créditos por ação (`CUSTO_CREDITOS` em `src/lib/creditos.ts`)
 
 | Ação | Créditos | Rota | Modelo |
 |---|---|---|---|
@@ -109,53 +181,30 @@ Definido em `src/lib/creditos.ts` (`CUSTO_CREDITOS`):
 | `plano` | 300 | `/api/plano/gerar` | **condicional** |
 | `questao_corrigir` | **0** (grátis) | `/api/questoes/corrigir` | Haiku |
 
-`resumo_pergunta` custa o mesmo que `tutora` **de propósito**: mesmo modelo, mesma
-natureza. Se cobrasse menos, viraria um bypass barato da IA Tutora.
-
-`questao_corrigir` é grátis mas **é registrada em `uso_ia`** com `creditos_debitados = 0`,
-para você enxergar o custo real dela.
+`resumo_pergunta` custa o mesmo que `tutora` **de propósito** (senão vira bypass barato da
+Tutora). `questao_corrigir` é grátis mas é registrada em `uso_ia` com 0 créditos.
 
 ### Créditos por plano
 
-`creditos_do_plano()` no banco: **gratuito 900 · plus 8.000 · premium 13.500**.
-
-O valor do Premium **não é arbitrário**: 13.500 é o ponto de paridade de US$/crédito com o
-Plus. `8000 × (39,99 ÷ 23,99) = 13.336`, arredondado pra cima. Com os 17.500 originais, o
-Premium entregava 23,8% menos receita por crédito que o Plus, deixando `questao` e `resumo`
-com margem negativa só naquele plano.
-
-Detalhe útil: **a razão dos preços cancela o câmbio**, então 13.336 continua sendo o ponto
-de paridade independente da cotação do dólar.
+`creditos_do_plano()`: **gratuito 900 · plus 8.000 · premium 13.500**. 13.500 é o ponto de
+paridade de US$/crédito com o Plus (`8000 × 39,99 ÷ 23,99 = 13.336`, arredondado). A razão
+dos preços cancela o câmbio.
 
 ### Fluxo em cada rota
 
-1. `if (!authUserId) return 401` — **as 7 rotas agora exigem login** (o middleware não
-   cobre `/api/*`, então isso é feito na mão em cada rota).
-2. `const sb = await clienteCreditos()` — **crie o client ANTES da chamada à Anthropic**.
-   Em `/api/questoes/gerar` o débito acontece dentro do `ReadableStream`, depois que a
-   `Response` já foi devolvida, e `cookies()` só existe no escopo do request.
-3. Checa saldo contra a **quantidade pedida** → 402 se não tiver.
+1. `if (!authUserId) return 401` — as 7 rotas exigem login (o middleware não cobre `/api/*`).
+2. `const sb = await clienteCreditos()` — **antes** da chamada à Anthropic (`cookies()` só
+   existe no escopo do request; em `questoes/gerar` o débito ocorre dentro do stream).
+3. Checa saldo contra a quantidade pedida → 402 se faltar.
 4. Chama a Anthropic.
-5. `registrarUsoSeguro(...)` com `sucesso` e a **quantidade realizada** (cards/questões
-   efetivamente gerados, não os pedidos).
+5. `registrarUsoSeguro(...)` com `sucesso` e a **quantidade realizada**.
 
-**Débito só em sucesso.** Falha de parse, resposta vazia ou truncamento gravam a linha em
-`uso_ia` com `sucesso = false` e `creditos_debitados = 0` — o custo em dólar fica
-registrado, mas o usuário não paga por uma geração quebrada.
+**Débito só em sucesso.** Falha grava `sucesso = false`, `creditos_debitados = 0`.
+`registrarUsoSeguro` **nunca lança**.
 
-`registrarUsoSeguro` **nunca lança**: contabilidade não pode derrubar uma geração já
-entregue. Falhas vão pro log estruturado.
+`calcularCustoUsd()` soma input, output, `cache_creation × 1,25` e `cache_read × 0,1`.
 
-### Custo em USD inclui os tokens de cache
-
-`calcularCustoUsd()` soma `input`, `output`, **`cache_creation × 1,25`** e
-**`cache_read × 0,1`**. Isso importa porque `usage.input_tokens` conta só o que **não** veio
-do cache — ignorar as colunas de cache subestimaria o custo nas rotas que usam prompt
-caching (tutora e resumos/pergunta).
-
-### Margem (referência, câmbio R$5,08 de 2026-07-30)
-
-Plus dá ~US$0,00059 por crédito. No cenário típico:
+### Margem (câmbio R$5,08 de 2026-07-30; Plus ≈ US$0,00059/crédito)
 
 | Ação | Margem típica | No teto de `max_tokens` |
 |---|---|---|
@@ -166,53 +215,27 @@ Plus dá ~US$0,00059 por crédito. No cenário típico:
 | resumo_pergunta | ~45% | negativa |
 | plano (Haiku) | ~82% | ~54% |
 
-**Pendência conhecida:** `resumo_pergunta` e `tutora` ficam negativas no teto (input grande).
-Não é problema de volume de plano — é preço por ação. Se for ajustar, mexa em
-`CUSTO_CREDITOS`, não nos créditos do plano.
+Se ajustar, mexa em `CUSTO_CREDITOS`, não nos créditos do plano.
 
 ---
 
 ## ⭐ Roteamento de modelo
 
-`MODELO` em `src/lib/creditos.ts`:
+`MODELO` em `src/lib/creditos.ts`: `raciocinio` = `claude-sonnet-4-6`,
+`economico` = `claude-haiku-4-5-20251001`.
 
-- `MODELO.raciocinio` = `claude-sonnet-4-6` — onde a qualidade de raciocínio importa
-- `MODELO.economico` = `claude-haiku-4-5-20251001` — ~3× mais barato, ~2× mais rápido
+Sonnet: tutora, resumos/pergunta, questoes/gerar. Haiku: flashcards, resumos, questoes/corrigir.
 
-Sonnet: `tutora`, `resumos/pergunta`, `questoes/gerar`.
-Haiku: `flashcards`, `resumos`, `questoes/corrigir`.
-
-### `/api/plano/gerar` é condicional — e o motivo é importante
+### `/api/plano/gerar` é condicional
 
 ```ts
 const blocos = semanasTotal * diasSemana.length * (duasMaterias ? 2 : 1)
 const model = blocos <= LIMITE_BLOCOS_HAIKU ? MODELO.economico : MODELO.raciocinio
 ```
 
-`LIMITE_BLOCOS_HAIKU = 100`. **Acima disso o Haiku omite `materia2` em alguns dias do
-cronograma.** É uma falha silenciosa: o JSON continua estruturalmente válido, a validação
-da rota não pega, e o aluno recebe um plano onde alguns dias têm metade do estudo que ele
-pediu.
-
-Medições (via `scripts/eval-plano.mjs`):
-
-| Caso | Blocos | Haiku |
-|---|---|---|
-| ENEM 14×5×1 | 70 | ✅ 100% |
-| UNICAMP 7×4×2 | 56 | ✅ 100% |
-| FUVEST 15×6×2 | 180 | ❌ falhou em **3 de 6** execuções (18, 15 e 2 dias sem `materia2`) |
-| FUVEST 15×6×2, Sonnet | 180 | ✅ 100% |
-
-Um reforço de prompt (lista explícita dos 8 campos obrigatórios + contagem exata de dias)
-reduziu muito as omissões — de 18/15 para 2/0/0 — mas **não zerou**, então o roteamento
-condicional ficou. O prompt reforçado está nos dois ramos: não custa nada no Sonnet e
-reduz risco no Haiku.
-
-### `scripts/eval-plano.mjs`
-
-Roda o prompt **real** da rota (replicado verbatim) contra um modelo e valida com rubrica
-objetiva: nº de semanas, dias por semana, dias permitidos, fases, numeração, `materia2` em
-todos os dias, `horas2`/`questoes2`, `materia ≠ materia2`, tópicos específicos.
+`LIMITE_BLOCOS_HAIKU = 100`. Acima disso o Haiku **omite `materia2` em alguns dias** — falha
+silenciosa (JSON válido, plano incompleto). Medido com `scripts/eval-plano.mjs`
+(FUVEST 15×6×2 = 180 blocos: Haiku falhou 3/6, Sonnet 100%).
 
 ```bash
 node scripts/eval-plano.mjs                    # 3 casos, Haiku, 1 repetição
@@ -220,16 +243,12 @@ CASO=1 REPS=3 node scripts/eval-plano.mjs      # critério de aceite
 MODEL=claude-sonnet-4-6 CASO=1 node scripts/eval-plano.mjs
 ```
 
-**Critério de aceite para promover um modelo mais barato ao caso grande: ZERO omissões em
-3 repetições.** Uma única omissão reprova — a falha é silenciosa demais pra tolerar taxa.
-Sai com código 1 se reprovar (serve em CI).
-
-⚠️ **Mantenha sincronizado com a rota.** Se o prompt mudar lá e não aqui, o eval deixa de
-medir o que roda em produção.
+Critério para promover modelo mais barato: **zero omissões em 3 repetições**. ⚠️ O prompt do
+eval é cópia do da rota — mantenha sincronizado.
 
 ---
 
-## Preços (atualizados em 2026-08-03)
+## Preços
 
 | Plano | Mensal | Anual | Equivalente mensal | Economia |
 |---|---|---|---|---|
@@ -237,187 +256,123 @@ medir o que roda em produção.
 | Plus | R$ 23,99 | R$ 239,90 | R$ 19,99 | 17% |
 | Premium | R$ 39,99 | R$ 399,90 | R$ 33,33 | 17% |
 
-`economiaAnual` é **derivado** — se mudar preço, recalcule. Os 17% saem de
-`23,99×12 = 287,88 → 239,90` (16,67%). Havia um badge `Economize até 28%` hardcoded em
-`dashboard/planos/page.tsx` que já foi corrigido, mas fique atento a ele.
-
-⚠️ **Preço aparece em dois lugares:** `lib/planos.ts` (fonte de verdade) e um array
-`PLANOS` duplicado e hardcoded em `dashboard/configuracoes/page.tsx`. **Se mudar preço,
-mude nos dois.** Vale unificar quando der.
+⚠️ Preço aparece em **dois lugares**: `lib/planos.ts` (fonte de verdade) e um array `PLANOS`
+duplicado em `dashboard/configuracoes/page.tsx`. Mude nos dois (ou unifique).
 
 ---
 
 ## 🛡️ Rate limiting
 
-`src/lib/rateLimit.ts`, 12 categorias, sliding window. É aplicado **antes** do handler, em
-`apiHandler.ts:68`.
+`src/lib/rateLimit.ts`, 12 categorias, sliding window, aplicado antes do handler no
+`apiHandler.ts`.
 
 | Categoria | Limite | Onde |
 |---|---|---|
 | `apiAuthenticated` / `apiPublic` | 120/min · 40/min por IP | rotas de leitura |
 | `login` / `signup` / `passwordRecovery` | 5/10min · 3/h · 3/h | `/api/auth/*` |
-| `iaGratuito/Plus/Premium` | 6-15/min por plano | `/api/tutora`, `/api/resumos/pergunta` |
+| `iaGratuito/Plus/Premium` | 6-15/min por plano | tutora, resumos/pergunta |
 | `geracaoConteudo` | 3/min | flashcards, resumos, plano/gerar, questoes/gerar |
 | `uploadPdf` | 5/10min | resumos/flashcards com `origem=pdf` |
 | `respostasQuestoes` | 30/min | questoes/corrigir |
 | `checkout` | 5/10min | **definida mas não usada** |
 
-**Backend:** Upstash Redis em produção; em dev cai pra limitador em memória (`.env.local`
-não tem as vars do Upstash — isso é esperado).
-
-**Armadilhas:**
-- A integração Upstash da Vercel pode injetar `UPSTASH_REDIS_REST_KV_REST_API_URL`/`_TOKEN`
-  em vez dos nomes padrão. `rateLimit.ts` aceita os dois formatos.
-- **Nunca logue `identifier` diretamente** — para login/recuperação ela é `ip:email@x.com`,
-  e a redação do pino é por nome de campo, não pega string composta.
-- **O slot é consumido mesmo se a geração falhar** (rate limit roda antes do handler). Uma
-  falha custa um slot ao usuário. Não foi corrigido; se quiser estornar, é no `apiHandler`.
+- Upstash Redis em produção; em dev, memória (`.env.local` não tem as vars — esperado).
+- **Redis fora ou timeout → cai para o limitador em memória**, nunca libera tudo.
+- A integração Vercel pode injetar `UPSTASH_REDIS_REST_KV_REST_API_URL`/`_TOKEN`;
+  `rateLimit.ts` aceita os dois formatos.
+- **Nunca logue `identifier`** (contém e-mail no login/recuperação).
+- O slot é consumido mesmo se a geração falhar.
 
 ---
 
-## 🔑 Chave do Supabase — resolvido, mas entenda
+## 🔑 Chave do Supabase
 
-Duas issues distintas já aconteceram com `NEXT_PUBLIC_SUPABASE_ANON_KEY`:
-
-1. A variável continha uma `service_role` vazada (ignora RLS).
-2. O projeto tem **legacy JWT API keys desativadas** — qualquer chave `eyJ...` recebe
-   `401 UNAUTHORIZED_DISABLED_LEGACY_KEY`.
-
-**Fix:** formato novo `sb_publishable_...` (Project Settings → API → Publishable key).
-Já aplicado em `.env.local` e na Vercel. **Se algo do Supabase quebrar com erro vago,
-confira essa variável primeiro.**
-
-Confirmado em 2026-08-03: a chave atual funciona tanto pra dados (PostgREST) quanto pra auth.
+`NEXT_PUBLIC_SUPABASE_ANON_KEY` tem de ser o formato novo **`sb_publishable_...`**. Chaves
+legadas `eyJ...` dão `401 UNAUTHORIZED_DISABLED_LEGACY_KEY`. Já aplicado em `.env.local` e
+na Vercel. Se o Supabase quebrar com erro vago, confira essa variável primeiro.
 
 ---
 
-## 🚨 Site lento ou dashboard não abre? Comece por aqui
+## 🚨 Site lento ou dashboard não abre?
 
-Incidente de 2026-10-30. Os dois serviços externos estavam fora ao mesmo tempo:
+Incidente de 2026-10-30: **Supabase pausado** (`ENOTFOUND` em `*.supabase.co`; reative pelo
+dashboard ou `restore_project` do MCP) e **Upstash fora** (`fetch failed`). Diagnóstico:
+`get_runtime_logs` da Vercel com `since: "30m"` (plano Hobby guarda 1h) e `get_project` do
+Supabase. Desde então o site não trava: sessão com timeout de 5s, Redis com timeout de 1s.
 
-1. **Supabase pausado** (`status: INACTIVE`). Com o projeto pausado o domínio
-   `*.supabase.co` deixa de existir (`ENOTFOUND`), então login e banco param. Reative pelo
-   dashboard do Supabase ou pelo `restore_project` do MCP; leva alguns minutos para subir.
-2. **Upstash fora do ar** (`fetch failed` em `erro ao checar rate limit`). O rate limit
-   libera a requisição (falha aberta), ou seja: **enquanto isso durar, não há rate limit
-   nenhum em produção**. Confira o banco no console da Upstash.
-
-O diagnóstico vem dos logs: `get_runtime_logs` da Vercel com `since: "30m"` (o plano Hobby
-só guarda 1 hora) e o `get_project` do Supabase.
-
-Desde então, uma queda desses serviços não trava mais o site: `getUserComLimite`
-(`src/lib/authComLimite.ts`) limita a checagem de sessão a 5s e o Redis tem retentativa
-curta + timeout de 1s.
-
-**`middleware.ts` fica na raiz, não em `src/`.** O `next build` e a Vercel o reconhecem, mas
-o `next dev` não: **em dev o `/dashboard` abre sem redirecionar para o login.** Para testar
-o middleware localmente, use uma cópia temporária em `src/middleware.ts`. O nome
-`middleware` também está deprecado no Next 16 (virou `proxy`).
+**`middleware.ts` fica na raiz, não em `src/`.** Build e Vercel reconhecem; o `next dev`
+**não** — em dev o `/dashboard` abre sem login (útil para ver telas). Para testar o
+middleware local, copie temporariamente para `src/middleware.ts`.
 
 ---
 
-## 🔒 Segurança (auditoria de 2026-11-17) — regras para não reabrir buracos
+## 🔒 Segurança (auditoria de 2026-11-17) — não reabrir buracos
 
-- **Toda rota de IA nova declara `maxBytes` no `withLogging`.** Sem teto, uma conta grátis
-  manda ~200k tokens por chamada na nossa chave Anthropic. Tetos atuais: tutora e
-  resumos/pergunta 64 KB, resumos e flashcards 300 KB (o PDF é cortado em 140 mil
-  caracteres no navegador), plano/questões 16 KB.
-- **Rate limit com Redis fora cai para memória**, nunca libera tudo (inclusive no timeout
-  da lib, que devolve `success: true`).
-- **CSP em `next.config.ts`.** Domínio externo novo no navegador (imagem, fetch) precisa
-  entrar lá, senão é bloqueado. Hoje: `*.supabase.co` e `enem.dev`.
-- **Link de redefinição de senha usa `new URL(req.url).origin`**, nunca o header Origin
-  (que o atacante controla).
-- **Avatares:** bucket só aceita imagem até 3 MB.
-- Funções `SECURITY DEFINER` executáveis por `authenticated` (`registrar_uso_ia`,
-  `saldo_creditos`) são intencionais: só mexem no próprio `auth.uid()` e não aceitam
-  débito negativo.
+- **Toda rota de IA nova declara `maxBytes` no `withLogging`.** Tetos: tutora e
+  resumos/pergunta 64 KB, resumos e flashcards 300 KB (PDF cortado em 140 mil caracteres no
+  navegador), plano/questões 16 KB.
+- **CSP em `next.config.ts`.** Domínio externo novo (imagem, fetch) precisa entrar lá. Hoje:
+  `*.supabase.co` e `https://enem.dev`.
+- Link de redefinição de senha usa `new URL(req.url).origin`, nunca o header Origin.
+- Avatares: bucket só aceita imagem até 3 MB.
+- Trigger `proteger_plano` (migration `20261117230000_seguranca_plano_avatares.sql`): usuário
+  não consegue trocar o próprio `plano` para pago (42501). Upgrade futuro vem do webhook do
+  pagamento com service_role.
+- Login e cadastro passam pelo servidor (`/api/auth/*`) com rate limit.
 
 ## ⚠️ Problemas conhecidos / não resolvidos
 
-1. **[RESOLVIDO em 2026-11-17] Premium de graça.** O trigger `proteger_plano`
-   (migration `20261117230000_seguranca_plano_avatares.sql`) recusa com 42501 qualquer
-   troca de `plano` feita como usuário (anon/authenticated), exceto voltar para
-   'gratuito'; INSERT pelo usuário sempre vira 'gratuito'. A tela de planos mostra
-   "pagamento em breve" nos planos pagos. **Quando houver checkout, o upgrade é gravado
-   pelo webhook do provedor com service_role** (o trigger deixa passar).
-
-2. **Não existe checkout/pagamento.** A categoria `checkout` no rate limit está pronta
-   esperando a rota.
-
-3. **O débito via rota HTTP nunca foi exercitado ponta a ponta.** A lógica de créditos foi
-   validada no banco (8/8 cenários) e o gate de login no HTTP (7/7 rotas dão 401), mas a
-   costura entre os dois não. Motivo: não deu pra criar usuário de teste — a Supabase
-   rejeita domínios fictícios (`email_address_invalid`) e `mailer_autoconfirm: false` exige
-   confirmação por e-mail, então nem signup bem-sucedido dá sessão.
-
-   **Primeira coisa a fazer:** logar numa conta real e gerar 1 flashcard, conferindo se a
-   linha aparece em `uso_ia` e o saldo cai.
-
-4. **`resumo_pergunta` e `tutora` ficam com margem negativa no teto de tokens.** Ver a
-   tabela de margem acima. É preço por ação, não volume de plano.
-
-5. **Lint:** ~21 avisos pré-existentes de `react-hooks/set-state-in-effect` (padrão
-   `useEffect(() => setMounted(true), [])` espalhado). Não é regressão, é o estilo já
-   estabelecido. **Não "corrigir" sem pedido explícito.**
-
-6. **`/api/flashcards` e `/api/resumos` têm um branch `else` morto** que trata PDF em
-   base64. O frontend extrai o texto no navegador e sempre manda `modo=texto` (por causa
-   de 413 no payload). O `else` não é inalcançável: pega qualquer `modo` inesperado e aí
-   estoura 500 em `arquivo.arrayBuffer()` com `arquivo` null. Vale trocar por
-   `else if (modo === 'pdf')` com 400 explícito.
+1. **Não existe checkout/pagamento.** Planos pagos mostram "pagamento em breve".
+2. **Débito de créditos via HTTP nunca testado ponta a ponta.** Primeiro teste: logar numa
+   conta real, gerar 1 flashcard, conferir linha em `uso_ia` e saldo caindo.
+3. **Margem negativa no teto** em `resumo_pergunta` e `tutora`.
+4. **Lint:** ~21 avisos pré-existentes de `react-hooks/set-state-in-effect`. Estilo
+   estabelecido — **não "corrigir" sem pedido.**
+5. `/api/flashcards` e `/api/resumos` têm `else` morto que trata PDF base64 e estoura 500 com
+   `modo` inesperado. Trocar por `else if (modo === 'pdf')` + 400.
+6. Landing: depoimentos fictícios, "milhares de estudantes" e links `#` no rodapé (ver topo).
 
 ---
 
 ## Convenções
 
-- **Toda rota de API nova** usa `withLogging('nome/da/acao', handler, { rateLimit: 'cat' })`
-  de `src/lib/apiHandler.ts` — log estruturado, erro 500 padronizado sem vazar stack, e
-  rate limit de graça.
-- Categoria de rate limit por plano: passe a função `iaCategoryByPlano` em vez de string.
-- **Rota de IA nova:** siga o fluxo de 5 passos da seção de créditos, adicione a ação no
-  `CHECK` de `uso_ia` (migration nova) e em `CUSTO_CREDITOS`.
-- Mensagens de erro pro usuário: português, direto, sem stack trace nunca.
-- `EnunciadoTexto` (em `dashboard/questoes/page.tsx`) já destaca citações bibliográficas —
-  reuse em vez de reescrever.
-- Design tokens em `globals.css` (bg, bg-card, border, text-muted, brand, brand-soft...) —
-  não hardcode cor.
-- `.motion-safe-ui` marca elementos que devem animar mesmo com `prefers-reduced-motion`.
-  `.no-focus-ring` é a exceção da regra global de `:focus-visible` (só no textarea da tutora).
-- **Animações — regras de performance** (a landing travava por violar estas regras; medido em
-  2026-11-14, ver commit da otimização):
-  - **Loop infinito = CSS, nunca framer-motion.** Use `.flutuar` + `flutuar({ y, dur, ... })`
-    (`src/lib/flutuar.ts`), `.piscar`, `.virar-card`. Um `repeat: Infinity` do framer recalcula o
-    estilo da página a cada quadro, mesmo com ela parada.
+- **Toda rota de API nova** usa `withLogging('nome/da/acao', handler, { rateLimit: 'cat', maxBytes })`.
+- Categoria por plano: passe `iaCategoryByPlano` em vez de string.
+- **Rota de IA nova:** fluxo de 5 passos dos créditos + ação no `CHECK` de `uso_ia`
+  (migration nova) + `CUSTO_CREDITOS`.
+- Erros para o usuário: português, direto, sem stack trace.
+- Texto de questão (citações/fonte, imagens): use `QuestaoTexto.tsx`, não reescreva.
+- `.motion-safe-ui` anima mesmo com `prefers-reduced-motion`; `.no-focus-ring` só no textarea
+  da tutora.
+- **Animações — regras de performance:**
+  - **Loop infinito = CSS, nunca framer-motion** (`.flutuar` + `flutuar()`, `.piscar`, `.virar-card`).
   - **Entradas animam `transform` como string** (`initial={{ transform: 'translateY(24px)' }}`),
-    não `y`/`x`/`scale`. Com string o framer usa WAAPI, que roda na GPU; com `y`, roda em JS.
-  - **Brilho difuso = `.brilho [--brilho:0.08]`**, nunca `bg-brand/x blur-[100px]` — blur grande é
-    refeito a cada quadro quando algo se move perto.
-  - **`backdrop-blur` só onde o fundo é realmente translúcido.** Em elemento fixo (navbar,
-    sidebar) ele é refeito a cada quadro de scroll; com fundo >90% opaco, não aparece e só custa.
-  - Não anime `width`/`height`/`top`/`left` em loop ou em algo grande — use `scaleX`/`translate`.
-- `maxDuration`: `questoes/gerar` e `plano/gerar` estão em **300s**. Foram 120s e isso
-  causava timeout real (Sonnet levou 130,8s num plano de 16 semanas). As demais usam o padrão.
+    não `y`/`x`/`scale` — assim roda na GPU (WAAPI).
+  - **Brilho difuso = `.brilho [--brilho:0.08]`**, nunca `blur-[100px]` grande.
+  - `backdrop-blur` só onde o fundo é realmente translúcido.
+  - Não anime `width`/`height`/`top`/`left` — use `scaleX`/`translate`.
+- `maxDuration`: `questoes/gerar` e `plano/gerar` em **300s**.
 
 ## Ambiente / variáveis
 
 `.env.local` (dev): `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-(formato `sb_publishable_...`), `ANTHROPIC_API_KEY`. **Não tem** as vars do Upstash —
-rate limit em memória localmente, esperado.
-
-`.env.example` documenta tudo. Produção (Vercel) tem tudo, incluindo Upstash via Marketplace.
+(`sb_publishable_...`), `ANTHROPIC_API_KEY`. Sem Upstash (esperado). `.env.example` documenta
+tudo. Produção (Vercel) tem tudo, incluindo Upstash via Marketplace.
 
 ## Como verificar que algo funciona
 
-Não há suíte de testes automatizados. O padrão usado nas últimas sessões:
+Não há testes automatizados. Padrão:
 
 1. `npx tsc --noEmit -p .`
 2. `npm run build`
-3. Exercitar de verdade (dev server + curl ou browser), checando console/network
-4. Para o `plano/gerar`: `node scripts/eval-plano.mjs`
-5. Para créditos: consultar `uso_ia` e `creditos_usuario` no Supabase
+3. Dev server: `preview_start` com o nome **"Next.js Dev Server"** (`.claude/launch.json`,
+   porta 3000). Conferir telas com screenshot, nos temas claro e escuro, desktop e mobile.
+4. `plano/gerar`: `node scripts/eval-plano.mjs`
+5. Créditos: consultar `uso_ia` e `creditos_usuario` no Supabase.
 
-Query útil pra acompanhar custo real vs. estimado:
+Armadilhas de ambiente (Windows): no Git Bash use `MSYS_NO_PATHCONV=1` antes de comandos
+com caminhos `/...`. Para editar código, prefira ler o trecho e usar a ferramenta Edit em vez
+de scripts de substituição (indentação quebra o match).
 
 ```sql
 SELECT acao, count(*) AS chamadas,
@@ -428,18 +383,11 @@ SELECT acao, count(*) AS chamadas,
 FROM uso_ia GROUP BY acao ORDER BY avg(custo_usd) DESC;
 ```
 
-**Depois de algumas semanas em produção, use essa query pra reavaliar os 300 créditos do
-`plano`** — hoje o valor veio de estimativa de teto, não de uso real.
-
 ## Migrations
 
-Novidade desta sessão: `supabase/migrations/`. Antes tudo era feito pelo dashboard do
-Supabase. A migration do sistema de créditos está em
-`20260803120000_sistema_creditos.sql` e **já foi aplicada em produção**.
-
-O MCP do Supabase é instável (deu timeout/connection closed várias vezes nesta sessão) —
-se falhar, tente de novo antes de partir pra outra abordagem; costuma voltar.
+`supabase/migrations/` — ambas **já aplicadas em produção**:
+`20260803120000_sistema_creditos.sql` e `20261117230000_seguranca_plano_avatares.sql`.
+O MCP do Supabase às vezes dá timeout — tente de novo antes de mudar de abordagem.
 
 ---
-*Este arquivo é um snapshot — não é atualizado automaticamente. Se ficar desatualizado,
-corrija-o em vez de ignorá-lo.*
+*Snapshot — não é atualizado sozinho. Se ficar desatualizado, corrija em vez de ignorar.*

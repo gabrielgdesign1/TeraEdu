@@ -188,7 +188,7 @@ export default function IATutora() {
         <button
           onClick={() => enviar()}
           disabled={loading || !input.trim()}
-          className="w-8 h-8 bg-brand hover:bg-brand-hover disabled:opacity-30 rounded-full flex items-center justify-center transition-colors"
+          className="w-8 h-8 botao-brand disabled:opacity-30 rounded-full flex items-center justify-center transition-colors"
         >
           <Send size={13} className="text-white" />
         </button>

@@ -274,7 +274,7 @@ export default function Flashcards() {
                 </button>
                 <button
                   onClick={proximo}
-                  className="flex items-center gap-2 flex-1 justify-center py-3 rounded-full bg-brand hover:bg-brand-hover text-white transition-colors text-sm font-medium"
+                  className="flex items-center gap-2 flex-1 justify-center py-3 rounded-full botao-brand text-white transition-colors text-sm font-medium"
                 >
                   {indiceAtual === flashcards.length - 1 ? 'Finalizar' : 'Próximo'}
                   {indiceAtual < flashcards.length - 1 && <ChevronRight size={15} />}
@@ -298,7 +298,7 @@ export default function Flashcards() {
                     key={m.id}
                     onClick={() => setModoEntrada(m.id)}
                     className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2 ${
-                      modoEntrada === m.id ? 'bg-brand text-white' : 'text-text-muted hover:text-text'
+                      modoEntrada === m.id ? 'botao-brand' : 'text-text-muted hover:text-text'
                     }`}
                   >
                     <m.icon size={14} /> {m.label}
@@ -352,7 +352,7 @@ export default function Flashcards() {
                         key={n}
                         onClick={() => setQuantidade(n)}
                         className={`px-5 py-2.5 rounded-full text-sm font-medium transition-colors ${
-                          quantidade === n ? 'bg-brand text-white' : 'bg-bg border border-border text-text-muted hover:text-text'
+                          quantidade === n ? 'botao-brand' : 'bg-bg border border-border text-text-muted hover:text-text'
                         }`}
                       >
                         {n}
@@ -364,7 +364,7 @@ export default function Flashcards() {
                 <button
                   onClick={gerarFlashcards}
                   disabled={loading || !podeGerar}
-                  className="w-full bg-brand hover:bg-brand-hover disabled:opacity-40 disabled:cursor-not-allowed text-white font-medium py-3 rounded-full transition-colors"
+                  className="w-full botao-brand disabled:opacity-40 disabled:cursor-not-allowed text-white font-medium py-3 rounded-full transition-colors"
                 >
                   {loading ? 'Gerando flashcards...' : 'Gerar flashcards com IA'}
                 </button>

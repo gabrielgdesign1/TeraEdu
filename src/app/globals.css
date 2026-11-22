@@ -158,6 +158,34 @@ body {
     0 4px 14px -6px rgb(249 115 22 / 0.6);
 }
 
+/* Card com bevel: luz fina na borda de cima, sombra na de baixo e um leve degradê,
+   para parecer uma peça com volume em vez de um retângulo chapado */
+.card-bevel {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--bg-card) 97%, white) 0%, var(--bg-card) 45%, color-mix(in srgb, var(--bg-card) 97%, black) 100%);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.9),
+    inset 0 -1px 0 rgb(15 17 23 / 0.06),
+    0 14px 32px -16px rgb(15 17 23 / 0.18);
+}
+.dark .card-bevel {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--bg-card) 93%, white) 0%, var(--bg-card) 45%, color-mix(in srgb, var(--bg-card) 88%, black) 100%);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.09),
+    inset 0 -1px 0 rgb(0 0 0 / 0.4),
+    0 20px 44px -18px rgb(0 0 0 / 0.6);
+}
+
+/* Horizonte do hero: a borda de um "planeta" da cor do fundo, com a luz laranja nascendo
+   atrás. Sombras estáticas: pintadas uma vez, nada aqui anima. */
+.horizonte {
+  background: var(--bg);
+  box-shadow:
+    0 -1px 0 0 rgb(253 186 116 / 0.9),
+    0 -24px 60px -8px rgb(249 115 22 / 0.55),
+    0 -90px 180px -30px rgb(249 115 22 / 0.35),
+    inset 0 40px 80px -40px rgb(249 115 22 / 0.3);
+}
+
 /* Texto com gradiente da marca */
 .text-gradient-brand {
   background: linear-gradient(100deg, var(--text) 30%, var(--brand) 85%);

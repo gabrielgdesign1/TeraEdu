@@ -119,7 +119,7 @@ function TiltCard({ children, className = '', tilt = 7, glow = true }: {
 /* ═══════════════════════════ dados ═══════════════════════════ */
 
 /* recuo de cada passo do "Como funciona": um degrau para a direita por passo (só no desktop) */
-const DEGRAUS = ['lg:ml-0', 'lg:ml-[18%]', 'lg:ml-[36%]', 'lg:ml-[54%]']
+const DEGRAUS = ['lg:ml-0', 'lg:ml-[15%]', 'lg:ml-[30%]', 'lg:ml-[45%]']
 
 const NAV_LINKS = [
   { name: 'Funcionalidades', url: '#features' },
@@ -143,7 +143,7 @@ function GlassPanel({ children, className = '', style }: {
   return (
     <div
       // sem backdrop-blur: dentro da cena 3D que inclina ele era refeito a cada quadro
-      className={`rounded-2xl border border-border/60 bg-bg-card/95 shadow-[0_8px_32px_rgba(0,0,0,0.12)] ${className}`}
+      className={`card-bevel rounded-2xl border border-border/60 ${className}`}
       style={style}
     >
       {children}
@@ -151,150 +151,155 @@ function GlassPanel({ children, className = '', style }: {
   )
 }
 
-/* Cena 3D do hero: mini-dashboard que ecoa o app, inclinando com o mouse */
-function HeroScene() {
-  const ref = useRef<HTMLDivElement>(null)
-  const rx = useSpring(useMotionValue(-4), { stiffness: 60, damping: 16 })
-  const ry = useSpring(useMotionValue(8),  { stiffness: 60, damping: 16 })
-
-  useEffect(() => {
-    function onMove(e: MouseEvent) {
-      const w = window.innerWidth, h = window.innerHeight
-      ry.set(((e.clientX / w) - 0.5) * 16 + 6)
-      rx.set((0.5 - (e.clientY / h)) * 12 - 3)
-    }
-    window.addEventListener('mousemove', onMove)
-    return () => window.removeEventListener('mousemove', onMove)
-  }, [rx, ry])
-
+/* Vitrine do hero: o painel do app, largo, apoiado num horizonte laranja, com chips
+   flutuando em volta. Entra uma vez e fica parado (nada segue o mouse). */
+function HeroVitrine() {
   return (
-    <div ref={ref} className="relative">
-      {/* entrada (transform via WAAPI) separada da inclinação pelo mouse (rotateX/Y por spring) */}
-      <motion.div
-        style={{ perspective: 1600 }}
-        initial={{ opacity: 0, transform: 'translateY(60px) scale(0.9)' }}
-        animate={{ opacity: 1, transform: 'translateY(0px) scale(1)' }}
-        transition={{ duration: 1.1, delay: 0.45, ease: EASE }}
-      >
-        <motion.div
-          className="relative will-change-transform"
-          style={{ rotateX: rx, rotateY: ry, transformStyle: 'preserve-3d' }}
-        >
-          {/* glow de fundo */}
-          <div className="brilho [--brilho:0.13] absolute -inset-[284px] pointer-events-none" style={{ transform: 'translateZ(-80px)' }} />
+    <div className="relative mx-auto w-full max-w-[1000px]" style={{ perspective: 1800 }}>
+      {/* horizonte: borda de um "planeta" com a luz nascendo atrás (sombras estáticas, globals.css) */}
+      <div aria-hidden className="horizonte absolute left-1/2 top-[12%] -translate-x-1/2 w-[2400px] h-[2400px] rounded-full pointer-events-none" />
 
-          {/* painel principal — mini dashboard */}
-          <GlassPanel className="relative w-[420px] max-w-full p-0 overflow-hidden !rounded-3xl" style={{ transform: 'translateZ(0px)' }}>
-            <div className="flex">
-              {/* mini sidebar glass — eco da sidebar do app */}
-              <div className="w-14 border-r border-border/50 py-4 flex flex-col items-center gap-1 bg-bg/40">
-                <Image src="/TeraEdu-logo-orange.webp" alt="" width={20} height={20} className="mb-3" />
-                {[LayoutDashboard, FileQuestion, Layers, FileText, MessageCircle, GraduationCap].map((Icon, i) => (
-                  <div key={i} className={`w-9 h-9 rounded-xl flex items-center justify-center ${i === 0 ? 'bg-brand/15 text-brand' : 'text-text-faint'}`}>
-                    <Icon size={14} />
-                  </div>
-                ))}
-                <div className="mt-auto w-7 h-7 rounded-full bg-brand flex items-center justify-center text-white text-[10px] font-bold">A</div>
+      <motion.div
+        className="relative z-10 rounded-3xl shadow-[0_40px_120px_-30px_rgba(249,115,22,0.45)]"
+        style={{ transformOrigin: '50% 0%' }}
+        initial={{ opacity: 0, transform: 'translateY(80px) rotateX(24deg) scale(0.94)' }}
+        animate={{ opacity: 1, transform: 'translateY(0px) rotateX(10deg) scale(1)' }}
+        transition={{ duration: 1.2, delay: 0.5, ease: EASE }}
+      >
+        <GlassPanel className="relative p-0 overflow-hidden !rounded-3xl">
+          <div className="flex">
+            {/* sidebar — eco da sidebar do app */}
+            <div className="hidden sm:flex w-16 border-r border-border/50 py-5 flex-col items-center gap-1.5 bg-bg/40">
+              <Image src="/TeraEdu-logo-orange.webp" alt="" width={22} height={22} className="mb-4" />
+              {[LayoutDashboard, FileQuestion, Layers, FileText, MessageCircle, GraduationCap].map((Icon, i) => (
+                <div key={i} className={`w-10 h-10 rounded-xl flex items-center justify-center ${i === 0 ? 'bg-brand/15 text-brand' : 'text-text-faint'}`}>
+                  <Icon size={16} />
+                </div>
+              ))}
+            </div>
+
+            <div className="flex-1 min-w-0 p-5 sm:p-7 text-left">
+              <div className="flex items-start justify-between gap-4 mb-6">
+                <div>
+                  <p className="text-text-faint text-xs mb-0.5">Boa noite</p>
+                  <p className="text-text font-bold text-xl leading-tight">Ana 👋</p>
+                </div>
+                <div className="hidden sm:flex gap-1.5">
+                  {['Questões', 'Flashcards', 'Resumos'].map((t, i) => (
+                    <span key={t} className={`text-[11px] font-medium px-3 py-1.5 rounded-full ${i === 0 ? 'bg-brand text-white' : 'bg-bg-hover text-text-muted'}`}>{t}</span>
+                  ))}
+                </div>
               </div>
 
-              {/* conteúdo */}
-              <div className="flex-1 p-5">
-                <p className="text-text-faint text-[10px] mb-0.5">Boa noite</p>
-                <p className="text-text font-bold text-lg leading-tight mb-4">Ana 👋</p>
+              <div className="grid grid-cols-3 gap-2.5 sm:gap-3 mb-4">
+                {[
+                  { r: 'Questões resolvidas', v: '128', d: '+12 essa semana' },
+                  { r: 'Sequência atual',     v: '7',   d: 'Continue assim!', fogo: true },
+                  { r: 'Flashcards revisados', v: '64', d: '18 para hoje' },
+                ].map(c => (
+                  <div key={c.r} className="rounded-2xl border border-border/60 p-3 sm:p-4">
+                    <p className="text-text-faint text-[10px] sm:text-[11px] mb-1.5 leading-tight">{c.r}</p>
+                    <p className="text-text font-bold text-xl sm:text-2xl leading-none flex items-center gap-1">
+                      {c.v}{c.fogo && <Flame size={15} className="text-brand" />}
+                    </p>
+                    <p className="text-brand text-[10px] sm:text-[11px] mt-1.5 font-medium">{c.d}</p>
+                  </div>
+                ))}
+              </div>
 
-                <div className="flex gap-1.5 mb-4">
-                  {['Questões', 'Flashcards', 'Resumos'].map((t, i) => (
-                    <span key={t} className={`text-[9px] font-medium px-2.5 py-1 rounded-full ${i === 0 ? 'bg-brand text-white' : 'bg-bg-hover text-text-muted'}`}>{t}</span>
+              <div className="grid md:grid-cols-[1.35fr_1fr] gap-3">
+                <div className="rounded-2xl border border-border/60 p-4 sm:p-5">
+                  <p className="text-text text-xs font-semibold mb-4">Desempenho por matéria</p>
+                  {[
+                    { m: 'Matemática', p: 72 },
+                    { m: 'Química',    p: 45 },
+                    { m: 'História',   p: 88 },
+                    { m: 'Biologia',   p: 63 },
+                  ].map((b, i) => (
+                    <div key={b.m} className="mb-3 last:mb-0">
+                      <div className="flex justify-between mb-1.5">
+                        <span className="text-text text-[11px] font-medium">{b.m}</span>
+                        <span className="text-text-faint text-[11px]">{b.p}%</span>
+                      </div>
+                      <div className="h-1.5 bg-bg-hover rounded-full overflow-hidden">
+                        {/* scaleX em vez de width: width refaz o layout a cada quadro */}
+                        <motion.div
+                          className="h-full bg-brand rounded-full origin-left"
+                          initial={{ transform: 'scaleX(0)' }}
+                          animate={{ transform: `scaleX(${b.p / 100})` }}
+                          transition={{ duration: 1.2, delay: 1.1 + i * 0.12, ease: EASE }}
+                        />
+                      </div>
+                    </div>
                   ))}
                 </div>
 
-                <div className="grid grid-cols-2 gap-2 mb-4">
-                  <div className="rounded-xl border border-border/60 p-3">
-                    <p className="text-text-faint text-[9px] mb-1">Questões resolvidas</p>
-                    <p className="text-text font-bold text-xl leading-none">128</p>
-                    <p className="text-brand text-[9px] mt-1 font-medium">+12 essa semana</p>
-                  </div>
-                  <div className="rounded-xl border border-border/60 p-3">
-                    <p className="text-text-faint text-[9px] mb-1">Sequência atual</p>
-                    <p className="text-text font-bold text-xl leading-none flex items-center gap-1">7 <Flame size={13} className="text-brand" /></p>
-                    <p className="text-brand text-[9px] mt-1 font-medium">Continue assim!</p>
-                  </div>
+                <div className="hidden md:block rounded-2xl border border-border/60 p-5">
+                  <p className="text-text text-xs font-semibold mb-4">Plano de hoje</p>
+                  {[
+                    { t: '20 questões de Matemática', feito: true },
+                    { t: 'Revisar flashcards de Biologia', feito: true },
+                    { t: 'Resumo: Revolução Industrial', feito: false },
+                  ].map(it => (
+                    <div key={it.t} className="flex items-center gap-2.5 py-2 border-b border-border/50 last:border-0">
+                      <span className={`w-4 h-4 rounded-md flex items-center justify-center flex-shrink-0 ${it.feito ? 'bg-brand text-white' : 'border border-border'}`}>
+                        {it.feito && <Check size={10} strokeWidth={3} />}
+                      </span>
+                      <span className={`text-[11px] ${it.feito ? 'text-text-faint line-through' : 'text-text'}`}>{it.t}</span>
+                    </div>
+                  ))}
                 </div>
-
-                {[
-                  { m: 'Matemática', p: 72 },
-                  { m: 'Química',    p: 45 },
-                  { m: 'História',   p: 88 },
-                ].map((b, i) => (
-                  <div key={b.m} className="mb-2.5 last:mb-0">
-                    <div className="flex justify-between mb-1">
-                      <span className="text-text text-[10px] font-medium">{b.m}</span>
-                      <span className="text-text-faint text-[10px]">{b.p}%</span>
-                    </div>
-                    <div className="h-1 bg-bg-hover rounded-full overflow-hidden">
-                      {/* scaleX em vez de width: width refaz o layout a cada quadro */}
-                      <motion.div
-                        className="h-full bg-brand rounded-full origin-left"
-                        initial={{ transform: 'scaleX(0)' }}
-                        animate={{ transform: `scaleX(${b.p / 100})` }}
-                        transition={{ duration: 1.2, delay: 1 + i * 0.15, ease: EASE }}
-                      />
-                    </div>
-                  </div>
-                ))}
               </div>
             </div>
-          </GlassPanel>
-
-          {/* chip flutuante — IA Tutora (translateZ fora, flutuação dentro: um transform não pode sobrescrever o outro) */}
-          <div className="absolute -right-16 -top-10 w-56" style={{ transform: 'translateZ(90px)' }}>
-            <div className="flutuar" style={flutuar({ y: -10, dur: 5 })}>
-              <GlassPanel className="p-3.5">
-                <div className="flex items-center gap-2 mb-2.5">
-                  <div className="w-6 h-6 bg-brand rounded-lg flex items-center justify-center"><MessageCircle size={11} className="text-white" /></div>
-                  <span className="text-text text-[11px] font-semibold">IA Tutora</span>
-                  <span className="ml-auto w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
-                </div>
-                <div className="bg-bg-hover rounded-xl rounded-tr-sm px-3 py-2 text-[10px] text-text mb-2 ml-6">Como resolvo função do 2° grau?</div>
-                <div className="border border-border/60 rounded-xl rounded-tl-sm px-3 py-2 text-[10px] text-text-muted mr-6">
-                  Vamos por partes! Primeiro identifique os coeficientes a, b e c…
-                </div>
-              </GlassPanel>
-            </div>
           </div>
-
-          {/* chip flutuante — flashcard */}
-          <div className="absolute -left-20 bottom-8 w-48" style={{ transform: 'translateZ(70px)' }}>
-            <div className="flutuar" style={flutuar({ y: 9, r0: -2, r1: 1, dur: 6 })}>
-              <GlassPanel className="p-4 text-center">
-                <p className="text-text-faint text-[8px] uppercase tracking-widest mb-1.5">Flashcard · Biologia</p>
-                <p className="text-text text-[11px] font-semibold leading-snug">O que é fotossíntese?</p>
-                <p className="text-brand text-[9px] mt-2">Toque para revelar →</p>
-              </GlassPanel>
-            </div>
-          </div>
-
-          {/* chip flutuante — conquista */}
-          <div className="absolute -right-8 bottom-0" style={{ transform: 'translateZ(110px)' }}>
-            <div className="flutuar" style={flutuar({ y: -7, dur: 4.2, delay: 1 })}>
-              <GlassPanel className="px-3.5 py-2.5 flex items-center gap-2">
-                <Trophy size={13} className="text-brand" />
-                <span className="text-text text-[10px] font-semibold whitespace-nowrap">+80 pts no ENEM</span>
-              </GlassPanel>
-            </div>
-          </div>
-
-          {/* capelo 3D flutuando acima */}
-          <div className="absolute -top-32 -left-24 w-44 pointer-events-none" style={{ transform: 'translateZ(140px)' }}>
-            <div className="flutuar" style={flutuar({ y: -14, r0: -6, r1: 2, dur: 7 })}>
-              <Image src="/render-capelo.webp" alt="" width={280} height={280} className="w-full drop-shadow-2xl" priority />
-            </div>
-          </div>
-        </motion.div>
+        </GlassPanel>
       </motion.div>
+
+      {/* chips em arco em volta do painel (só no desktop) */}
+      <div className="hidden lg:block absolute -right-20 top-14 w-60 z-20">
+        <div className="flutuar" style={flutuar({ y: -10, dur: 5 })}>
+          <GlassPanel className="p-3.5">
+            <div className="flex items-center gap-2 mb-2.5">
+              <div className="w-6 h-6 bg-brand rounded-lg flex items-center justify-center"><MessageCircle size={11} className="text-white" /></div>
+              <span className="text-text text-[11px] font-semibold">IA Tutora</span>
+              <span className="ml-auto w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
+            </div>
+            <div className="bg-bg-hover rounded-xl rounded-tr-sm px-3 py-2 text-[10px] text-text mb-2 ml-6">Como resolvo função do 2° grau?</div>
+            <div className="border border-border/60 rounded-xl rounded-tl-sm px-3 py-2 text-[10px] text-text-muted mr-6">
+              Vamos por partes! Primeiro identifique os coeficientes a, b e c…
+            </div>
+          </GlassPanel>
+        </div>
+      </div>
+
+      <div className="hidden lg:block absolute -left-36 top-[46%] w-52 z-20">
+        <div className="flutuar" style={flutuar({ y: 9, r0: -3, r1: 1, dur: 6 })}>
+          <GlassPanel className="p-4 text-center">
+            <p className="text-text-faint text-[10px] mb-1.5">Flashcard de Biologia</p>
+            <p className="text-text text-[12px] font-semibold leading-snug">O que é fotossíntese?</p>
+            <p className="text-brand text-[10px] mt-2">Toque para revelar</p>
+          </GlassPanel>
+        </div>
+      </div>
+
+      <div className="hidden lg:block absolute -right-10 top-[58%] z-20">
+        <div className="flutuar" style={flutuar({ y: -7, dur: 4.2, delay: 1 })}>
+          <GlassPanel className="px-4 py-3 flex items-center gap-2">
+            <Trophy size={14} className="text-brand" />
+            <span className="text-text text-[11px] font-semibold whitespace-nowrap">+80 pts no ENEM</span>
+          </GlassPanel>
+        </div>
+      </div>
+
+      <div className="hidden lg:block absolute -left-28 -top-24 w-44 z-20 pointer-events-none">
+        <div className="flutuar" style={flutuar({ y: -14, r0: -6, r1: 2, dur: 7 })}>
+          <Image src="/render-capelo.webp" alt="" width={280} height={280} className="w-full drop-shadow-2xl" priority />
+        </div>
+      </div>
     </div>
   )
 }
+
 
 /* ═════════════════ mini-mocks das feature cards ═════════════════ */
 
@@ -475,6 +480,7 @@ export default function Home() {
           <div className="flex items-center gap-2">
             <button
               onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+              aria-label="Alternar tema claro e escuro"
               className="w-9 h-9 rounded-xl hover:bg-bg-hover flex items-center justify-center text-text-muted hover:text-text transition-colors"
             >
               {mounted && theme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}
@@ -493,78 +499,70 @@ export default function Home() {
       </motion.nav>
 
       {/* ══════════════════════════ HERO ══════════════════════════ */}
-      <section className="relative min-h-screen overflow-hidden pt-36 pb-0 flex flex-col">
-
-        {/* grid de fundo + orbes */}
+      {/* título e botões centralizados; embaixo, a vitrine do app sobre o horizonte laranja,
+          cortada pela base da seção e sumindo num degradê */}
+      <section className="relative overflow-hidden pt-36">
         <div className="hero-grid absolute inset-0 opacity-60 pointer-events-none" />
-        {/* orbes: mesmo centro e alcance de antes (w-72 blur-100 / w-96 blur-120), agora gradiente */}
-        <div
-          className="flutuar brilho [--brilho:0.065] absolute top-[8%] left-[12%] -mt-[196px] -ml-[196px] w-[680px] h-[680px] pointer-events-none"
-          style={flutuar({ x: 40, y: -30, dur: 14 })}
-        />
-        <div
-          className="flutuar brilho [--brilho:0.058] absolute bottom-[20%] right-[8%] -mb-[238px] -mr-[238px] w-[860px] h-[860px] pointer-events-none"
-          style={flutuar({ x: -50, y: 40, dur: 18 })}
-        />
 
-        {/* pôster: em cima, cena 3D à esquerda e texto de apoio à direita; o título fica
-            na base, de ponta a ponta da tela */}
-        <div className="relative max-w-7xl mx-auto px-6 lg:px-10 w-full flex-1 grid lg:grid-cols-[1fr_minmax(0,380px)] gap-10 items-start">
-          <div className="hidden lg:flex justify-start relative z-10 pl-24 pt-20">
-            <HeroScene />
-          </div>
+        <div className="relative z-20 max-w-6xl mx-auto px-6 text-center">
+          <h1 className="text-[clamp(2.6rem,5.4vw,5.25rem)] font-black leading-[0.95] tracking-[-0.03em]">
+            <LineReveal
+              delay={0.3}
+              lines={[
+                { text: 'Estude mais inteligente,', className: 'text-text' },
+                { text: 'não mais difícil.',        className: 'text-brand' },
+              ]}
+            />
+          </h1>
 
-          <div className="relative z-20 lg:pt-4 lg:text-right">
-            <motion.p
-              className="text-text-muted text-lg leading-relaxed mb-8"
-              initial={{ opacity: 0, transform: 'translateY(24px)' }}
-              animate={{ opacity: 1, transform: 'translateY(0px)' }}
-              transition={{ duration: 0.7, delay: 0.85, ease: EASE }}
+          <motion.p
+            className="text-text-muted text-lg leading-relaxed max-w-xl mx-auto mt-7"
+            initial={{ opacity: 0, transform: 'translateY(24px)' }}
+            animate={{ opacity: 1, transform: 'translateY(0px)' }}
+            transition={{ duration: 0.7, delay: 0.7, ease: EASE }}
+          >
+            O TeraEdu usa inteligência artificial para criar resumos, flashcards, explicar conteúdos e gerar questões personalizadas para o seu ritmo de estudo.
+          </motion.p>
+
+          <motion.div
+            className="flex items-center justify-center gap-3 flex-wrap mt-9"
+            initial={{ opacity: 0, transform: 'translateY(24px)' }}
+            animate={{ opacity: 1, transform: 'translateY(0px)' }}
+            transition={{ duration: 0.7, delay: 0.8, ease: EASE }}
+          >
+            <Magnetic>
+              <Link
+                href="/login"
+                className="botao-brand group inline-flex items-center gap-2 font-semibold px-8 py-4 rounded-2xl text-sm"
+              >
+                Criar conta grátis
+                <ArrowRight size={15} className="transition-transform group-hover:translate-x-1" />
+              </Link>
+            </Magnetic>
+            <a
+              href="#como-funciona"
+              className="inline-flex items-center gap-2 font-semibold px-7 py-4 rounded-2xl text-sm text-text border border-border bg-bg-card/70 hover:border-brand/50 transition-colors"
             >
-              O TeraEdu usa inteligência artificial para criar resumos, flashcards, explicar conteúdos e gerar questões personalizadas para o seu ritmo de estudo.
-            </motion.p>
+              Ver como funciona
+            </a>
+          </motion.div>
 
-            <motion.div
-              className="flex items-center gap-5 flex-wrap mb-5 lg:justify-end"
-              initial={{ opacity: 0, transform: 'translateY(24px)' }}
-              animate={{ opacity: 1, transform: 'translateY(0px)' }}
-              transition={{ duration: 0.7, delay: 0.95, ease: EASE }}
-            >
-              <a href="#como-funciona" className="text-text-muted hover:text-text text-sm flex items-center gap-1.5 transition-colors">
-                Como funciona <ArrowRight size={12} />
-              </a>
-              <Magnetic>
-                <Link
-                  href="/login"
-                  className="botao-brand group inline-flex items-center gap-2 font-semibold px-8 py-4 rounded-2xl text-sm"
-                >
-                  Criar conta grátis
-                  <ArrowRight size={15} className="transition-transform group-hover:translate-x-1" />
-                </Link>
-              </Magnetic>
-            </motion.div>
-
-            <motion.p
-              className="text-text-faint text-xs"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.7, delay: 1.1 }}
-            >
-              Grátis para começar · Sem cartão de crédito
-            </motion.p>
-          </div>
+          <motion.p
+            className="text-text-faint text-xs mt-5"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.7, delay: 1 }}
+          >
+            Grátis para começar · Sem cartão de crédito
+          </motion.p>
         </div>
 
-        {/* fora do max-w: o título ocupa a largura da tela, não a do container */}
-        <h1 className="relative z-20 px-6 lg:px-10 mt-14 lg:mt-4 pb-10 text-[clamp(2.75rem,6.4vw,9rem)] font-black leading-[0.9] tracking-[-0.035em]">
-          <LineReveal
-            delay={0.4}
-            lines={[
-              { text: 'Estude mais inteligente,', className: 'text-text' },
-              { text: 'não mais difícil.',        className: 'text-brand lg:text-right' },
-            ]}
-          />
-        </h1>
+        <div className="relative mt-16 h-[300px] sm:h-[440px] lg:h-[540px] px-4 sm:px-6">
+          <HeroVitrine />
+        </div>
+
+        {/* a vitrine some na página em vez de terminar num corte seco */}
+        <div aria-hidden className="absolute inset-x-0 bottom-0 h-40 z-30 bg-gradient-to-t from-bg via-bg/80 to-transparent pointer-events-none" />
       </section>
 
       {/* ══════════════════════ FEATURES — bento 3D ══════════════════════ */}
@@ -573,9 +571,10 @@ export default function Home() {
 
           {/* o título é uma célula da própria grade, encaixado entre os cards (no celular, vem primeiro) */}
           <div className="grid grid-cols-1 md:grid-cols-6 gap-4 [grid-auto-rows:minmax(240px,auto)]">
-            <div className="relative order-first md:order-none md:col-span-4 md:col-start-3 md:row-start-2 flex flex-col justify-center md:pl-8 py-6">
+            {/* pr: o vão do átomo — o título quebra antes dele em vez de passar por baixo */}
+            <div className="relative order-first md:order-none md:col-span-4 md:col-start-3 md:row-start-2 flex flex-col justify-center pr-24 md:pl-8 md:pr-[200px] lg:pr-[240px] py-6">
               <motion.div
-                className="absolute -right-3 -top-16 md:right-0 md:-top-6 z-[15] pointer-events-none w-[96px] md:w-[180px] lg:w-[220px]"
+                className="absolute -right-3 -top-16 md:right-0 md:top-1/2 md:-translate-y-1/2 z-[15] pointer-events-none w-[96px] md:w-[180px] lg:w-[220px]"
                 initial={{ opacity: 0, transform: 'scale(0.7) rotate(-20deg)' }}
                 whileInView={{ opacity: 1, transform: 'scale(1) rotate(0deg)' }}
                 viewport={{ once: true }}
@@ -587,7 +586,7 @@ export default function Home() {
                 </div>
               </motion.div>
 
-              <h2 className="text-[clamp(2.2rem,4.6vw,4.8rem)] font-black leading-[0.9] tracking-tight relative z-[5]">
+              <h2 className="text-[clamp(2.2rem,4vw,4.2rem)] font-black leading-[0.9] tracking-tight relative z-[5]">
                 <LineReveal lines={[
                   { text: 'Tudo que você',       className: 'text-text-muted font-extralight' },
                   { text: 'precisa para passar.', className: 'text-text' },
@@ -621,7 +620,7 @@ export default function Home() {
                 transition={{ duration: 0.6, delay: (i % 3) * 0.08, ease: EASE }}
               >
                 <TiltCard className="h-full" tilt={5}>
-                  <div className="relative h-full flex flex-col bg-bg-card border border-border rounded-3xl p-7 overflow-hidden transition-colors duration-300 group-hover:border-brand/50">
+                  <div className="card-bevel relative h-full flex flex-col border border-border rounded-3xl p-7 overflow-hidden transition-colors duration-300 group-hover:border-brand/50">
                     <div className="mb-5">
                       <div className="w-11 h-11 bg-brand-soft rounded-2xl flex items-center justify-center group-hover:bg-brand/20 transition-colors" style={{ transform: 'translateZ(30px)' }}>
                         <f.icon size={18} className="text-brand" />
@@ -642,8 +641,8 @@ export default function Home() {
       <section id="como-funciona" className="py-28 px-6 lg:px-10 border-t border-border overflow-hidden">
         <div className="max-w-7xl mx-auto relative">
 
-          {/* escada: título à direita, cada passo desce um degrau para a direita, lápis embaixo à esquerda */}
-          <h2 className="text-[clamp(2.2rem,5vw,5.2rem)] font-black leading-[0.9] tracking-tight mb-16 lg:text-right">
+          {/* escada: cada passo desce um degrau para a direita, lápis no vão embaixo à esquerda */}
+          <h2 className="text-[clamp(2.2rem,5vw,5.2rem)] font-black leading-[0.9] tracking-tight mb-16">
             <LineReveal lines={[
               { text: 'Simples,',            className: 'text-text-muted font-extralight' },
               { text: 'rápido e eficiente.', className: 'text-text' },
@@ -659,24 +658,24 @@ export default function Home() {
             ].map((p, i) => (
               <motion.div
                 key={i}
-                className={`relative flex items-start gap-6 lg:gap-8 py-8 border-t border-border lg:max-w-[46%] group ${DEGRAUS[i]}`}
+                className={`relative flex items-start gap-6 lg:gap-10 py-10 border-t border-border lg:max-w-[55%] group ${DEGRAUS[i]}`}
                 initial={{ opacity: 0, transform: 'translateX(-32px)' }}
                 whileInView={{ opacity: 1, transform: 'translateX(0px)' }}
                 viewport={{ once: true, margin: '-60px' }}
                 transition={{ duration: 0.6, delay: i * 0.08, ease: EASE }}
               >
-                <span className="text-[4.5rem] lg:text-[6rem] font-black leading-none text-text-faint group-hover:text-brand/30 transition-colors duration-500 tabular-nums w-24 lg:w-28 flex-shrink-0">
+                <span className="text-[4.5rem] lg:text-[8rem] font-black leading-none text-text-faint group-hover:text-brand/30 transition-colors duration-500 tabular-nums w-24 lg:w-40 flex-shrink-0">
                   {p.num}
                 </span>
-                <div className="pt-2 lg:pt-4">
-                  <h3 className="text-text font-bold text-xl mb-3">{p.titulo}</h3>
-                  <p className="text-text-muted text-sm leading-relaxed">{p.desc}</p>
+                <div className="pt-2 lg:pt-5">
+                  <h3 className="text-text font-bold text-xl lg:text-3xl tracking-tight mb-3">{p.titulo}</h3>
+                  <p className="text-text-muted text-sm lg:text-lg leading-relaxed">{p.desc}</p>
                 </div>
               </motion.div>
             ))}
 
             {/* lápis 3D dirigido pelo scroll, no vão embaixo da escada */}
-            <div className="hidden lg:block absolute left-[4%] bottom-0 w-[260px] pointer-events-none">
+            <div className="hidden lg:block absolute left-[2%] bottom-0 w-[340px] pointer-events-none">
               <motion.div className="relative" style={{ rotate: pencilRotate, y: pencilY }}>
                 <div className="brilho [--brilho:0.1] absolute -inset-[155px]" />
                 <Image src="/render-lapis.webp" alt="" width={320} height={320} className="relative z-10 drop-shadow-2xl w-full" />
@@ -689,11 +688,14 @@ export default function Home() {
       {/* ══════════════════════ DEPOIMENTOS ══════════════════════ */}
       <section id="depoimentos" className="py-28 px-6 lg:px-10 border-t border-border overflow-hidden">
         <div className="max-w-7xl mx-auto">
-          {/* título partido em volta do leque: começo no alto à esquerda, fim embaixo à direita */}
-          <h2 className="text-[clamp(2.2rem,5vw,5rem)] font-black leading-[0.9] tracking-tight mb-14">
-            <LineReveal lines={[{ text: 'O que os', className: 'text-text-muted font-extralight' }]} />
-            <span className="sr-only"> alunos dizem.</span>
-          </h2>
+          <div className="mb-20 text-center">
+            <h2 className="text-[clamp(2.2rem,5vw,5rem)] font-black leading-[0.9] tracking-tight">
+              <LineReveal lines={[
+                { text: 'O que os',      className: 'text-text-muted font-extralight' },
+                { text: 'alunos dizem.', className: 'text-text' },
+              ]} />
+            </h2>
+          </div>
 
           {/* leque de cards */}
           <div className="hidden md:flex justify-center items-center px-10" style={{ perspective: 1400 }}>
@@ -708,7 +710,7 @@ export default function Home() {
               return (
                 <motion.div
                   key={d.nome}
-                  className="relative w-64 flex-shrink-0 bg-bg-card border border-border rounded-3xl p-6 cursor-default shadow-sm"
+                  className="card-bevel relative w-64 flex-shrink-0 border border-border rounded-3xl p-6 cursor-default"
                   style={{ marginLeft: i === 0 ? 0 : -36, zIndex: zBase, transformOrigin: 'bottom center' }}
                   initial={{ opacity: 0, y: 60, rotate: 0 }}
                   whileInView={{ opacity: 1, y: dy, rotate }}
@@ -746,7 +748,7 @@ export default function Home() {
             {DEPOIMENTOS.slice(0, 3).map((d, i) => (
               <motion.div
                 key={d.nome}
-                className="bg-bg-card border border-border rounded-3xl p-6 flex flex-col gap-5"
+                className="card-bevel border border-border rounded-3xl p-6 flex flex-col gap-5"
                 initial={{ opacity: 0, transform: 'translateY(24px)' }}
                 whileInView={{ opacity: 1, transform: 'translateY(0px)' }}
                 viewport={{ once: true, margin: '-40px' }}
@@ -765,10 +767,6 @@ export default function Home() {
               </motion.div>
             ))}
           </div>
-
-          <p aria-hidden className="mt-20 text-right text-[clamp(2.2rem,5vw,5rem)] font-black leading-[0.9] tracking-tight">
-            <LineReveal lines={[{ text: 'alunos dizem.', className: 'text-text' }]} />
-          </p>
         </div>
       </section>
 
@@ -793,7 +791,7 @@ export default function Home() {
               />
             </div>
 
-            <div className="relative m-[1.5px] rounded-[calc(2rem-1.5px)] bg-bg-card overflow-hidden p-10 sm:p-12 lg:p-20">
+            <div className="card-bevel relative m-[1.5px] rounded-[calc(2rem-1.5px)] overflow-hidden p-10 sm:p-12 lg:p-24 text-center">
               <div className="absolute inset-0 bg-gradient-to-br from-brand/10 via-transparent to-transparent pointer-events-none" />
               <div className="brilho [--brilho:0.084] absolute -top-[328px] -right-[328px] w-[784px] h-[784px] pointer-events-none" />
 
@@ -812,16 +810,14 @@ export default function Home() {
                 <Image src="/render-atomo.webp" alt="" width={240} height={240} className="w-full drop-shadow-2xl" />
               </div>
 
-              {/* diagonal: 1ª linha encostada à esquerda, 2ª recuada, e o resto segue o recuo */}
               <div className="relative z-10">
-                <h2 className="text-[clamp(2rem,5.4vw,5.4rem)] font-black leading-[0.9] tracking-tight mb-8">
+                <h2 className="text-[clamp(2rem,5vw,5rem)] font-black leading-[0.9] tracking-tight mb-6">
                   <LineReveal lines={[
                     { text: 'Pronto para passar', className: 'text-text-muted font-extralight' },
-                    { text: 'na sua prova?',      className: 'text-text lg:pl-[22%]' },
+                    { text: 'na sua prova?',      className: 'text-text' },
                   ]} />
                 </h2>
-                <div className="lg:pl-[22%]">
-                <motion.p className="text-text-muted text-lg max-w-lg mb-10" {...inView(0.24)}>
+                <motion.p className="text-text-muted text-lg max-w-lg mx-auto mb-12" {...inView(0.24)}>
                   Junte-se a milhares de estudantes que já estão usando o TeraEdu para estudar com inteligência.
                 </motion.p>
                 <motion.div {...inView(0.32)}>
@@ -836,14 +832,13 @@ export default function Home() {
                   </Magnetic>
                 </motion.div>
                 <motion.div
-                  className="flex items-center gap-6 mt-8 text-text-faint text-xs flex-wrap"
+                  className="flex items-center justify-center gap-6 mt-8 text-text-faint text-xs flex-wrap"
                   {...inView(0.4)}
                 >
                   <span className="flex items-center gap-1.5"><Check size={11} /> Grátis para começar</span>
                   <span className="flex items-center gap-1.5"><Check size={11} /> Cancele quando quiser</span>
                   <span className="flex items-center gap-1.5"><Check size={11} /> Sem cartão de crédito</span>
                 </motion.div>
-                </div>
               </div>
             </div>
           </motion.div>

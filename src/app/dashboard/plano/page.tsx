@@ -366,7 +366,7 @@ export default function PlanoPage() {
                       <button key={v}
                         onClick={() => setConfig(c => ({ ...c, vestibular: v }))}
                         className={`px-4 py-2 rounded-full text-sm font-medium border transition-all ${
-                          config.vestibular === v ? 'bg-brand text-white border-brand' : 'border-border text-text-muted hover:border-brand hover:text-text'
+                          config.vestibular === v ? 'botao-brand border-brand' : 'border-border text-text-muted hover:border-brand hover:text-text'
                         }`}
                       >{v}</button>
                     ))}
@@ -406,7 +406,7 @@ export default function PlanoPage() {
                 <button
                   onClick={() => setStep(2)}
                   disabled={!config.vestibular || !config.dataProva}
-                  className="w-full bg-brand hover:bg-brand-hover disabled:opacity-40 disabled:cursor-not-allowed text-white py-3 rounded-full font-medium text-sm transition-colors flex items-center justify-center gap-2"
+                  className="w-full botao-brand disabled:opacity-40 disabled:cursor-not-allowed text-white py-3 rounded-full font-medium text-sm transition-colors flex items-center justify-center gap-2"
                 >
                   Continuar <ChevronRight size={16} />
                 </button>
@@ -423,7 +423,7 @@ export default function PlanoPage() {
                       <button key={h}
                         onClick={() => setConfig(c => ({ ...c, horasPorDia: h }))}
                         className={`flex-1 py-3 rounded-xl text-sm font-semibold border transition-all ${
-                          config.horasPorDia === h ? 'bg-brand text-white border-brand' : 'border-border text-text-muted hover:border-brand hover:text-text'
+                          config.horasPorDia === h ? 'botao-brand border-brand' : 'border-border text-text-muted hover:border-brand hover:text-text'
                         }`}
                       >{h === 4 ? '4h+' : `${h}h`}</button>
                     ))}
@@ -440,7 +440,7 @@ export default function PlanoPage() {
                       <button key={o.n}
                         onClick={() => setConfig(c => ({ ...c, materiasPorDia: o.n }))}
                         className={`flex-1 py-3 px-4 rounded-xl text-sm font-semibold border transition-all text-left ${
-                          config.materiasPorDia === o.n ? 'bg-brand text-white border-brand' : 'border-border text-text-muted hover:border-brand hover:text-text'
+                          config.materiasPorDia === o.n ? 'botao-brand border-brand' : 'border-border text-text-muted hover:border-brand hover:text-text'
                         }`}
                       >
                         <div>{o.label}</div>
@@ -462,7 +462,7 @@ export default function PlanoPage() {
                             diasSemana: on ? c.diasSemana.filter(x => x !== d) : [...c.diasSemana, d],
                           }))}
                           className={`py-2.5 rounded-xl text-sm font-medium border transition-all ${
-                            on ? 'bg-brand text-white border-brand' : 'border-border text-text-muted hover:border-brand hover:text-text'
+                            on ? 'botao-brand border-brand' : 'border-border text-text-muted hover:border-brand hover:text-text'
                           }`}
                         >{d.slice(0, 3)}</button>
                       )
@@ -478,7 +478,7 @@ export default function PlanoPage() {
                   <button
                     onClick={() => setStep(3)}
                     disabled={!config.diasSemana.length}
-                    className="flex-1 bg-brand hover:bg-brand-hover disabled:opacity-40 disabled:cursor-not-allowed text-white py-3 rounded-full font-medium text-sm transition-colors flex items-center justify-center gap-2"
+                    className="flex-1 botao-brand disabled:opacity-40 disabled:cursor-not-allowed text-white py-3 rounded-full font-medium text-sm transition-colors flex items-center justify-center gap-2"
                   >
                     Continuar <ChevronRight size={16} />
                   </button>
@@ -546,7 +546,7 @@ export default function PlanoPage() {
                   <button
                     onClick={gerarPlano}
                     disabled={gerando}
-                    className="flex-1 bg-brand hover:bg-brand-hover disabled:opacity-70 text-white py-3 rounded-full font-medium text-sm transition-colors flex items-center justify-center gap-2"
+                    className="flex-1 botao-brand disabled:opacity-70 text-white py-3 rounded-full font-medium text-sm transition-colors flex items-center justify-center gap-2"
                   >
                     {gerando ? (
                       <>
@@ -693,7 +693,7 @@ export default function PlanoPage() {
                     <span className="text-text-faint text-xs flex items-center gap-1"><Target size={10} /> {tarefaHoje.questoes} questões</span>
                   </div>
                   <button onClick={() => concluirDia(tarefaHoje.data)}
-                    className="w-full bg-brand hover:bg-brand-hover text-white py-2 rounded-full text-sm font-medium transition-colors flex items-center justify-center gap-2">
+                    className="w-full botao-brand text-white py-2 rounded-full text-sm font-medium transition-colors flex items-center justify-center gap-2">
                     <Check size={14} /> Marcar como concluído
                   </button>
                 </div>

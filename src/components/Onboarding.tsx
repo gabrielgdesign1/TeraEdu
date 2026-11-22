@@ -103,7 +103,7 @@ export function Onboarding({
                     onClick={() => { setUniv(u); setUnivCustom('') }}
                     className={`text-left px-4 py-2.5 rounded-xl border text-sm transition-all ${
                       universidade === u
-                        ? 'bg-brand text-white border-brand font-medium'
+                        ? 'botao-brand border-brand font-medium'
                         : 'border-border text-text-muted hover:border-brand hover:text-text bg-bg'
                     }`}
                   >
@@ -122,7 +122,7 @@ export function Onboarding({
               <button
                 onClick={() => setStep('curso')}
                 disabled={!universidade && !univCustom.trim()}
-                className="w-full mt-6 flex items-center justify-center gap-2 bg-brand hover:bg-brand-hover disabled:opacity-40 text-white font-semibold py-3 rounded-full text-sm transition-colors"
+                className="w-full mt-6 flex items-center justify-center gap-2 botao-brand disabled:opacity-40 text-white font-semibold py-3 rounded-full text-sm transition-colors"
               >
                 Continuar <ChevronRight size={15} />
               </button>
@@ -144,7 +144,7 @@ export function Onboarding({
                     onClick={() => { setCurso(c); setCursoC('') }}
                     className={`text-left px-4 py-2.5 rounded-xl border text-sm transition-all ${
                       curso === c
-                        ? 'bg-brand text-white border-brand font-medium'
+                        ? 'botao-brand border-brand font-medium'
                         : 'border-border text-text-muted hover:border-brand hover:text-text bg-bg'
                     }`}
                   >
@@ -167,7 +167,7 @@ export function Onboarding({
                 <button
                   onClick={() => setStep('ano')}
                   disabled={!curso || (curso === 'Outro' && !cursoCustom.trim())}
-                  className="flex-1 flex items-center justify-center gap-2 bg-brand hover:bg-brand-hover disabled:opacity-40 text-white font-semibold py-3 rounded-full text-sm transition-colors"
+                  className="flex-1 flex items-center justify-center gap-2 botao-brand disabled:opacity-40 text-white font-semibold py-3 rounded-full text-sm transition-colors"
                 >
                   Continuar <ChevronRight size={15} />
                 </button>
@@ -190,7 +190,7 @@ export function Onboarding({
                     onClick={() => setAno(a)}
                     className={`text-left px-4 py-3 rounded-xl border text-sm transition-all flex items-center gap-3 ${
                       ano === a
-                        ? 'bg-brand text-white border-brand font-medium'
+                        ? 'botao-brand border-brand font-medium'
                         : 'border-border text-text-muted hover:border-brand hover:text-text bg-bg'
                     }`}
                   >
@@ -210,7 +210,7 @@ export function Onboarding({
                 <button
                   onClick={() => setStep('objetivo')}
                   disabled={!ano}
-                  className="flex-1 flex items-center justify-center gap-2 bg-brand hover:bg-brand-hover disabled:opacity-40 text-white font-semibold py-3 rounded-full text-sm transition-colors"
+                  className="flex-1 flex items-center justify-center gap-2 botao-brand disabled:opacity-40 text-white font-semibold py-3 rounded-full text-sm transition-colors"
                 >
                   Continuar <ChevronRight size={15} />
                 </button>
@@ -233,7 +233,7 @@ export function Onboarding({
                     onClick={() => setObjetivo(o)}
                     className={`text-left px-4 py-3 rounded-xl border text-sm transition-all flex items-center gap-3 ${
                       objetivo === o
-                        ? 'bg-brand text-white border-brand font-medium'
+                        ? 'botao-brand border-brand font-medium'
                         : 'border-border text-text-muted hover:border-brand hover:text-text bg-bg'
                     }`}
                   >
@@ -253,7 +253,7 @@ export function Onboarding({
                 <button
                   onClick={concluir}
                   disabled={!objetivo || salvando}
-                  className="flex-1 flex items-center justify-center gap-2 bg-brand hover:bg-brand-hover disabled:opacity-40 text-white font-semibold py-3 rounded-full text-sm transition-colors"
+                  className="flex-1 flex items-center justify-center gap-2 botao-brand disabled:opacity-40 text-white font-semibold py-3 rounded-full text-sm transition-colors"
                 >
                   {salvando
                     ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Salvando...</>

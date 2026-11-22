@@ -585,7 +585,7 @@ export default function Vestibulares() {
               onClick={() => setFiltro(f.id)}
               className={`px-4 py-1.5 rounded-full border text-sm font-medium transition-all ${
                 filtro === f.id
-                  ? 'bg-brand text-white border-brand'
+                  ? 'botao-brand border-brand'
                   : 'border-border text-text-muted hover:border-brand hover:text-text'
               }`}
             >

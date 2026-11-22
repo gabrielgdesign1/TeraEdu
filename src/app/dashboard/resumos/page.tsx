@@ -236,7 +236,7 @@ export default function Resumos() {
                     key={m.id}
                     onClick={() => setModoEntrada(m.id)}
                     className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2 ${
-                      modoEntrada === m.id ? 'bg-brand text-white' : 'text-text-muted hover:text-text'
+                      modoEntrada === m.id ? 'botao-brand' : 'text-text-muted hover:text-text'
                     }`}
                   >
                     <m.icon size={14} /> {m.label}
@@ -294,7 +294,7 @@ export default function Resumos() {
                         key={t.id}
                         onClick={() => setTamanho(t.id)}
                         className={`flex-1 py-3 px-4 rounded-xl text-sm font-medium transition-colors text-left ${
-                          tamanho === t.id ? 'bg-brand text-white' : 'bg-bg border border-border text-text-muted hover:text-text'
+                          tamanho === t.id ? 'botao-brand' : 'bg-bg border border-border text-text-muted hover:text-text'
                         }`}
                       >
                         <div>{t.label}</div>
@@ -307,7 +307,7 @@ export default function Resumos() {
                 <button
                   onClick={gerarResumo}
                   disabled={loading || !podeGerar}
-                  className="w-full bg-brand hover:bg-brand-hover disabled:opacity-40 disabled:cursor-not-allowed text-white font-medium py-3 rounded-full transition-colors"
+                  className="w-full botao-brand disabled:opacity-40 disabled:cursor-not-allowed text-white font-medium py-3 rounded-full transition-colors"
                 >
                   {loading ? 'Gerando resumo...' : 'Gerar resumo com IA'}
                 </button>
@@ -378,7 +378,7 @@ export default function Resumos() {
                 <button
                   onClick={enviarPergunta}
                   disabled={loadingQ || !pergunta.trim()}
-                  className="w-11 h-11 bg-brand hover:bg-brand-hover disabled:opacity-40 rounded-full flex items-center justify-center transition-colors flex-shrink-0"
+                  className="w-11 h-11 botao-brand disabled:opacity-40 rounded-full flex items-center justify-center transition-colors flex-shrink-0"
                 >
                   <Send size={15} className="text-white" />
                 </button>

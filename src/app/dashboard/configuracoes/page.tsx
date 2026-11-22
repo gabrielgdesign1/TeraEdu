@@ -252,7 +252,7 @@ function MinhaConta({ profile, salvarProfile, router }: {
           <button
             onClick={salvarNome}
             disabled={salvando}
-            className="self-start flex items-center gap-2 bg-brand hover:bg-brand-hover disabled:opacity-60 text-white font-semibold px-5 py-2.5 rounded-full text-sm transition-colors"
+            className="self-start flex items-center gap-2 botao-brand disabled:opacity-60 text-white font-semibold px-5 py-2.5 rounded-full text-sm transition-colors"
           >
             {salvando
               ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Salvando...</>
@@ -404,7 +404,7 @@ function MeusEstudos({ profile, salvarProfile }: {
               onClick={() => setVestibular(vestibular === v ? '' : v)}
               className={`px-4 py-2 rounded-full text-sm font-medium border transition-all ${
                 vestibular === v
-                  ? 'bg-brand text-white border-brand'
+                  ? 'botao-brand border-brand'
                   : 'border-border text-text-muted hover:border-brand hover:text-text'
               }`}
             >
@@ -437,7 +437,7 @@ function MeusEstudos({ profile, salvarProfile }: {
               onClick={() => setAno(ano === a ? '' : a)}
               className={`px-4 py-2 rounded-full text-sm font-medium border transition-all ${
                 ano === a
-                  ? 'bg-brand text-white border-brand'
+                  ? 'botao-brand border-brand'
                   : 'border-border text-text-muted hover:border-brand hover:text-text'
               }`}
             >
@@ -462,7 +462,7 @@ function MeusEstudos({ profile, salvarProfile }: {
                 onClick={() => toggleMateria(m)}
                 className={`flex items-center gap-1.5 px-3.5 py-2 rounded-full text-sm font-medium border transition-all ${
                   on
-                    ? 'bg-brand text-white border-brand'
+                    ? 'botao-brand border-brand'
                     : 'border-border text-text-muted hover:border-brand hover:text-text'
                 }`}
               >
@@ -477,7 +477,7 @@ function MeusEstudos({ profile, salvarProfile }: {
       <button
         onClick={salvar}
         disabled={salvando}
-        className="self-start flex items-center gap-2 bg-brand hover:bg-brand-hover disabled:opacity-60 text-white font-semibold px-6 py-2.5 rounded-full text-sm transition-colors"
+        className="self-start flex items-center gap-2 botao-brand disabled:opacity-60 text-white font-semibold px-6 py-2.5 rounded-full text-sm transition-colors"
       >
         {salvando
           ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Salvando...</>
@@ -552,7 +552,7 @@ function Assinatura({ profile, salvarProfile, reload }: {
           <div className="flex gap-2">
             <Link
               href="/dashboard/planos"
-              className="bg-brand hover:bg-brand-hover text-white font-semibold px-5 py-2.5 rounded-full text-sm transition-colors"
+              className="botao-brand text-white font-semibold px-5 py-2.5 rounded-full text-sm transition-colors"
             >
               Ver planos
             </Link>

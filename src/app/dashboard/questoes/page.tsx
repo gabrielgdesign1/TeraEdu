@@ -584,7 +584,7 @@ function BancoQuestoes() {
               onClick={() => v.disponivel && escolherVestibular(v.id)}
               className={`px-4 py-2 rounded-full text-sm font-medium border transition-all flex items-center gap-1.5 ${
                 vestibular === v.id
-                  ? 'bg-brand text-white border-brand'
+                  ? 'botao-brand border-brand'
                   : v.disponivel
                   ? 'bg-bg-card border-border text-text-muted hover:text-text hover:border-brand'
                   : 'bg-bg-card border-border text-text-faint cursor-not-allowed opacity-40'
@@ -614,7 +614,7 @@ function BancoQuestoes() {
                 key={d.value}
                 onClick={() => escolherMateria(d.value)}
                 className={`py-3 px-4 rounded-full text-sm font-medium border transition-all ${
-                  materia === d.value ? 'bg-brand text-white border-brand' : 'bg-bg-card border-border text-text-muted hover:text-text hover:border-brand'
+                  materia === d.value ? 'botao-brand border-brand' : 'bg-bg-card border-border text-text-muted hover:text-text hover:border-brand'
                 }`}
               >
                 {d.label}
@@ -633,7 +633,7 @@ function BancoQuestoes() {
                 key={m}
                 onClick={() => escolherMateria(m)}
                 className={`px-4 py-2 rounded-full text-sm font-medium border transition-all ${
-                  materia === m ? 'bg-brand text-white border-brand' : 'bg-bg-card border-border text-text-muted hover:text-text hover:border-brand'
+                  materia === m ? 'botao-brand border-brand' : 'bg-bg-card border-border text-text-muted hover:text-text hover:border-brand'
                 }`}
               >
                 {m}
@@ -653,7 +653,7 @@ function BancoQuestoes() {
             <button
               onClick={() => setAno('')}
               className={`px-3.5 py-1.5 rounded-full text-sm font-medium border transition-all ${
-                ano === '' ? 'bg-brand text-white border-brand' : 'bg-bg-card border-border text-text-muted hover:text-text hover:border-brand'
+                ano === '' ? 'botao-brand border-brand' : 'bg-bg-card border-border text-text-muted hover:text-text hover:border-brand'
               }`}
             >
               Qualquer ano
@@ -663,7 +663,7 @@ function BancoQuestoes() {
                 key={a}
                 onClick={() => setAno(String(a))}
                 className={`px-3.5 py-1.5 rounded-full text-sm font-medium border transition-all tabular-nums ${
-                  ano === String(a) ? 'bg-brand text-white border-brand' : 'bg-bg-card border-border text-text-muted hover:text-text hover:border-brand'
+                  ano === String(a) ? 'botao-brand border-brand' : 'bg-bg-card border-border text-text-muted hover:text-text hover:border-brand'
                 }`}
               >
                 {a}
@@ -700,7 +700,7 @@ function BancoQuestoes() {
         <button
           onClick={buscar}
           disabled={!prontoParaBuscar || loading}
-          className="flex items-center justify-center gap-2 w-full bg-brand hover:bg-brand-hover disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3.5 rounded-full transition-colors text-sm"
+          className="flex items-center justify-center gap-2 w-full botao-brand disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3.5 rounded-full transition-colors text-sm"
         >
           {loading
             ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Buscando questões...</>
@@ -871,7 +871,7 @@ function SessaoQuestoes({
           <button onClick={reiniciar} className="flex items-center gap-2 border border-border text-text-muted hover:text-text px-5 py-2.5 rounded-full text-sm transition-colors">
             <RotateCcw size={14} /> Refazer
           </button>
-          <button onClick={onVoltar} className="bg-brand hover:bg-brand-hover text-white px-5 py-2.5 rounded-full text-sm font-medium transition-colors">
+          <button onClick={onVoltar} className="botao-brand text-white px-5 py-2.5 rounded-full text-sm font-medium transition-colors">
             Nova sessão
           </button>
         </div>
@@ -997,14 +997,14 @@ function SessaoQuestoes({
           <button
             onClick={confirmar}
             disabled={!selecionada}
-            className="bg-brand hover:bg-brand-hover disabled:opacity-40 disabled:cursor-not-allowed text-white px-7 py-3 rounded-full text-sm font-semibold transition-colors"
+            className="botao-brand disabled:opacity-40 disabled:cursor-not-allowed text-white px-7 py-3 rounded-full text-sm font-semibold transition-colors"
           >
             Confirmar resposta
           </button>
         ) : (
           <button
             onClick={proxima}
-            className="bg-brand hover:bg-brand-hover text-white px-7 py-3 rounded-full text-sm font-semibold transition-colors"
+            className="botao-brand text-white px-7 py-3 rounded-full text-sm font-semibold transition-colors"
           >
             {atual + 1 >= quantidade ? 'Ver resultado' : 'Próxima questão →'}
           </button>
@@ -1132,7 +1132,7 @@ function GerarComIA() {
                 onClick={() => handleVestibular(v)}
                 className={`px-4 py-2 rounded-full text-sm font-medium border transition-all ${
                   vestibular === v
-                    ? 'bg-brand text-white border-brand'
+                    ? 'botao-brand border-brand'
                     : 'bg-bg-card border-border text-text-muted hover:text-text hover:border-brand'
                 }`}
               >
@@ -1155,7 +1155,7 @@ function GerarComIA() {
                   onClick={() => handleMateria(m)}
                   className={`px-4 py-2 rounded-full text-sm font-medium border transition-all ${
                     materia === m
-                      ? 'bg-brand text-white border-brand'
+                      ? 'botao-brand border-brand'
                       : 'bg-bg-card border-border text-text-muted hover:text-text hover:border-brand'
                   }`}
                 >
@@ -1179,7 +1179,7 @@ function GerarComIA() {
                   onClick={() => setConteudo(c)}
                   className={`px-4 py-2 rounded-full text-sm font-medium border transition-all ${
                     conteudo === c
-                      ? 'bg-brand text-white border-brand'
+                      ? 'botao-brand border-brand'
                       : 'bg-bg-card border-border text-text-muted hover:text-text hover:border-brand'
                   }`}
                 >
@@ -1202,7 +1202,7 @@ function GerarComIA() {
                     onClick={() => setDificuldade(d)}
                     className={`flex-1 py-2 rounded-full text-xs font-medium border transition-all capitalize ${
                       dificuldade === d
-                        ? 'bg-brand text-white border-brand'
+                        ? 'botao-brand border-brand'
                         : 'bg-bg-card border-border text-text-muted hover:text-text hover:border-brand'
                     }`}
                   >
@@ -1220,7 +1220,7 @@ function GerarComIA() {
                     onClick={() => setQuantidade(q)}
                     className={`flex-1 py-2 rounded-full text-xs font-medium border transition-all ${
                       quantidade === q
-                        ? 'bg-brand text-white border-brand'
+                        ? 'botao-brand border-brand'
                         : 'bg-bg-card border-border text-text-muted hover:text-text hover:border-brand'
                     }`}
                   >
@@ -1239,7 +1239,7 @@ function GerarComIA() {
           <button
             onClick={gerarQuestoes}
             disabled={loading}
-            className="flex items-center justify-center gap-2 bg-brand hover:bg-brand-hover disabled:opacity-60 text-white font-semibold py-3.5 rounded-full transition-colors text-sm"
+            className="flex items-center justify-center gap-2 botao-brand disabled:opacity-60 text-white font-semibold py-3.5 rounded-full transition-colors text-sm"
           >
             {loading ? (
               <>
@@ -1513,7 +1513,7 @@ function SessaoDiscursiva({
           <button onClick={onVoltar} className="flex-1 border border-border hover:border-brand text-text-muted hover:text-text py-3 rounded-full text-sm font-medium transition-all">
             ← Voltar
           </button>
-          <button onClick={reiniciar} className="flex-1 bg-brand hover:bg-brand-hover text-white py-3 rounded-full text-sm font-semibold transition-colors flex items-center justify-center gap-2">
+          <button onClick={reiniciar} className="flex-1 botao-brand text-white py-3 rounded-full text-sm font-semibold transition-colors flex items-center justify-center gap-2">
             <RotateCcw size={14} /> Praticar novamente
           </button>
         </div>
@@ -1597,7 +1597,7 @@ function SessaoDiscursiva({
         <button
           onClick={confirmar}
           disabled={corrigindo}
-          className="w-full flex items-center justify-center gap-2 bg-brand hover:bg-brand-hover disabled:opacity-60 text-white font-semibold py-3.5 rounded-full transition-colors text-sm mb-6"
+          className="w-full flex items-center justify-center gap-2 botao-brand disabled:opacity-60 text-white font-semibold py-3.5 rounded-full transition-colors text-sm mb-6"
         >
           {corrigindo
             ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Corrigindo com IA...</>
@@ -1660,7 +1660,7 @@ function SessaoDiscursiva({
           {/* Botão próxima */}
           <button
             onClick={proxima}
-            className="w-full flex items-center justify-center gap-2 bg-brand hover:bg-brand-hover text-white font-semibold py-3.5 rounded-full transition-colors text-sm"
+            className="w-full flex items-center justify-center gap-2 botao-brand text-white font-semibold py-3.5 rounded-full transition-colors text-sm"
           >
             {atual + 1 >= total ? <><Trophy size={15} /> Ver resultado final</> : <>Próxima questão <ChevronRight size={15} /></>}
           </button>

@@ -78,7 +78,7 @@ function PlanoCardDashboard() {
           <p className="text-text-muted text-xs">Não sabe por onde começar? A IA organiza tudo para você.</p>
         </div>
         <Link href="/dashboard/plano"
-          className="flex-shrink-0 ml-4 bg-brand hover:bg-brand-hover text-white px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap">
+          className="flex-shrink-0 ml-4 botao-brand text-white px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap">
           Criar meu plano →
         </Link>
       </div>
@@ -214,7 +214,7 @@ export default function Dashboard() {
                 href={a.href}
                 className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium transition-all cursor-pointer ${
                   a.primary
-                    ? 'bg-brand hover:bg-brand-hover text-white shadow-[0_10px_24px_-8px_rgba(249,115,22,0.5)] hover:shadow-[0_12px_28px_-8px_rgba(249,115,22,0.6)]'
+                    ? 'botao-brand'
                     : 'bg-bg-card border border-border text-text-muted hover:text-text hover:border-brand/40'
                 }`}
               >
