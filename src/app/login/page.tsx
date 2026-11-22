@@ -202,7 +202,7 @@ export default function Login() {
             <button
               onClick={handleSubmit}
               disabled={loading}
-              className="group w-full botao-brand disabled:opacity-50 text-white font-semibold py-3.5 rounded-full transition-all mt-1 flex items-center justify-center gap-2 cursor-pointer"
+              className="group w-full botao-brand disabled:opacity-50 text-white font-semibold py-3.5 rounded-xl transition-all mt-1 flex items-center justify-center gap-2 cursor-pointer"
             >
               {loading ? (
                 <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Aguarde...</>

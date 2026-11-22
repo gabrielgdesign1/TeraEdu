@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useState, useRef, useEffect, useCallback } from 'react'
 import ReactMarkdown from 'react-markdown'
@@ -257,7 +257,7 @@ export default function IATutora() {
       </HistoryPanel>
 
       {/* ── Chat ── */}
-      <main className="flex-1 min-w-0 ml-0 md:ml-[344px] flex flex-col h-[calc(100dvh-4rem)] md:h-screen overflow-hidden">
+      <main className="flex-1 min-w-0 ml-0 md:ml-[344px] flex flex-col h-[calc(100dvh-6rem)] md:h-screen overflow-hidden">
         {vazio ? (
           <div className="flex-1 flex flex-col items-center justify-center px-4 md:px-6 pb-10">
             <h1 className="text-text text-3xl md:text-4xl font-bold tracking-tight mb-2 text-center">
@@ -269,7 +269,7 @@ export default function IATutora() {
                 <button
                   key={s}
                   onClick={() => enviar(s)}
-                  className="border border-border text-text-muted hover:text-text hover:border-brand/50 text-sm px-4 py-2 rounded-full transition-colors"
+                  className="border border-border text-text-muted hover:text-text hover:border-brand/50 text-sm px-4 py-2 rounded-xl transition-colors"
                 >
                   {s}
                 </button>

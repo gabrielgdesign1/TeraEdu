@@ -61,28 +61,8 @@ ${instrucaoTamanho}
 
 Estruture bem em Markdown. Destaque os pontos mais importantes.`
   } else {
-    const arquivo = formData.get('arquivo') as File
-    const buffer = await arquivo.arrayBuffer()
-    const base64 = Buffer.from(buffer).toString('base64')
-
-    content = [
-      {
-        type: 'document',
-        source: {
-          type: 'base64',
-          media_type: 'application/pdf',
-          data: base64
-        }
-      },
-      {
-        type: 'text',
-        text: `Crie um resumo do conteúdo deste PDF.
-
-${instrucaoTamanho}
-
-Estruture bem em Markdown com títulos, subtítulos e listas. Destaque os pontos mais importantes.`
-      }
-    ]
+    // PDF chega como 'texto' (extraído no navegador); qualquer outro modo é inválido
+    return Response.json({ error: 'Modo inválido.' }, { status: 400 })
   }
 
   const custo = CUSTO_CREDITOS.resumo

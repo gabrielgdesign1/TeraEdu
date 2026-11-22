@@ -78,7 +78,7 @@ function PlanoCardDashboard() {
           <p className="text-text-muted text-xs">Não sabe por onde começar? A IA organiza tudo para você.</p>
         </div>
         <Link href="/dashboard/plano"
-          className="flex-shrink-0 ml-4 botao-brand text-white px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap">
+          className="flex-shrink-0 ml-4 botao-brand text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors whitespace-nowrap">
           Criar meu plano →
         </Link>
       </div>
@@ -111,7 +111,7 @@ function PlanoCardDashboard() {
         </div>
       </div>
       <Link href="/dashboard/plano"
-        className="flex-shrink-0 ml-4 border border-brand/30 text-brand hover:bg-brand hover:text-white px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap">
+        className="flex-shrink-0 ml-4 border border-brand/30 text-brand hover:bg-brand hover:text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors whitespace-nowrap">
         Ver plano →
       </Link>
     </div>
@@ -212,7 +212,7 @@ export default function Dashboard() {
               <Link
                 key={a.label}
                 href={a.href}
-                className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium transition-all cursor-pointer ${
+                className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-all cursor-pointer ${
                   a.primary
                     ? 'botao-brand'
                     : 'bg-bg-card border border-border text-text-muted hover:text-text hover:border-brand/40'

@@ -252,7 +252,7 @@ function MinhaConta({ profile, salvarProfile, router }: {
           <button
             onClick={salvarNome}
             disabled={salvando}
-            className="self-start flex items-center gap-2 botao-brand disabled:opacity-60 text-white font-semibold px-5 py-2.5 rounded-full text-sm transition-colors"
+            className="self-start flex items-center gap-2 botao-brand disabled:opacity-60 text-white font-semibold px-5 py-2.5 rounded-xl text-sm transition-colors"
           >
             {salvando
               ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Salvando...</>
@@ -284,7 +284,7 @@ function MinhaConta({ profile, salvarProfile, router }: {
         <button
           onClick={enviarResetSenha}
           disabled={salvandoSenha}
-          className="flex items-center gap-2 border border-border hover:border-brand text-text-muted hover:text-text disabled:opacity-50 font-medium px-5 py-2.5 rounded-full text-sm transition-colors"
+          className="flex items-center gap-2 border border-border hover:border-brand text-text-muted hover:text-text disabled:opacity-50 font-medium px-5 py-2.5 rounded-xl text-sm transition-colors"
         >
           {salvandoSenha
             ? <><div className="w-4 h-4 border-2 border-border border-t-brand rounded-full animate-spin" /> Enviando...</>
@@ -304,7 +304,7 @@ function MinhaConta({ profile, salvarProfile, router }: {
         </p>
         <button
           onClick={() => setShowExcluir(true)}
-          className="flex items-center gap-2 border border-red-500/30 text-red-500 hover:bg-red-500 hover:text-white px-5 py-2.5 rounded-full text-sm font-medium transition-colors"
+          className="flex items-center gap-2 border border-red-500/30 text-red-500 hover:bg-red-500 hover:text-white px-5 py-2.5 rounded-xl text-sm font-medium transition-colors"
         >
           <Trash2 size={14} /> Excluir minha conta
         </button>
@@ -325,14 +325,14 @@ function MinhaConta({ profile, salvarProfile, router }: {
               <button
                 onClick={() => setShowExcluir(false)}
                 disabled={excluindo}
-                className="flex-1 border border-border text-text-muted hover:text-text py-2.5 rounded-full text-sm transition-colors"
+                className="flex-1 border border-border text-text-muted hover:text-text py-2.5 rounded-xl text-sm transition-colors"
               >
                 Cancelar
               </button>
               <button
                 onClick={excluirConta}
                 disabled={excluindo}
-                className="flex-1 bg-red-500 hover:bg-red-600 disabled:opacity-60 text-white py-2.5 rounded-full text-sm font-medium transition-colors"
+                className="flex-1 bg-red-500 hover:bg-red-600 disabled:opacity-60 text-white py-2.5 rounded-xl text-sm font-medium transition-colors"
               >
                 {excluindo ? 'Excluindo...' : 'Excluir'}
               </button>
@@ -345,7 +345,7 @@ function MinhaConta({ profile, salvarProfile, router }: {
       <div>
         <button
           onClick={async () => { const sb = createClient(); await sb.auth.signOut(); router.push('/login') }}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-full border border-border text-text-muted hover:text-red-500 hover:border-red-400 text-sm transition-colors"
+          className="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-border text-text-muted hover:text-red-500 hover:border-red-400 text-sm transition-colors"
         >
           <LogOut size={14} /> Sair da conta
         </button>
@@ -402,7 +402,7 @@ function MeusEstudos({ profile, salvarProfile }: {
             <button
               key={v}
               onClick={() => setVestibular(vestibular === v ? '' : v)}
-              className={`px-4 py-2 rounded-full text-sm font-medium border transition-all ${
+              className={`px-4 py-2 rounded-xl text-sm font-medium border transition-all ${
                 vestibular === v
                   ? 'botao-brand border-brand'
                   : 'border-border text-text-muted hover:border-brand hover:text-text'
@@ -435,7 +435,7 @@ function MeusEstudos({ profile, salvarProfile }: {
             <button
               key={a}
               onClick={() => setAno(ano === a ? '' : a)}
-              className={`px-4 py-2 rounded-full text-sm font-medium border transition-all ${
+              className={`px-4 py-2 rounded-xl text-sm font-medium border transition-all ${
                 ano === a
                   ? 'botao-brand border-brand'
                   : 'border-border text-text-muted hover:border-brand hover:text-text'
@@ -460,7 +460,7 @@ function MeusEstudos({ profile, salvarProfile }: {
               <button
                 key={m}
                 onClick={() => toggleMateria(m)}
-                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-full text-sm font-medium border transition-all ${
+                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-sm font-medium border transition-all ${
                   on
                     ? 'botao-brand border-brand'
                     : 'border-border text-text-muted hover:border-brand hover:text-text'
@@ -477,7 +477,7 @@ function MeusEstudos({ profile, salvarProfile }: {
       <button
         onClick={salvar}
         disabled={salvando}
-        className="self-start flex items-center gap-2 botao-brand disabled:opacity-60 text-white font-semibold px-6 py-2.5 rounded-full text-sm transition-colors"
+        className="self-start flex items-center gap-2 botao-brand disabled:opacity-60 text-white font-semibold px-6 py-2.5 rounded-xl text-sm transition-colors"
       >
         {salvando
           ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Salvando...</>
@@ -552,14 +552,14 @@ function Assinatura({ profile, salvarProfile, reload }: {
           <div className="flex gap-2">
             <Link
               href="/dashboard/planos"
-              className="botao-brand text-white font-semibold px-5 py-2.5 rounded-full text-sm transition-colors"
+              className="botao-brand text-white font-semibold px-5 py-2.5 rounded-xl text-sm transition-colors"
             >
               Ver planos
             </Link>
             {planoAtual.id !== 'gratuito' && (
               <button
                 onClick={() => setShowCancelar(true)}
-                className="border border-border text-text-muted hover:text-red-500 hover:border-red-400 px-5 py-2.5 rounded-full text-sm transition-colors"
+                className="border border-border text-text-muted hover:text-red-500 hover:border-red-400 px-5 py-2.5 rounded-xl text-sm transition-colors"
               >
                 Cancelar assinatura
               </button>
@@ -598,10 +598,10 @@ function Assinatura({ profile, salvarProfile, reload }: {
               Você voltará para o plano Gratuito imediatamente e perderá os benefícios do plano {planoAtual.nome}.
             </p>
             <div className="flex gap-3">
-              <button onClick={() => setShowCancelar(false)} className="flex-1 border border-border text-text-muted hover:text-text py-2.5 rounded-full text-sm transition-colors">
+              <button onClick={() => setShowCancelar(false)} className="flex-1 border border-border text-text-muted hover:text-text py-2.5 rounded-xl text-sm transition-colors">
                 Manter plano
               </button>
-              <button onClick={cancelarAssinatura} className="flex-1 bg-red-500 hover:bg-red-600 text-white py-2.5 rounded-full text-sm font-medium transition-colors">
+              <button onClick={cancelarAssinatura} className="flex-1 bg-red-500 hover:bg-red-600 text-white py-2.5 rounded-xl text-sm font-medium transition-colors">
                 Cancelar assinatura
               </button>
             </div>

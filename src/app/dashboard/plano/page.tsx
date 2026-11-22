@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
@@ -155,16 +155,16 @@ function AcoesRapidas({ materia, vestibular }: { materia: string; vestibular: st
   const questoesHref = `/dashboard/questoes?vestibular=${encodeURIComponent(vestibular)}&materia=${encodeURIComponent(materia)}`
   return (
     <div className="flex gap-1.5 flex-wrap mt-2">
-      <Link href={questoesHref} className="text-[11px] px-2.5 py-1 rounded-full bg-bg-hover text-text-muted hover:text-text hover:bg-brand/10 hover:text-brand transition-colors flex items-center gap-1">
+      <Link href={questoesHref} className="text-[11px] px-2.5 py-1 rounded-xl bg-bg-hover text-text-muted hover:text-text hover:bg-brand/10 hover:text-brand transition-colors flex items-center gap-1">
         <FileQuestion size={10} /> Questões
       </Link>
-      <Link href={`/dashboard/resumos`} className="text-[11px] px-2.5 py-1 rounded-full bg-bg-hover text-text-muted hover:text-text hover:bg-brand/10 hover:text-brand transition-colors flex items-center gap-1">
+      <Link href={`/dashboard/resumos`} className="text-[11px] px-2.5 py-1 rounded-xl bg-bg-hover text-text-muted hover:text-text hover:bg-brand/10 hover:text-brand transition-colors flex items-center gap-1">
         <FileText size={10} /> Resumo
       </Link>
-      <Link href={`/dashboard/flashcards`} className="text-[11px] px-2.5 py-1 rounded-full bg-bg-hover text-text-muted hover:text-text hover:bg-brand/10 hover:text-brand transition-colors flex items-center gap-1">
+      <Link href={`/dashboard/flashcards`} className="text-[11px] px-2.5 py-1 rounded-xl bg-bg-hover text-text-muted hover:text-text hover:bg-brand/10 hover:text-brand transition-colors flex items-center gap-1">
         <Layers size={10} /> Flashcards
       </Link>
-      <Link href={`/dashboard/tutora`} className="text-[11px] px-2.5 py-1 rounded-full bg-bg-hover text-text-muted hover:text-text hover:bg-brand/10 hover:text-brand transition-colors flex items-center gap-1">
+      <Link href={`/dashboard/tutora`} className="text-[11px] px-2.5 py-1 rounded-xl bg-bg-hover text-text-muted hover:text-text hover:bg-brand/10 hover:text-brand transition-colors flex items-center gap-1">
         <MessageCircle size={10} /> IA Tutora
       </Link>
     </div>
@@ -365,7 +365,7 @@ export default function PlanoPage() {
                     {VESTIBULARES_OPTS.map(v => (
                       <button key={v}
                         onClick={() => setConfig(c => ({ ...c, vestibular: v }))}
-                        className={`px-4 py-2 rounded-full text-sm font-medium border transition-all ${
+                        className={`px-4 py-2 rounded-xl text-sm font-medium border transition-all ${
                           config.vestibular === v ? 'botao-brand border-brand' : 'border-border text-text-muted hover:border-brand hover:text-text'
                         }`}
                       >{v}</button>
@@ -406,7 +406,7 @@ export default function PlanoPage() {
                 <button
                   onClick={() => setStep(2)}
                   disabled={!config.vestibular || !config.dataProva}
-                  className="w-full botao-brand disabled:opacity-40 disabled:cursor-not-allowed text-white py-3 rounded-full font-medium text-sm transition-colors flex items-center justify-center gap-2"
+                  className="w-full botao-brand disabled:opacity-40 disabled:cursor-not-allowed text-white py-3 rounded-xl font-medium text-sm transition-colors flex items-center justify-center gap-2"
                 >
                   Continuar <ChevronRight size={16} />
                 </button>
@@ -472,13 +472,13 @@ export default function PlanoPage() {
 
                 <div className="flex gap-3">
                   <button onClick={() => setStep(1)}
-                    className="flex items-center gap-2 border border-border text-text-muted hover:text-text px-5 py-3 rounded-full text-sm transition-colors">
+                    className="flex items-center gap-2 border border-border text-text-muted hover:text-text px-5 py-3 rounded-xl text-sm transition-colors">
                     <ChevronLeft size={16} /> Voltar
                   </button>
                   <button
                     onClick={() => setStep(3)}
                     disabled={!config.diasSemana.length}
-                    className="flex-1 botao-brand disabled:opacity-40 disabled:cursor-not-allowed text-white py-3 rounded-full font-medium text-sm transition-colors flex items-center justify-center gap-2"
+                    className="flex-1 botao-brand disabled:opacity-40 disabled:cursor-not-allowed text-white py-3 rounded-xl font-medium text-sm transition-colors flex items-center justify-center gap-2"
                   >
                     Continuar <ChevronRight size={16} />
                   </button>
@@ -501,7 +501,7 @@ export default function PlanoPage() {
                             materiasBoas: on ? c.materiasBoas.filter(x => x !== m) : [...c.materiasBoas, m],
                             materiasDificeis: c.materiasDificeis.filter(x => x !== m),
                           }))}
-                          className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-all ${
+                          className={`px-3 py-1.5 rounded-xl text-sm font-medium border transition-all ${
                             on ? 'bg-green-500 text-white border-green-500' : 'border-border text-text-muted hover:border-green-400 hover:text-text'
                           }`}
                         >{m}</button>
@@ -522,7 +522,7 @@ export default function PlanoPage() {
                             materiasDificeis: on ? c.materiasDificeis.filter(x => x !== m) : [...c.materiasDificeis, m],
                             materiasBoas: c.materiasBoas.filter(x => x !== m),
                           }))}
-                          className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-all ${
+                          className={`px-3 py-1.5 rounded-xl text-sm font-medium border transition-all ${
                             on ? 'bg-red-500 text-white border-red-500' : 'border-border text-text-muted hover:border-red-400 hover:text-text'
                           }`}
                         >{m}</button>
@@ -540,13 +540,13 @@ export default function PlanoPage() {
 
                 <div className="flex gap-3">
                   <button onClick={() => setStep(2)} disabled={gerando}
-                    className="flex items-center gap-2 border border-border text-text-muted hover:text-text disabled:opacity-40 px-5 py-3 rounded-full text-sm transition-colors">
+                    className="flex items-center gap-2 border border-border text-text-muted hover:text-text disabled:opacity-40 px-5 py-3 rounded-xl text-sm transition-colors">
                     <ChevronLeft size={16} /> Voltar
                   </button>
                   <button
                     onClick={gerarPlano}
                     disabled={gerando}
-                    className="flex-1 botao-brand disabled:opacity-70 text-white py-3 rounded-full font-medium text-sm transition-colors flex items-center justify-center gap-2"
+                    className="flex-1 botao-brand disabled:opacity-70 text-white py-3 rounded-xl font-medium text-sm transition-colors flex items-center justify-center gap-2"
                   >
                     {gerando ? (
                       <>
@@ -599,11 +599,11 @@ export default function PlanoPage() {
               Seu plano de estudos será apagado permanentemente. Você poderá criar um novo plano depois.
             </p>
             <div className="flex gap-3">
-              <button onClick={() => setShowDelete(false)} className="flex-1 border border-border text-text-muted hover:text-text py-2.5 rounded-full text-sm transition-colors">
+              <button onClick={() => setShowDelete(false)} className="flex-1 border border-border text-text-muted hover:text-text py-2.5 rounded-xl text-sm transition-colors">
                 Cancelar
               </button>
               <button onClick={deletarPlano} disabled={deletando}
-                className="flex-1 bg-red-500 hover:bg-red-600 disabled:opacity-60 text-white py-2.5 rounded-full text-sm font-medium transition-colors">
+                className="flex-1 bg-red-500 hover:bg-red-600 disabled:opacity-60 text-white py-2.5 rounded-xl text-sm font-medium transition-colors">
                 {deletando ? 'Apagando...' : 'Apagar'}
               </button>
             </div>
@@ -693,7 +693,7 @@ export default function PlanoPage() {
                     <span className="text-text-faint text-xs flex items-center gap-1"><Target size={10} /> {tarefaHoje.questoes} questões</span>
                   </div>
                   <button onClick={() => concluirDia(tarefaHoje.data)}
-                    className="w-full botao-brand text-white py-2 rounded-full text-sm font-medium transition-colors flex items-center justify-center gap-2">
+                    className="w-full botao-brand text-white py-2 rounded-xl text-sm font-medium transition-colors flex items-center justify-center gap-2">
                     <Check size={14} /> Marcar como concluído
                   </button>
                 </div>

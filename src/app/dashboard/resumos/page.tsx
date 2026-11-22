@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useState, useEffect, useCallback } from 'react'
 import ReactMarkdown from 'react-markdown'
@@ -307,7 +307,7 @@ export default function Resumos() {
                 <button
                   onClick={gerarResumo}
                   disabled={loading || !podeGerar}
-                  className="w-full botao-brand disabled:opacity-40 disabled:cursor-not-allowed text-white font-medium py-3 rounded-full transition-colors"
+                  className="w-full botao-brand disabled:opacity-40 disabled:cursor-not-allowed text-white font-medium py-3 rounded-xl transition-colors"
                 >
                   {loading ? 'Gerando resumo...' : 'Gerar resumo com IA'}
                 </button>
@@ -320,7 +320,7 @@ export default function Resumos() {
               <h2 className="text-text font-semibold">{tema || 'Resumo gerado'}</h2>
               <button
                 onClick={novoResumo}
-                className="flex items-center gap-1.5 text-text-muted hover:text-text text-sm transition-colors border border-border px-4 py-2 rounded-full hover:border-brand/50"
+                className="flex items-center gap-1.5 text-text-muted hover:text-text text-sm transition-colors border border-border px-4 py-2 rounded-xl hover:border-brand/50"
               >
                 <Plus size={13} /> Novo resumo
               </button>

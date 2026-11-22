@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useState, useEffect } from 'react'
 import {
@@ -583,7 +583,7 @@ export default function Vestibulares() {
             <button
               key={f.id}
               onClick={() => setFiltro(f.id)}
-              className={`px-4 py-1.5 rounded-full border text-sm font-medium transition-all ${
+              className={`px-4 py-1.5 rounded-xl border text-sm font-medium transition-all ${
                 filtro === f.id
                   ? 'botao-brand border-brand'
                   : 'border-border text-text-muted hover:border-brand hover:text-text'

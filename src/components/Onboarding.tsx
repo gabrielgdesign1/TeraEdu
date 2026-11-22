@@ -122,7 +122,7 @@ export function Onboarding({
               <button
                 onClick={() => setStep('curso')}
                 disabled={!universidade && !univCustom.trim()}
-                className="w-full mt-6 flex items-center justify-center gap-2 botao-brand disabled:opacity-40 text-white font-semibold py-3 rounded-full text-sm transition-colors"
+                className="w-full mt-6 flex items-center justify-center gap-2 botao-brand disabled:opacity-40 text-white font-semibold py-3 rounded-xl text-sm transition-colors"
               >
                 Continuar <ChevronRight size={15} />
               </button>
@@ -161,13 +161,13 @@ export function Onboarding({
                 />
               )}
               <div className="flex gap-3 mt-6">
-                <button onClick={() => setStep('universidade')} className="px-5 py-3 rounded-full border border-border text-text-muted hover:text-text text-sm transition-colors">
+                <button onClick={() => setStep('universidade')} className="px-5 py-3 rounded-xl border border-border text-text-muted hover:text-text text-sm transition-colors">
                   ← Voltar
                 </button>
                 <button
                   onClick={() => setStep('ano')}
                   disabled={!curso || (curso === 'Outro' && !cursoCustom.trim())}
-                  className="flex-1 flex items-center justify-center gap-2 botao-brand disabled:opacity-40 text-white font-semibold py-3 rounded-full text-sm transition-colors"
+                  className="flex-1 flex items-center justify-center gap-2 botao-brand disabled:opacity-40 text-white font-semibold py-3 rounded-xl text-sm transition-colors"
                 >
                   Continuar <ChevronRight size={15} />
                 </button>
@@ -204,13 +204,13 @@ export function Onboarding({
                 ))}
               </div>
               <div className="flex gap-3 mt-6">
-                <button onClick={() => setStep('curso')} className="px-5 py-3 rounded-full border border-border text-text-muted hover:text-text text-sm transition-colors">
+                <button onClick={() => setStep('curso')} className="px-5 py-3 rounded-xl border border-border text-text-muted hover:text-text text-sm transition-colors">
                   ← Voltar
                 </button>
                 <button
                   onClick={() => setStep('objetivo')}
                   disabled={!ano}
-                  className="flex-1 flex items-center justify-center gap-2 botao-brand disabled:opacity-40 text-white font-semibold py-3 rounded-full text-sm transition-colors"
+                  className="flex-1 flex items-center justify-center gap-2 botao-brand disabled:opacity-40 text-white font-semibold py-3 rounded-xl text-sm transition-colors"
                 >
                   Continuar <ChevronRight size={15} />
                 </button>
@@ -247,13 +247,13 @@ export function Onboarding({
                 ))}
               </div>
               <div className="flex gap-3 mt-6">
-                <button onClick={() => setStep('ano')} className="px-5 py-3 rounded-full border border-border text-text-muted hover:text-text text-sm transition-colors">
+                <button onClick={() => setStep('ano')} className="px-5 py-3 rounded-xl border border-border text-text-muted hover:text-text text-sm transition-colors">
                   ← Voltar
                 </button>
                 <button
                   onClick={concluir}
                   disabled={!objetivo || salvando}
-                  className="flex-1 flex items-center justify-center gap-2 botao-brand disabled:opacity-40 text-white font-semibold py-3 rounded-full text-sm transition-colors"
+                  className="flex-1 flex items-center justify-center gap-2 botao-brand disabled:opacity-40 text-white font-semibold py-3 rounded-xl text-sm transition-colors"
                 >
                   {salvando
                     ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Salvando...</>

@@ -98,7 +98,7 @@ export default function RedefinirSenha() {
               <button
                 onClick={salvar}
                 disabled={loading || !senha || !confirma}
-                className="w-full botao-brand disabled:opacity-50 text-white font-semibold py-3.5 rounded-full transition-all flex items-center justify-center gap-2"
+                className="w-full botao-brand disabled:opacity-50 text-white font-semibold py-3.5 rounded-xl transition-all flex items-center justify-center gap-2"
               >
                 {loading
                   ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Salvando...</>

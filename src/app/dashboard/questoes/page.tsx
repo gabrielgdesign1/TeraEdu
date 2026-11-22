@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useState, useEffect, useCallback } from 'react'
 import { registrarAtividade } from '@/lib/registrarAtividade'
@@ -422,8 +422,7 @@ function BancoQuestoes() {
 
       const resultados = await Promise.all(
         anosParaBuscar.map(async (a) => {
-          const offset = Math.floor(Math.random() * 30)
-          const res = await fetch(`/api/questoes/banco?year=${a}&discipline=${materia}&limit=${porAno}&offset=${offset}`)
+          const res = await fetch(`/api/questoes/banco?year=${a}&discipline=${materia}&limit=${porAno}`)
           if (!res.ok) return [] as ApiQuestao[]
           const data = await res.json()
           return (data.questions ?? []) as ApiQuestao[]
@@ -582,7 +581,7 @@ function BancoQuestoes() {
             <button
               key={v.id}
               onClick={() => v.disponivel && escolherVestibular(v.id)}
-              className={`px-4 py-2 rounded-full text-sm font-medium border transition-all flex items-center gap-1.5 ${
+              className={`px-4 py-2 rounded-xl text-sm font-medium border transition-all flex items-center gap-1.5 ${
                 vestibular === v.id
                   ? 'botao-brand border-brand'
                   : v.disponivel
@@ -613,7 +612,7 @@ function BancoQuestoes() {
               <button
                 key={d.value}
                 onClick={() => escolherMateria(d.value)}
-                className={`py-3 px-4 rounded-full text-sm font-medium border transition-all ${
+                className={`py-3 px-4 rounded-xl text-sm font-medium border transition-all ${
                   materia === d.value ? 'botao-brand border-brand' : 'bg-bg-card border-border text-text-muted hover:text-text hover:border-brand'
                 }`}
               >
@@ -632,7 +631,7 @@ function BancoQuestoes() {
               <button
                 key={m}
                 onClick={() => escolherMateria(m)}
-                className={`px-4 py-2 rounded-full text-sm font-medium border transition-all ${
+                className={`px-4 py-2 rounded-xl text-sm font-medium border transition-all ${
                   materia === m ? 'botao-brand border-brand' : 'bg-bg-card border-border text-text-muted hover:text-text hover:border-brand'
                 }`}
               >
@@ -652,7 +651,7 @@ function BancoQuestoes() {
           <div className="flex flex-wrap gap-2">
             <button
               onClick={() => setAno('')}
-              className={`px-3.5 py-1.5 rounded-full text-sm font-medium border transition-all ${
+              className={`px-3.5 py-1.5 rounded-xl text-sm font-medium border transition-all ${
                 ano === '' ? 'botao-brand border-brand' : 'bg-bg-card border-border text-text-muted hover:text-text hover:border-brand'
               }`}
             >
@@ -662,7 +661,7 @@ function BancoQuestoes() {
               <button
                 key={a}
                 onClick={() => setAno(String(a))}
-                className={`px-3.5 py-1.5 rounded-full text-sm font-medium border transition-all tabular-nums ${
+                className={`px-3.5 py-1.5 rounded-xl text-sm font-medium border transition-all tabular-nums ${
                   ano === String(a) ? 'botao-brand border-brand' : 'bg-bg-card border-border text-text-muted hover:text-text hover:border-brand'
                 }`}
               >
@@ -700,7 +699,7 @@ function BancoQuestoes() {
         <button
           onClick={buscar}
           disabled={!prontoParaBuscar || loading}
-          className="flex items-center justify-center gap-2 w-full botao-brand disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3.5 rounded-full transition-colors text-sm"
+          className="flex items-center justify-center gap-2 w-full botao-brand disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3.5 rounded-xl transition-colors text-sm"
         >
           {loading
             ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Buscando questões...</>
@@ -868,10 +867,10 @@ function SessaoQuestoes({
         </div>
 
         <div className="flex gap-3 justify-center">
-          <button onClick={reiniciar} className="flex items-center gap-2 border border-border text-text-muted hover:text-text px-5 py-2.5 rounded-full text-sm transition-colors">
+          <button onClick={reiniciar} className="flex items-center gap-2 border border-border text-text-muted hover:text-text px-5 py-2.5 rounded-xl text-sm transition-colors">
             <RotateCcw size={14} /> Refazer
           </button>
-          <button onClick={onVoltar} className="botao-brand text-white px-5 py-2.5 rounded-full text-sm font-medium transition-colors">
+          <button onClick={onVoltar} className="botao-brand text-white px-5 py-2.5 rounded-xl text-sm font-medium transition-colors">
             Nova sessão
           </button>
         </div>
@@ -997,14 +996,14 @@ function SessaoQuestoes({
           <button
             onClick={confirmar}
             disabled={!selecionada}
-            className="botao-brand disabled:opacity-40 disabled:cursor-not-allowed text-white px-7 py-3 rounded-full text-sm font-semibold transition-colors"
+            className="botao-brand disabled:opacity-40 disabled:cursor-not-allowed text-white px-7 py-3 rounded-xl text-sm font-semibold transition-colors"
           >
             Confirmar resposta
           </button>
         ) : (
           <button
             onClick={proxima}
-            className="botao-brand text-white px-7 py-3 rounded-full text-sm font-semibold transition-colors"
+            className="botao-brand text-white px-7 py-3 rounded-xl text-sm font-semibold transition-colors"
           >
             {atual + 1 >= quantidade ? 'Ver resultado' : 'Próxima questão →'}
           </button>
@@ -1130,7 +1129,7 @@ function GerarComIA() {
               <button
                 key={v}
                 onClick={() => handleVestibular(v)}
-                className={`px-4 py-2 rounded-full text-sm font-medium border transition-all ${
+                className={`px-4 py-2 rounded-xl text-sm font-medium border transition-all ${
                   vestibular === v
                     ? 'botao-brand border-brand'
                     : 'bg-bg-card border-border text-text-muted hover:text-text hover:border-brand'
@@ -1153,7 +1152,7 @@ function GerarComIA() {
                 <button
                   key={m}
                   onClick={() => handleMateria(m)}
-                  className={`px-4 py-2 rounded-full text-sm font-medium border transition-all ${
+                  className={`px-4 py-2 rounded-xl text-sm font-medium border transition-all ${
                     materia === m
                       ? 'botao-brand border-brand'
                       : 'bg-bg-card border-border text-text-muted hover:text-text hover:border-brand'
@@ -1177,7 +1176,7 @@ function GerarComIA() {
                 <button
                   key={c}
                   onClick={() => setConteudo(c)}
-                  className={`px-4 py-2 rounded-full text-sm font-medium border transition-all ${
+                  className={`px-4 py-2 rounded-xl text-sm font-medium border transition-all ${
                     conteudo === c
                       ? 'botao-brand border-brand'
                       : 'bg-bg-card border-border text-text-muted hover:text-text hover:border-brand'
@@ -1200,7 +1199,7 @@ function GerarComIA() {
                   <button
                     key={d}
                     onClick={() => setDificuldade(d)}
-                    className={`flex-1 py-2 rounded-full text-xs font-medium border transition-all capitalize ${
+                    className={`flex-1 py-2 rounded-xl text-xs font-medium border transition-all capitalize ${
                       dificuldade === d
                         ? 'botao-brand border-brand'
                         : 'bg-bg-card border-border text-text-muted hover:text-text hover:border-brand'
@@ -1218,7 +1217,7 @@ function GerarComIA() {
                   <button
                     key={q}
                     onClick={() => setQuantidade(q)}
-                    className={`flex-1 py-2 rounded-full text-xs font-medium border transition-all ${
+                    className={`flex-1 py-2 rounded-xl text-xs font-medium border transition-all ${
                       quantidade === q
                         ? 'botao-brand border-brand'
                         : 'bg-bg-card border-border text-text-muted hover:text-text hover:border-brand'
@@ -1239,7 +1238,7 @@ function GerarComIA() {
           <button
             onClick={gerarQuestoes}
             disabled={loading}
-            className="flex items-center justify-center gap-2 botao-brand disabled:opacity-60 text-white font-semibold py-3.5 rounded-full transition-colors text-sm"
+            className="flex items-center justify-center gap-2 botao-brand disabled:opacity-60 text-white font-semibold py-3.5 rounded-xl transition-colors text-sm"
           >
             {loading ? (
               <>
@@ -1510,10 +1509,10 @@ function SessaoDiscursiva({
           ))}
         </div>
         <div className="flex gap-3">
-          <button onClick={onVoltar} className="flex-1 border border-border hover:border-brand text-text-muted hover:text-text py-3 rounded-full text-sm font-medium transition-all">
+          <button onClick={onVoltar} className="flex-1 border border-border hover:border-brand text-text-muted hover:text-text py-3 rounded-xl text-sm font-medium transition-all">
             ← Voltar
           </button>
-          <button onClick={reiniciar} className="flex-1 botao-brand text-white py-3 rounded-full text-sm font-semibold transition-colors flex items-center justify-center gap-2">
+          <button onClick={reiniciar} className="flex-1 botao-brand text-white py-3 rounded-xl text-sm font-semibold transition-colors flex items-center justify-center gap-2">
             <RotateCcw size={14} /> Praticar novamente
           </button>
         </div>
@@ -1597,7 +1596,7 @@ function SessaoDiscursiva({
         <button
           onClick={confirmar}
           disabled={corrigindo}
-          className="w-full flex items-center justify-center gap-2 botao-brand disabled:opacity-60 text-white font-semibold py-3.5 rounded-full transition-colors text-sm mb-6"
+          className="w-full flex items-center justify-center gap-2 botao-brand disabled:opacity-60 text-white font-semibold py-3.5 rounded-xl transition-colors text-sm mb-6"
         >
           {corrigindo
             ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Corrigindo com IA...</>
@@ -1660,7 +1659,7 @@ function SessaoDiscursiva({
           {/* Botão próxima */}
           <button
             onClick={proxima}
-            className="w-full flex items-center justify-center gap-2 botao-brand text-white font-semibold py-3.5 rounded-full transition-colors text-sm"
+            className="w-full flex items-center justify-center gap-2 botao-brand text-white font-semibold py-3.5 rounded-xl transition-colors text-sm"
           >
             {atual + 1 >= total ? <><Trophy size={15} /> Ver resultado final</> : <>Próxima questão <ChevronRight size={15} /></>}
           </button>

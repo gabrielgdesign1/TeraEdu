@@ -72,30 +72,8 @@ Responda APENAS o JSON no formato pedido.`
       }
     ]
   } else {
-    const arquivo = formData.get('arquivo') as File
-    const buffer = await arquivo.arrayBuffer()
-    const base64 = Buffer.from(buffer).toString('base64')
-
-    content = [
-      {
-        type: 'document',
-        source: {
-          type: 'base64',
-          media_type: 'application/pdf',
-          data: base64
-        },
-        // mesmo PDF pode voltar num segundo lote — o breakpoint fica no
-        // documento, e a instrução variável vem depois, sem breakpoint
-        cache_control: { type: 'ephemeral' }
-      },
-      {
-        type: 'text',
-        text: `Crie ${quantidade} flashcards baseados no conteúdo deste PDF.
-As perguntas devem ser curtas e diretas. As respostas claras e objetivas, máximo 2-3 frases.
-Cubra os pontos mais importantes do conteúdo.
-Responda APENAS o JSON no formato: {"flashcards": [{"pergunta": "...", "resposta": "..."}, ...]}`
-      }
-    ]
+    // PDF chega como 'texto' (extraído no navegador); qualquer outro modo é inválido
+    return Response.json({ error: 'Modo inválido.' }, { status: 400 })
   }
 
   const resposta = await anthropic.messages.create({

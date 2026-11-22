@@ -244,9 +244,9 @@ export function DashboardSidebar() {
 
     {/* ══════════ Mobile: barra inferior + menu completo ══════════ */}
     <nav
-      className="md:hidden fixed left-0 right-0 bottom-0 z-50 flex items-stretch justify-around border-t border-border/50"
+      className="md:hidden fixed left-3 right-3 z-50 flex items-stretch justify-around gap-1 p-1.5 rounded-[28px] border border-border/60 shadow-[0_8px_30px_rgba(0,0,0,0.18)]"
       style={{
-        paddingBottom: 'env(safe-area-inset-bottom)',
+        bottom: 'calc(env(safe-area-inset-bottom) + 12px)',
         background: isDark ? 'rgba(26,29,39,0.97)' : 'rgba(255,255,255,0.97)',
       }}
     >
@@ -256,8 +256,8 @@ export function DashboardSidebar() {
           <Link
             key={item.href}
             href={item.href}
-            className={`flex-1 flex flex-col items-center justify-center gap-0.5 h-16 transition-colors ${
-              active ? 'text-brand' : 'text-text-muted'
+            className={`flex-1 flex flex-col items-center justify-center gap-0.5 h-14 rounded-[22px] transition-colors ${
+              active ? 'text-brand bg-bg-hover' : 'text-text-muted'
             }`}
           >
             <item.icon size={20} />
@@ -267,7 +267,7 @@ export function DashboardSidebar() {
       })}
       <button
         onClick={() => setMenuAberto(true)}
-        className="flex-1 flex flex-col items-center justify-center gap-0.5 h-16 text-text-muted transition-colors"
+        className="flex-1 flex flex-col items-center justify-center gap-0.5 h-14 rounded-[22px] text-text-muted transition-colors"
       >
         <Menu size={20} />
         <span className="text-[10px] font-medium">Mais</span>

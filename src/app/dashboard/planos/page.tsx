@@ -18,9 +18,9 @@ export default function PlanosPage() {
 
   async function escolherPlano(id: PlanoId) {
     if (id === profile?.plano) return
-    // plano pago só via pagamento confirmado (o banco recusa a troca feita pelo próprio usuário)
+    // plano pago sÃ³ via pagamento confirmado (o banco recusa a troca feita pelo prÃ³prio usuÃ¡rio)
     if (id !== 'gratuito') {
-      setAviso('O pagamento online ainda não está disponível. Em breve você poderá assinar por aqui.')
+      setAviso('O pagamento online ainda nÃ£o estÃ¡ disponÃ­vel. Em breve vocÃª poderÃ¡ assinar por aqui.')
       return
     }
     setAssinando(id)
@@ -35,24 +35,24 @@ export default function PlanosPage() {
       <main className="flex-1 min-w-0 ml-0 md:ml-20 px-4 md:px-10 py-8 md:py-16 pb-24 md:pb-16">
         <div className="max-w-5xl mx-auto">
 
-          {/* Cabeçalho */}
+          {/* CabeÃ§alho */}
           <div className="text-center mb-10">
             <div className="inline-flex items-center gap-2 border border-border rounded-full px-4 py-1.5 mb-5 bg-bg-card">
               <Sparkles size={12} className="text-brand" />
               <span className="text-text-muted text-xs tracking-widest uppercase">Fazer upgrade</span>
             </div>
             <h1 className="text-text text-4xl lg:text-5xl font-black tracking-tight leading-[1.05] mb-4">
-              Preços simples para<br className="hidden sm:block" /> quem quer estudar sem limites.
+              PreÃ§os simples para<br className="hidden sm:block" /> quem quer estudar sem limites.
             </h1>
-            <p className="text-text-muted text-base">Comece grátis. Evolua quando fizer sentido. Sem surpresas.</p>
+            <p className="text-text-muted text-base">Comece grÃ¡tis. Evolua quando fizer sentido. Sem surpresas.</p>
           </div>
 
           {/* Toggle mensal/anual */}
           <div className="flex justify-center mb-12">
-            <div className="flex items-center gap-1 bg-bg-card border border-border rounded-full p-1">
+            <div className="flex items-center gap-1 bg-bg-card border border-border rounded-2xl p-1">
               <button
                 onClick={() => setAnual(false)}
-                className={`px-5 py-2 rounded-full text-sm font-medium transition-all ${
+                className={`px-5 py-2 rounded-xl text-sm font-medium transition-all ${
                   !anual ? 'bg-bg shadow-sm text-text border border-border' : 'text-text-muted hover:text-text'
                 }`}
               >
@@ -60,13 +60,13 @@ export default function PlanosPage() {
               </button>
               <button
                 onClick={() => setAnual(true)}
-                className={`flex items-center gap-2 px-5 py-2 rounded-full text-sm font-medium transition-all ${
+                className={`flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-medium transition-all ${
                   anual ? 'bg-bg shadow-sm text-text border border-border' : 'text-text-muted hover:text-text'
                 }`}
               >
                 Anual
                 <span className="text-[10px] bg-green-500/15 text-green-600 dark:text-green-400 px-2 py-0.5 rounded-full font-semibold">
-                  Economize até 17%
+                  Economize atÃ© 17%
                 </span>
               </button>
             </div>
@@ -83,7 +83,7 @@ export default function PlanosPage() {
             {PLANOS.map(p => {
               const ehAtual = profile?.plano === p.id
               const preco = anual ? p.precoAnual : p.precoMensal
-              const periodo = p.precoMensal === 0 ? 'para sempre' : anual ? '/ano' : '/mês'
+              const periodo = p.precoMensal === 0 ? 'para sempre' : anual ? '/ano' : '/mÃªs'
 
               return (
                 <div
@@ -112,7 +112,7 @@ export default function PlanosPage() {
                   </div>
                   {anual && p.economiaAnual && (
                     <p className="text-green-600 dark:text-green-400 text-xs font-semibold mb-5">
-                      Equivale a {fmtPreco(p.precoMensalNoAnual)}/mês · economize {p.economiaAnual}%
+                      Equivale a {fmtPreco(p.precoMensalNoAnual)}/mÃªs Â· economize {p.economiaAnual}%
                     </p>
                   )}
                   {(!anual || !p.economiaAnual) && <div className="mb-5" />}
@@ -120,7 +120,7 @@ export default function PlanosPage() {
                   <button
                     onClick={() => escolherPlano(p.id)}
                     disabled={ehAtual || assinando !== null}
-                    className={`w-full py-3 rounded-full text-sm font-semibold transition-all mb-6 flex items-center justify-center gap-2 ${
+                    className={`w-full py-3 rounded-xl text-sm font-semibold transition-all mb-6 flex items-center justify-center gap-2 ${
                       ehAtual
                         ? 'bg-bg-hover text-text-muted cursor-default border border-border'
                         : 'botao-brand text-white'
